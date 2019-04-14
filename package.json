@@ -1,0 +1,78 @@
+{
+  "name": "RaftJS",
+  "description": "RaftJS implementation",
+  "version": "0.1.0",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  ],
+  "repository": "https://github.com/maxenglander/raftjs",
+  "bugs": "https://github.com/maxenglander/raftjs/issues",
+  "contributors": [],
+  "author": "Max Englander",
+  "keywords": [],
+  "homepage": "https://github.com/maxenglander/raftjs",
+  "scripts": {
+    "build": "./node_modules/gulp-cli/bin/gulp.js compile",
+    "test": "./node_modules/gulp-cli/bin/gulp.js test"
+  },
+  "directories": {
+    "build": "build",
+    "docs": "docs",
+    "dist": "dist",
+    "gen": "gen",
+    "src": "src",
+    "test": "test"
+  },
+  "dependencies": {
+    "flatbuffers": "^1.10.2",
+    "pino": "^5.12.2",
+    "pino-pretty": "^2.6.0",
+    "yargs": "^13.2.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/node": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/register": "^7.0.0",
+    "@types/chai": "^4.1.7",
+    "@types/flatbuffers": "^1.9.0",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.18",
+    "@types/pino": "^5.8.6",
+    "@types/uuid": "^3.4.4",
+    "@types/yargs": "^12.0.9",
+    "chai": "^4.2.0",
+    "del": "^3.0.0",
+    "dependency-tree": "^7.0.2",
+    "docco": "^0.8.0",
+    "flatc": "^1.1.0",
+    "glob": "^7.1.3",
+    "gulp": "^4.0.0",
+    "gulp-babel": "^8.0.0",
+    "gulp-cli": "^2.0.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-eslint": "^5.0.0",
+    "gulp-filter": "^5.1.0",
+    "gulp-if": "^2.0.2",
+    "gulp-mocha": "^6.0.0",
+    "gulp-prettier": "^2.1.0",
+    "gulp-read": "^1.0.1",
+    "gulp-replace": "^1.0.0",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^5.0.0",
+    "minimist": "^1.2.0",
+    "mocha": "^5.2.0",
+    "mocha-logger": "^1.0.6",
+    "sinon": "^7.2.3",
+    "through2": "^3.0.0",
+    "tsconfig-root-dirs": "file:../../tsconfig-root-dirs",
+    "typescript": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=10.12.0"
+  }
+}

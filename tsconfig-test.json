@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "downlevelIteration": true,
+        "lib": ["ES5", "ES6", "ES7"],
+        "module": "ES6",
+        "moduleResolution": "Node",
+        "rootDirs": [ "build/gen", "src", "test" ],
+        "target": "es5"
+    }
+}

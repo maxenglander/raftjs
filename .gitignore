@@ -1,0 +1,6 @@
+.nvmrc
+*.swp
+build/
+dist/
+node_modules/
+annotated-source.js

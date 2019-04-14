@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+var cli = require('../dist/cli');
+var args = process.argv.slice(2);
+cli.execute(args);

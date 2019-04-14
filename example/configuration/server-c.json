@@ -1,0 +1,24 @@
+{
+    "cluster": {
+        "servers": {
+            "server-a": {
+                "host": "127.0.0.1",
+                "port": 9080
+            },
+            "server-b": {
+                "host": "127.0.0.1",
+                "port": 9081
+            },
+            "server-c": {
+                "host": "127.0.0.1",
+                "port": 9082
+            }
+        }
+    },
+    "dataDir": "../data/server-c",
+    "id": "server-c",
+    "logger": {
+        "level": "debug",
+        "machineReadable": false
+    }
+}

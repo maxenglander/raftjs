@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "downlevelIteration": true,
+        "lib": ["ES5", "ES6", "ES7"],
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "noImplicitAny": true,
+        "rootDirs": [ "build/gen", "src" ],
+        "target": "ESNext"
+    },
+    "exclude": ["test/"]
+}
