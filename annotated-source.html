@@ -1,0 +1,4003 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>raftjs</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h1 id="raftjs">raftjs</h1>
+<p>This annotated source is a single page containing
+almost all of the source code in the <code>raftjs</code> project.</p>
+<p>A bolded <strong>filename.js</strong> above a horizontal rule
+in the left column next to <code>/** filename.js */</code> in the
+right-side column indicates the beginning of a new file.</p>
+<p>The annotated files are presented in reverse-dependency
+order, starting from the entry point to the <code>raftjs</code>
+application: <code>cli/index.js</code>. For those more interested
+in seeing the protocol implementation, <code>server/index.js</code>
+and <code>server/state/*.js</code> are the best places to start.</p>
+<p>References to the <a href="https://raft.github.io/raft.pdf">Raft paper</a>
+are indicated with a quote containing a section sign (§)
+and number (e.g. “5.2”), and are <em>italicized</em>.</p>
+<p>Generally speaking, most of the annotations highlight
+areas of the code that closely correspond to writing
+in the Raft paper. Other parts of the code, such as the
+TCP transport, which are useful within the <code>raftjs</code> project
+but are not essential to the Raft protocol, are less
+heavily annotated.</p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p><strong>cli/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/index.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> yargs <span class="hljs-keyword">from</span> <span class="hljs-string">'yargs'</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> command <span class="hljs-keyword">from</span> <span class="hljs-string">'./command'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Can be used by a CLI program to start a single
+<code>raftjs</code> server.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">execute</span>(<span class="hljs-params">args</span>) </span>{
+    yargs.strict()
+        .demandCommand()
+        .command(command.start)
+        .parse(args);
+}
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> { execute };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p><strong>cli/command/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/command/index.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Re-exports <code>raftjs</code> server CLI commands.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> { <span class="hljs-keyword">default</span> <span class="hljs-keyword">as</span> start } <span class="hljs-keyword">from</span> <span class="hljs-string">'./start'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p><strong>cli/command/start/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/command/start/index.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>A <code>yargs</code> CLI command module for the <code>raftjs</code>
+server start command.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> handler <span class="hljs-keyword">from</span> <span class="hljs-string">'./handler'</span>;
+<span class="hljs-keyword">import</span> builder <span class="hljs-keyword">from</span> <span class="hljs-string">'./builder'</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+    builder,
+    <span class="hljs-attr">command</span>: <span class="hljs-string">'start'</span>,
+    <span class="hljs-attr">description</span>: <span class="hljs-string">'Start RaftJS server.'</span>,
+    handler
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p><strong>cli/command/start/builder.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/command/start/builder.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>A <code>yargs</code> builder for the <code>raftjs</code> server start
+command that validates that a <code>--config-file</code>
+argument is present and references an existing
+file.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> fs <span class="hljs-keyword">from</span> <span class="hljs-string">'fs'</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">builder</span>(<span class="hljs-params">yargs</span>) </span>{
+    <span class="hljs-keyword">return</span> yargs.strict()
+        .option(<span class="hljs-string">'config-file'</span>, {
+        <span class="hljs-attr">coerce</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">path</span>) </span>{
+            <span class="hljs-keyword">if</span> (!fs.existsSync(path))
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config file <span class="hljs-subst">${path}</span> does not exist`</span>);
+            <span class="hljs-keyword">return</span> path;
+        },
+        <span class="hljs-attr">required</span>: <span class="hljs-literal">true</span>,
+        <span class="hljs-attr">type</span>: <span class="hljs-string">'string'</span>
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p><strong>cli/command/start/handler.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/command/start/handler.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>A <code>yargs</code> command handler for the <code>raftjs</code> server start
+command that parses a <code>--config-file</code> and starts a <code>raftjs</code>
+server.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> { createServer } <span class="hljs-keyword">from</span> <span class="hljs-string">'../../../server'</span>;
+<span class="hljs-keyword">import</span> { parseConfigFile } <span class="hljs-keyword">from</span> <span class="hljs-string">'./config-file-parser'</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">argv</span>) </span>{
+    <span class="hljs-keyword">const</span> serverOptions = parseConfigFile(argv[<span class="hljs-string">'config-file'</span>]), server = createServer(serverOptions);
+    server.start();
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">exit</span>(<span class="hljs-params"></span>) </span>{
+        server.stop();
+    }
+    process.on(<span class="hljs-string">'SIGINT'</span>, exit);
+    process.on(<span class="hljs-string">'SIGTERM'</span>, exit);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p><strong>cli/command/start/config-file-parser.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** cli/command/start/config-file-parser.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> fs <span class="hljs-keyword">from</span> <span class="hljs-string">'fs'</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> path <span class="hljs-keyword">from</span> <span class="hljs-string">'path'</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> logger <span class="hljs-keyword">from</span> <span class="hljs-string">'../../../logger'</span>;
+<span class="hljs-keyword">import</span> { createEndpoint } <span class="hljs-keyword">from</span> <span class="hljs-string">'../../../net'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>A config file parser that accepts a file path,
+validates the contents, and returns a configuration
+object to be used for creating and starting a
+raft server. An example config file is:</p>
+<pre><code>{
+  <span class="hljs-string">"cluster"</span>: {
+    <span class="hljs-string">"servers"</span>: {
+      <span class="hljs-string">"server-a"</span>: { <span class="hljs-string">"host"</span>: <span class="hljs-string">"127.0.0.1"</span>, <span class="hljs-string">"port"</span>: <span class="hljs-number">9080</span> },
+      <span class="hljs-string">"server-b"</span>: { <span class="hljs-string">"host"</span>: <span class="hljs-string">"127.0.0.1"</span>, <span class="hljs-string">"port"</span>: <span class="hljs-number">9081</span> },
+      <span class="hljs-string">"server-c"</span>: { <span class="hljs-string">"host"</span>: <span class="hljs-string">"127.0.0.1"</span>, <span class="hljs-string">"port"</span>: <span class="hljs-number">9082</span> }
+    }
+  },
+  <span class="hljs-string">"dataDir"</span>: <span class="hljs-string">"../data/server-a"</span>,
+  <span class="hljs-string">"id"</span>: <span class="hljs-string">"server-a"</span>,
+  <span class="hljs-string">"logger"</span>: {
+    <span class="hljs-string">"level"</span>: <span class="hljs-string">"debug"</span>,
+    <span class="hljs-string">"pretty"</span>: <span class="hljs-literal">true</span>
+  }
+}</code></pre>
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseConfigFile</span>(<span class="hljs-params">configFile</span>) </span>{
+    <span class="hljs-keyword">const</span> config = <span class="hljs-built_in">JSON</span>.parse(fs.readFileSync(configFile).toString());
+    <span class="hljs-keyword">if</span> (!config[<span class="hljs-string">'id'</span>])
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config is missing required key 'id'.`</span>);
+    <span class="hljs-keyword">const</span> id = config[<span class="hljs-string">'id'</span>];
+    <span class="hljs-keyword">if</span> (!config[<span class="hljs-string">'cluster'</span>])
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config is missing required key 'cluster'.`</span>);
+    <span class="hljs-keyword">const</span> cluster = parseCluster(config[<span class="hljs-string">'cluster'</span>]);
+    <span class="hljs-keyword">if</span> (!(id <span class="hljs-keyword">in</span> cluster.servers))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config defines a server 'id' not present in 'cluster.servers'.`</span>);
+    <span class="hljs-keyword">if</span> (!config[<span class="hljs-string">'dataDir'</span>])
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config is missing required key 'dataDir'.`</span>);
+    <span class="hljs-keyword">const</span> dataDir = parseDataDir(configFile, config[<span class="hljs-string">'dataDir'</span>]);
+    <span class="hljs-keyword">const</span> logger = parseLogger(config[<span class="hljs-string">'logger'</span>]);
+    <span class="hljs-keyword">return</span> {
+        cluster,
+        dataDir,
+        id,
+        logger
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Parses the cluster configuration.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseCluster</span>(<span class="hljs-params">config</span>) </span>{
+    <span class="hljs-keyword">if</span> (!config[<span class="hljs-string">'servers'</span>])
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Config is missing required key 'cluster.servers'.`</span>);
+    <span class="hljs-keyword">const</span> servers = parseClusterServers(config[<span class="hljs-string">'servers'</span>]);
+    <span class="hljs-keyword">return</span> {
+        servers
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Parses the cluster members.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseClusterServers</span>(<span class="hljs-params">config</span>) </span>{
+    <span class="hljs-keyword">const</span> result = {};
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.keys(config).reduce(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">result, key</span>) </span>{
+        result[key] = createEndpoint({
+            <span class="hljs-attr">host</span>: config[key][<span class="hljs-string">'host'</span>],
+            <span class="hljs-attr">port</span>: config[key][<span class="hljs-string">'port'</span>]
+        });
+        <span class="hljs-keyword">return</span> result;
+    }, result);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Parses the absolute path to the directory where
+persistent state such as the current vote and
+term are stored.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseDataDir</span>(<span class="hljs-params">configFile, dataDir</span>) </span>{
+    <span class="hljs-keyword">if</span> (path.isAbsolute(dataDir)) {
+        <span class="hljs-keyword">return</span> dataDir;
+    }
+    <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">return</span> path.resolve(path.dirname(configFile), dataDir);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>Parses the logger level.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseLogLevel</span>(<span class="hljs-params">level</span>) </span>{
+    <span class="hljs-keyword">if</span> (!(<span class="hljs-keyword">typeof</span> level == <span class="hljs-string">'string'</span>))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Config 'logger.level' must be a string: "</span> + level);
+    <span class="hljs-keyword">if</span> (![<span class="hljs-string">'fatal'</span>, <span class="hljs-string">'error'</span>, <span class="hljs-string">'warn'</span>, <span class="hljs-string">'info'</span>, <span class="hljs-string">'debug'</span>, <span class="hljs-string">'trace'</span>].includes(level))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Config 'logger.level' must be one of [fatal, error, warn, info, debug, trace]: "</span> + level);
+    <span class="hljs-keyword">return</span> level;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Parses the logger machine-readable flag.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseLogMachineReadable</span>(<span class="hljs-params">machineReadable</span>) </span>{
+    <span class="hljs-keyword">if</span> (!(<span class="hljs-keyword">typeof</span> machineReadable == <span class="hljs-string">'boolean'</span>))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Config 'logger.machineReadable' must be a boolean: "</span> + machineReadable);
+    <span class="hljs-keyword">return</span> machineReadable;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>Parses the logger configuration.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseLogger</span>(<span class="hljs-params">config</span>) </span>{
+    <span class="hljs-keyword">if</span> (config &amp;&amp; !(<span class="hljs-keyword">typeof</span> config == <span class="hljs-string">'object'</span>))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"Config 'logger' must be an objct: "</span> + config);
+    <span class="hljs-keyword">const</span> level = config &amp;&amp; config[<span class="hljs-string">'level'</span>]
+        ? parseLogLevel(config[<span class="hljs-string">'level'</span>])
+        : <span class="hljs-string">'error'</span>;
+    <span class="hljs-keyword">const</span> machineReadable = config &amp;&amp; config[<span class="hljs-string">'machineReadable'</span>]
+        ? parseLogMachineReadable(config[<span class="hljs-string">'machineReadable'</span>])
+        : <span class="hljs-literal">false</span>;
+    <span class="hljs-keyword">return</span> logger.createLogger({
+        level,
+        machineReadable
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p><strong>server/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/index.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>The central component of the <code>raftjs</code> project,
+<code>Server</code>, listens on a socket for RPC commands
+from other <code>Server</code> instances and transitions
+between follower, candidate and leader states.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> path <span class="hljs-keyword">from</span> <span class="hljs-string">'path'</span>;
+<span class="hljs-keyword">import</span> { createDurableInteger, createDurableString } <span class="hljs-keyword">from</span> <span class="hljs-string">'../storage'</span>;
+<span class="hljs-keyword">import</span> { createLog } <span class="hljs-keyword">from</span> <span class="hljs-string">'../log'</span>;
+<span class="hljs-keyword">import</span> { createLogger } <span class="hljs-keyword">from</span> <span class="hljs-string">'../logger'</span>;
+<span class="hljs-keyword">import</span> { isMessage, isRequest, isResponse } <span class="hljs-keyword">from</span> <span class="hljs-string">'../message'</span>;
+<span class="hljs-keyword">import</span> { isEndpoint } <span class="hljs-keyword">from</span> <span class="hljs-string">'../net'</span>;
+<span class="hljs-keyword">import</span> { createRpcService } <span class="hljs-keyword">from</span> <span class="hljs-string">'../rpc'</span>;
+<span class="hljs-keyword">import</span> { createTimer } <span class="hljs-keyword">from</span> <span class="hljs-string">'./timer'</span>;
+<span class="hljs-keyword">import</span> { createState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./state'</span>;
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Server</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options) {
+        <span class="hljs-keyword">this</span>._cluster = options.cluster;
+        <span class="hljs-keyword">this</span>.electionTimer = options.electionTimer;
+        <span class="hljs-keyword">this</span>.endpoint = options.cluster.servers[options.id];
+        <span class="hljs-keyword">this</span>.id = options.id;
+        <span class="hljs-keyword">this</span>.log = options.log;
+        <span class="hljs-keyword">this</span>.logger = options.logger;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p><code>noop</code> is not a state specified by the Raft protocol.
+It is used here as a <a href="https://en.wikipedia.org/wiki/Null_object_pattern">“null
+object”</a> to
+ensure that <code>Server</code> can always call <code>enter</code>
+and <code>exit</code> on <code>this._state</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>._state = createState(<span class="hljs-string">'noop'</span>, <span class="hljs-literal">null</span>);
+        <span class="hljs-keyword">this</span>.rpcService = options.rpcService;
+        <span class="hljs-keyword">this</span>._term = options.term;
+        <span class="hljs-keyword">this</span>._vote = options.vote;
+    }
+    <span class="hljs-keyword">get</span> cluster() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._cluster;
+    }
+    <span class="hljs-keyword">get</span> state() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._state;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>The <code>receive</code> method can be used to register a
+receiver of RPC requests from other Raft <code>Server</code>
+instances.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    receive(receiver) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.rpcService.receive(receiver);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>RPC requests can be sent to other Raft <code>Server</code>
+instances with the <code>send</code> method.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    send(arg0, arg1 = <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">let</span> message;
+        <span class="hljs-keyword">let</span> endpoints;
+        <span class="hljs-keyword">if</span> (isMessage(arg0)) {
+            endpoints = <span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.cluster.servers)
+                .filter(<span class="hljs-function"><span class="hljs-params">serverId</span> =&gt;</span> serverId != <span class="hljs-keyword">this</span>.id)
+                .map(<span class="hljs-function"><span class="hljs-params">serverId</span> =&gt;</span> <span class="hljs-keyword">this</span>.cluster.servers[serverId]);
+            message = arg0;
+        }
+        <span class="hljs-keyword">else</span> {
+            <span class="hljs-keyword">if</span> (arg0 <span class="hljs-keyword">instanceof</span> <span class="hljs-built_in">Array</span>) {
+                endpoints = arg0;
+            }
+            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (isEndpoint(arg0)) {
+                endpoints = [arg0];
+            }
+            message = arg1;
+        }
+        <span class="hljs-keyword">if</span> (isRequest(message)) {
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.rpcService.send(endpoints, message);
+        }
+        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (isResponse(message)) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Before responding to an RPC request, the recipient <code>Server</code>
+updates persistent state on stable storage.</p>
+<blockquote>
+<p><em>§5. “…(Updated on stable storage before responding)…”</em><br><em>§5.6 “…Raft’s RPCs…require the recipient to persist…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.updatePersistentState()
+                .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-keyword">this</span>.rpcService.send(endpoints, message));
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>After the <code>Server</code> loads and initializes its term and vote,
+and binds to a socket for RPC calls, it transitions to the
+follower state:</p>
+<blockquote>
+<p><em>§5. “…When servers start up, they begin as followers…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    start() {
+        <span class="hljs-keyword">this</span>.logger.info(<span class="hljs-string">`Starting Raftjs server <span class="hljs-subst">${<span class="hljs-keyword">this</span>.id}</span>`</span>);
+        <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Loading persistent state'</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.all([</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>The current term is…</p>
+<blockquote>
+<p><em>§5. “…initialized to zero on first boot…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">this</span>._term.read(<span class="hljs-literal">null</span>)
+                .then((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">value</span>) </span>{
+                <span class="hljs-keyword">if</span> (value == <span class="hljs-literal">null</span>) {
+                    <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Term was not found on persistent storage; setting to zero'</span>);
+                    <span class="hljs-keyword">this</span>.term = <span class="hljs-number">0</span>;
+                }
+            }).bind(<span class="hljs-keyword">this</span>)),
+            <span class="hljs-keyword">this</span>._vote.read()
+        ])
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+            <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Starting RPC service'</span>);
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.rpcService.listen(<span class="hljs-keyword">this</span>.endpoint);
+        })
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+            <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Transitioning to follower'</span>);
+            <span class="hljs-keyword">this</span>.transitionTo(<span class="hljs-string">'follower'</span>);
+        })
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-keyword">this</span>.logger.info(<span class="hljs-string">`Started Raftjs server <span class="hljs-subst">${<span class="hljs-keyword">this</span>.id}</span>`</span>));
+    }
+    stop() {
+        <span class="hljs-keyword">this</span>.logger.info(<span class="hljs-string">`Stopping Raftjs server <span class="hljs-subst">${<span class="hljs-keyword">this</span>.id}</span>`</span>);
+        <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Exiting current state'</span>);
+        <span class="hljs-keyword">this</span>.state.exit();
+        <span class="hljs-keyword">this</span>.logger.debug(<span class="hljs-string">'Stopping RPC service'</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.rpcService.close()
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-keyword">this</span>.logger.info(<span class="hljs-string">`Stopped Raftjs server <span class="hljs-subst">${<span class="hljs-keyword">this</span>.id}</span>`</span>));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>A <code>Server</code> transitions between multiple states:
+follower, candidate, and leader. The <a href="https://en.wikipedia.org/wiki/State_pattern">state design
+pattern</a>
+is used here to facilitate separating the rules of
+these states into separate components while allowing
+those components access to <code>Server</code> data and methods.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    transitionTo(state) {
+        <span class="hljs-keyword">const</span> newState = <span class="hljs-keyword">typeof</span> state == <span class="hljs-string">'string'</span> ? createState(state, <span class="hljs-keyword">this</span>) : state;
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>._state.type == newState.type)
+            <span class="hljs-keyword">return</span>;
+        <span class="hljs-keyword">this</span>._state.exit();
+        <span class="hljs-keyword">this</span>._state = newState;
+        <span class="hljs-keyword">this</span>._state.enter();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>The <code>term</code> is used by a <code>Server</code> in a cluster
+to determine if it is ahead or behind of another
+<code>Server</code> in the same cluster.</p>
+<blockquote>
+<p><em>§5. “…latest term server has seen…”</em>
+<em>§5.1. “…Raft divides time into <em>terms</em>…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">get</span> term() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._term.value;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>When the term is updated, it is not immediately
+persisted because, as the Raft paper says, the
+term is part of persistent state that is:</p>
+<blockquote>
+<p><em>§5. “…(Updated on stable storage before responding)…”</em><br>to RPC requests.</p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">set</span> term(newTerm) {
+        <span class="hljs-keyword">this</span>._term.value = newTerm;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>The <code>Server</code> vote is the candidate the <code>Server</code>
+voted for in the current term…</p>
+<blockquote>
+<p><em>§5. “…or null if none…”</em>
+When a <code>Server</code> enters a new election,
+it has not yet voted for a candidate,
+so its vote is set here to <code>null</code>.</p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.vote = <span class="hljs-literal">null</span>;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>Persistent state is data read from and written
+to stable storage (i.e. a disk).</p>
+<blockquote>
+<p><em>§5. “…Persistent state on all servers…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    updatePersistentState() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.log.write()
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-keyword">this</span>._term.write())
+            .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-keyword">this</span>._vote.write());
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>The <code>Server</code> vote is the…
+<em>§5. “…candidateId that received vote in current term…”</em></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">get</span> vote() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._vote.value;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>When the vote is updated, it is not immediately
+persisted because, as the Raft paper says, the
+vote is part of persistent state that is…</p>
+<blockquote>
+<p><em>§5. “…(Updated on stable storage before responding)…”</em><br>…to RPC requests.</p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">set</span> vote(candidateId) {
+        <span class="hljs-keyword">this</span>._vote.value = candidateId;
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <p>The <code>createServer</code> method produces a <code>Server</code> configured
+by the provided <code>options</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createServer</span>(<span class="hljs-params">options</span>) </span>{
+    <span class="hljs-keyword">let</span> term;
+    <span class="hljs-keyword">if</span> (<span class="hljs-string">'term'</span> <span class="hljs-keyword">in</span> options) {
+        term = options.term;
+    }
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-string">'dataDir'</span> <span class="hljs-keyword">in</span> options) {
+        term = createDurableInteger(path.join(options.dataDir, <span class="hljs-string">'term'</span>));
+    }
+    <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Must supply either term or dataDir'</span>);
+    }
+    <span class="hljs-keyword">let</span> vote;
+    <span class="hljs-keyword">if</span> (<span class="hljs-string">'vote'</span> <span class="hljs-keyword">in</span> options) {
+        vote = options.vote;
+    }
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-string">'dataDir'</span> <span class="hljs-keyword">in</span> options) {
+        vote = createDurableString(path.join(options.dataDir, <span class="hljs-string">'vote'</span>));
+    }
+    <span class="hljs-keyword">else</span> {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Must supply either vote or dataDir'</span>);
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Server({
+        <span class="hljs-attr">cluster</span>: options.cluster,
+        <span class="hljs-attr">electionTimer</span>: options.electionTimer || createTimer(),
+        <span class="hljs-attr">id</span>: options.id,
+        <span class="hljs-attr">log</span>: options.log || createLog(),
+        <span class="hljs-attr">logger</span>: options.logger || createLogger(),
+        <span class="hljs-attr">rpcService</span>: options.rpcService || createRpcService(),
+        term,
+        vote
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p><strong>server/state/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/index.js*/</span>
+<span class="hljs-keyword">import</span> { compilerError } <span class="hljs-keyword">from</span> <span class="hljs-string">'../../util/compiler-error'</span>;
+<span class="hljs-keyword">import</span> { createNoopState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./noop'</span>;
+<span class="hljs-keyword">import</span> { createLeaderState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./leader'</span>;
+<span class="hljs-keyword">import</span> { createCandidateState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./candidate'</span>;
+<span class="hljs-keyword">import</span> { createFollowerState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./follower'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p><code>createState</code> is a convenience function for creating <code>State</code>
+implementations by name.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createState</span>(<span class="hljs-params">stateType, server</span>) </span>{
+    <span class="hljs-keyword">switch</span> (stateType) {
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'candidate'</span>:
+            <span class="hljs-keyword">return</span> createCandidateState(server);
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'follower'</span>:
+            <span class="hljs-keyword">return</span> createFollowerState(server);
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'leader'</span>:
+            <span class="hljs-keyword">return</span> createLeaderState(server);
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'noop'</span>:
+            <span class="hljs-keyword">return</span> createNoopState();
+        <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> compilerError(stateType);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p><strong>server/state/follower.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/follower.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> RequestVote <span class="hljs-keyword">from</span> <span class="hljs-string">'../../message/request-vote'</span>;
+<span class="hljs-keyword">import</span> { BaseState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./base'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>Followers:</p>
+<blockquote>
+<p><em>§5. “…Respond to RPC requests from candidates and leaders…”</em>  </p>
+</blockquote>
+<p>Followers remain in that state until either:  </p>
+<blockquote>
+<p><em>§5. “…an election timeout elapses without receiving AppendEntries RPC from
+curren leader or granting vote to candidate…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FollowerState</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseState</span> </span>{
+    <span class="hljs-keyword">constructor</span>(server) {
+        <span class="hljs-keyword">super</span>(server, <span class="hljs-string">'follower'</span>);
+        <span class="hljs-keyword">this</span>.onAppendEntriesRequest1 = <span class="hljs-keyword">this</span>.onAppendEntriesRequest1.bind(<span class="hljs-keyword">this</span>);
+        <span class="hljs-keyword">this</span>.onRequestVoteRequest1 = <span class="hljs-keyword">this</span>.onRequestVoteRequest1.bind(<span class="hljs-keyword">this</span>);
+        <span class="hljs-keyword">this</span>.onTimeout = <span class="hljs-keyword">this</span>.onTimeout.bind(<span class="hljs-keyword">this</span>);
+    }
+    enter() {
+        <span class="hljs-keyword">super</span>.enter();
+        <span class="hljs-keyword">super</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onAppendEntriesRequest1
+        }));
+        <span class="hljs-keyword">super</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestVoteRequest1
+        }));
+        <span class="hljs-keyword">this</span>.server.electionTimer.on(<span class="hljs-string">'timeout'</span>, <span class="hljs-keyword">this</span>.onTimeout);
+        <span class="hljs-keyword">this</span>.server.logger.debug(<span class="hljs-string">`Starting election timer with timeout <span class="hljs-subst">${<span class="hljs-keyword">this</span>.server.electionTimer.timeout}</span>ms`</span>);
+        <span class="hljs-keyword">this</span>.server.electionTimer.start();
+    }
+    exit() {
+        <span class="hljs-keyword">this</span>.server.electionTimer.stop();
+        <span class="hljs-keyword">this</span>.server.electionTimer.off(<span class="hljs-string">'timeout'</span>, <span class="hljs-keyword">this</span>.onTimeout);
+        <span class="hljs-keyword">super</span>.exit();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>One of the conditions for a follower resetting
+its election timer is:</p>
+<blockquote>
+<p><em>§5. “…receiving AppendEntries RPC from current leader…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onAppendEntriesRequest1(endpoint, message) {
+        <span class="hljs-keyword">this</span>.server.electionTimer.reset();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onRequestVoteRequest1(endpoint, message) {
+        <span class="hljs-keyword">const</span> { <span class="hljs-attr">term</span>: currentTerm, <span class="hljs-attr">vote</span>: currentVote, electionTimer } = <span class="hljs-keyword">this</span>.server,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <p>A receiver of RequestVote RPC will:</p>
+<blockquote>
+<p><em>§5. “…reply false if term &lt; currentTerm…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        voteGranted = message.arguments.term &gt;= currentTerm
+            &amp;&amp; (currentVote == <span class="hljs-literal">null</span> || currentVote == message.arguments.candidateId);
+        <span class="hljs-keyword">if</span> (voteGranted) {
+            <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Granting vote request from server <span class="hljs-subst">${endpoint.toString()}</span>`</span>);
+        }
+        <span class="hljs-keyword">else</span> {
+            <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Denying vote request from server <span class="hljs-subst">${endpoint.toString()}</span>`</span>);
+        }
+        <span class="hljs-keyword">this</span>.server.send(endpoint, RequestVote.createResponse({
+            <span class="hljs-attr">term</span>: currentTerm,
+            voteGranted
+        })).then(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>One of the conditions for a follower resetting
+its election timer is:</p>
+<blockquote>
+<p><em>§5. “…granting vote to candidate…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (voteGranted) {
+                electionTimer.reset();
+            }
+        });
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>When the election timeout elapses without the follower
+receiving either an <code>AppendEntries</code> RPC from the leader
+or granting a vote to a candidate, the follower
+begins an election by converting to a candidate.</p>
+<blockquote>
+<p><em>§5.1 * “If a follower receives no communication, it becomes a candidate and initiates an election.”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onTimeout() {
+        <span class="hljs-keyword">this</span>.server.logger.debug(<span class="hljs-string">'Timer elapsed; transitioning to candidate'</span>);
+        <span class="hljs-keyword">this</span>.transitionTo(<span class="hljs-string">'candidate'</span>);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createFollowerState</span>(<span class="hljs-params">server</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> FollowerState(server);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-48">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <p><strong>server/state/candidate.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/candidate.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> RequestVote <span class="hljs-keyword">from</span> <span class="hljs-string">'../../message/request-vote'</span>;
+<span class="hljs-keyword">import</span> { BaseState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./base'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
+              </div>
+              <p>A candidate:</p>
+<blockquote>
+<p><em>§5.1 “…votes for itself and issues RequestVote RPCs in parallel…”</em>  </p>
+</blockquote>
+<p>A candidate continues in this state until either:  </p>
+<blockquote>
+<p><em>§5.1 “…(a) it wins the election…”</em><br><em>§5.1 “…(b) another server establishes itself as leader…”</em><br><em>§5.1 “…(c) a period of time goes by with no winner…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CandidateState</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseState</span> </span>{
+    <span class="hljs-keyword">constructor</span>(server) {
+        <span class="hljs-keyword">super</span>(server, <span class="hljs-string">'candidate'</span>);
+        <span class="hljs-keyword">this</span>.onTimeout = <span class="hljs-keyword">this</span>.onTimeout.bind(<span class="hljs-keyword">this</span>);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-50">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-50">&#182;</a>
+              </div>
+              <p>Upon transitioning from a follower to a candidate,
+a candidate immediately starts an election.</p>
+<blockquote>
+<p><em>§5. “…On conversion to candidate, start election…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    enter() {
+        <span class="hljs-keyword">super</span>.enter();
+        <span class="hljs-keyword">super</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onAppendEntriesRequest1.bind(<span class="hljs-keyword">this</span>)
+        }));
+        <span class="hljs-keyword">super</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestVoteResponse.bind(<span class="hljs-keyword">this</span>)
+        }));
+        <span class="hljs-keyword">this</span>.server.electionTimer.on(<span class="hljs-string">'timeout'</span>, <span class="hljs-keyword">this</span>.onTimeout);
+        <span class="hljs-keyword">this</span>.startElection();
+    }
+    exit() {
+        <span class="hljs-keyword">this</span>.server.electionTimer.stop();
+        <span class="hljs-keyword">this</span>.server.electionTimer.off(<span class="hljs-string">'timeout'</span>, <span class="hljs-keyword">this</span>.onTimeout);
+        <span class="hljs-keyword">super</span>.exit();
+    }
+    incrementTerm() {
+        <span class="hljs-keyword">const</span> nextTerm = <span class="hljs-keyword">this</span>.server.term + <span class="hljs-number">1</span>;
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Incrementing term to <span class="hljs-subst">${nextTerm}</span>`</span>);
+        <span class="hljs-keyword">this</span>.server.term = nextTerm;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-51">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <p>A candidate obtains a majority when it receives
+<code>(# servers / 2) + 1</code> votes.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    isMajorityObtained() {
+        <span class="hljs-keyword">const</span> numServers = <span class="hljs-built_in">Object</span>.keys(<span class="hljs-keyword">this</span>.server.cluster.servers).length;
+        <span class="hljs-keyword">const</span> majority = <span class="hljs-built_in">Math</span>.floor(numServers / <span class="hljs-number">2</span>) + <span class="hljs-number">1</span>;
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.serverVotes.size &gt;= majority;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
+              </div>
+              <p>When a candidate receives an AppendEntries RPC
+request from a leader with a term greater or equal
+to its own, it converts to a follower.</p>
+<blockquote>
+<p><em>§5. “…If AppendEntries RPC received…”</em><br><em>§5.2. “…While waiting for votes…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onAppendEntriesRequest1(endpoint, message) {
+        <span class="hljs-keyword">if</span> (message.arguments.term &gt;= <span class="hljs-keyword">this</span>.server.term) {
+            <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Received append-entries request from <span class="hljs-subst">${endpoint.toString}</span>; transitioning to follower`</span>);
+            <span class="hljs-keyword">this</span>.transitionTo(<span class="hljs-string">'follower'</span>);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onRequestVoteResponse(endpoint, message) {
+        <span class="hljs-keyword">if</span> (!message.results.voteGranted)
+            <span class="hljs-keyword">return</span>;
+        <span class="hljs-keyword">this</span>.tallyVote(endpoint);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-54">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-54">&#182;</a>
+              </div>
+              <p>When the election timeout elapses, a candidate
+starts a new election. This occurs when a candidate
+neither obtains a majority of votes from followers
+nor receives an AppendEntries RPC from the leader.</p>
+<blockquote>
+<p><em>§5. “…If election timeout elapses…”</em><br><em>§5.2. “…third possible outcome…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onTimeout() {
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">'Timer elapsed; restarting election'</span>);
+        <span class="hljs-keyword">this</span>.startElection();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-55">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-55">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    requestVotes() {
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">'Requesting votes from other servers'</span>);
+        <span class="hljs-keyword">const</span> lastLogIndex = <span class="hljs-keyword">this</span>.server.log.getLastIndex();
+        <span class="hljs-keyword">this</span>.server.send(RequestVote.createRequest({
+            <span class="hljs-attr">candidateId</span>: <span class="hljs-keyword">this</span>.server.id,
+            lastLogIndex,
+            <span class="hljs-attr">lastLogTerm</span>: <span class="hljs-keyword">this</span>.server.log.getEntry(lastLogIndex).term,
+            <span class="hljs-attr">term</span>: <span class="hljs-keyword">this</span>.server.term
+        }));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-56">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-56">&#182;</a>
+              </div>
+              <p>After transitioning to a candidate, the server increments
+its current term, votes for itself, resets the election timer,
+and requests votes from all other servers.
+<em>§5.2. “…To begin an election…”</em></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    startElection() {
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">'Starting election'</span>);
+        <span class="hljs-keyword">this</span>.serverVotes = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-57">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-57">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5.2. “…increments its term…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.incrementTerm();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-58">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-58">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5.2. “…votes for itself…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.voteForSelf();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-59">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-59">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5. “…reset election timer…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Resetting election timer with timeout <span class="hljs-subst">${<span class="hljs-keyword">this</span>.server.electionTimer.timeout}</span>ms`</span>);
+        <span class="hljs-keyword">this</span>.server.electionTimer.reset();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-60">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-60">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5.2 “…issues RequestVote RPCs…”</em></p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.requestVotes();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-61">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-61">&#182;</a>
+              </div>
+              <p>When a candidate has received votes from the
+majority of servers, it becomes the leader.</p>
+<blockquote>
+<p><em>§5. “…votes received from majority…”</em><br><em>§5.2. “…a candidate wins an election if…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    tallyVote(endpoint) {
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Tallying vote received from <span class="hljs-subst">${endpoint.toString()}</span>`</span>);
+        <span class="hljs-keyword">this</span>.serverVotes.add(endpoint.toString());
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.isMajorityObtained()) {
+            <span class="hljs-keyword">this</span>.server.logger.debug(<span class="hljs-string">'Votes obtained from cluster majority; transitioning to leader'</span>);
+            <span class="hljs-keyword">this</span>.transitionTo(<span class="hljs-string">'leader'</span>);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-62">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-62">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    voteForSelf() {
+        <span class="hljs-keyword">this</span>.server.vote = <span class="hljs-keyword">this</span>.server.id;
+        <span class="hljs-keyword">this</span>.tallyVote(<span class="hljs-keyword">this</span>.server.endpoint);
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createCandidateState</span>(<span class="hljs-params">server</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> CandidateState(server);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-63">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-63">&#182;</a>
+              </div>
+              <p><strong>server/state/leader.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/leader.js*/</span>
+<span class="hljs-keyword">import</span> { createRequest <span class="hljs-keyword">as</span> createAppendEntriesRequest } <span class="hljs-keyword">from</span> <span class="hljs-string">'../../message/append-entries'</span>;
+<span class="hljs-keyword">import</span> { BaseState } <span class="hljs-keyword">from</span> <span class="hljs-string">'./base'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-64">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-64">&#182;</a>
+              </div>
+              <p>Leaders:</p>
+<blockquote>
+<p><em>§5.2 “…send periodic heartbeats…to all followers…to maintain their authority”</em>  </p>
+</blockquote>
+<p>Leaders are also responsible for accepting request from clients
+and replicating log entries to followers. At the present time, this
+implementation does not implement those requirements.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">LeaderState</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseState</span> </span>{
+    <span class="hljs-keyword">constructor</span>(server) {
+        <span class="hljs-keyword">super</span>(server, <span class="hljs-string">'leader'</span>);
+        <span class="hljs-keyword">this</span>.sendHeartbeats = <span class="hljs-keyword">this</span>.sendHeartbeats.bind(<span class="hljs-keyword">this</span>);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-65">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-65">&#182;</a>
+              </div>
+              <p>Upon election:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    enter() {
+        <span class="hljs-keyword">super</span>.enter();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-66">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-66">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5 “…send initial empty AppendEntries RPCs (heartbeat) to each server…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.sendHeartbeats();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-67">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-67">&#182;</a>
+              </div>
+              <blockquote>
+<p><em>§5 “…repeat during idle periods to prevent election timeouts…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.intervalId = setInterval(<span class="hljs-keyword">this</span>.sendHeartbeats, <span class="hljs-number">50</span>);
+    }
+    exit() {
+        clearInterval(<span class="hljs-keyword">this</span>.intervalId);
+        <span class="hljs-keyword">super</span>.exit();
+    }
+    sendHeartbeats() {
+        <span class="hljs-keyword">this</span>.server.send(createAppendEntriesRequest({
+            <span class="hljs-attr">entries</span>: [],
+            <span class="hljs-attr">term</span>: <span class="hljs-keyword">this</span>.server.term
+        }));
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createLeaderState</span>(<span class="hljs-params">server</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> LeaderState(server);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-68">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-68">&#182;</a>
+              </div>
+              <p><strong>server/state/base.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/base.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> AppendEntries <span class="hljs-keyword">from</span> <span class="hljs-string">'../../message/append-entries'</span>;
+<span class="hljs-keyword">import</span> { compilerError } <span class="hljs-keyword">from</span> <span class="hljs-string">'../../util/compiler-error'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-69">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-69">&#182;</a>
+              </div>
+              <p>The base server state is not named as such in
+the Raft paper, but is used in the <code>raftjs</code>
+project as a way to share functionality
+with the named states (follower, candidate,
+leader).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseState</span> </span>{
+    <span class="hljs-keyword">constructor</span>(server, stateType) {
+        <span class="hljs-keyword">this</span>.rpcEventListeners = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>();
+        <span class="hljs-keyword">this</span>.server = server;
+        <span class="hljs-keyword">this</span>.onAppendEntriesRequest0 = <span class="hljs-keyword">this</span>.onAppendEntriesRequest0.bind(<span class="hljs-keyword">this</span>);
+        <span class="hljs-keyword">this</span>.onRequestOrResponse = <span class="hljs-keyword">this</span>.onRequestOrResponse.bind(<span class="hljs-keyword">this</span>);
+        <span class="hljs-keyword">this</span>.transitionTo = <span class="hljs-keyword">this</span>.transitionTo.bind(<span class="hljs-keyword">this</span>);
+        <span class="hljs-keyword">this</span>.type = stateType;
+    }
+    addRpcEventListener(rpcEventListener) {
+        <span class="hljs-keyword">this</span>.rpcEventListeners.add(rpcEventListener);
+    }
+    enter() {
+        <span class="hljs-keyword">this</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onAppendEntriesRequest0
+        }));
+        <span class="hljs-keyword">this</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestOrResponse
+        }));
+        <span class="hljs-keyword">this</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestOrResponse
+        }));
+        <span class="hljs-keyword">this</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestOrResponse
+        }));
+        <span class="hljs-keyword">this</span>.addRpcEventListener(<span class="hljs-keyword">this</span>.server.rpcService
+            .receive({
+            <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+            <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+            <span class="hljs-attr">notify</span>: <span class="hljs-keyword">this</span>.onRequestOrResponse
+        }));
+    }
+    exit() {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> rpcEventListener <span class="hljs-keyword">of</span> <span class="hljs-keyword">this</span>.rpcEventListeners) {
+            <span class="hljs-keyword">this</span>.rpcEventListeners.delete(rpcEventListener);
+            rpcEventListener.detach();
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-70">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-70">&#182;</a>
+              </div>
+              <p>This method is a stub for a Raft response to an
+AppendEntries RPC request. At the present time,
+it only handles responding to heartbeats.</p>
+<blockquote>
+<p><em>§5. “…Receiver implementation:…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    onAppendEntriesRequest0(endpoint, message) {
+        <span class="hljs-keyword">this</span>.server.send(endpoint, AppendEntries.createResponse({</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-71">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-71">&#182;</a>
+              </div>
+              <p>When another <code>Server</code> makes an <code>AppendEntries</code> RPC
+request with a <code>term</code> less than the <code>term</code> on this
+<code>Server</code>, the RPC request is rejected.</p>
+<blockquote>
+<p><em>§5. “…false if term &lt; currentTerm…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            success: message.arguments.term &gt;= <span class="hljs-keyword">this</span>.server.term,
+            <span class="hljs-attr">term</span>: <span class="hljs-keyword">this</span>.server.term
+        }));
+    }
+    onRequestOrResponse(endpoint, message) {
+        <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Received <span class="hljs-subst">${message.procedureType}</span> <span class="hljs-subst">${message.callType}</span> from <span class="hljs-subst">${endpoint.toString()}</span>`</span>);
+        <span class="hljs-keyword">const</span> callType = message.callType, procedureType = message.procedureType;
+        <span class="hljs-keyword">let</span> term;
+        <span class="hljs-keyword">switch</span> (callType) {
+            <span class="hljs-keyword">case</span> <span class="hljs-string">'request'</span>:
+                term = message.arguments.term;
+                <span class="hljs-keyword">break</span>;
+            <span class="hljs-keyword">case</span> <span class="hljs-string">'response'</span>:
+                term = message.results.term;
+                <span class="hljs-keyword">break</span>;
+            <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-72">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-72">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                compilerError(callType);
+                <span class="hljs-keyword">break</span>;
+        }
+        <span class="hljs-keyword">const</span> server = <span class="hljs-keyword">this</span>.server;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-73">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-73">&#182;</a>
+              </div>
+              <p>Whenever Raft server’s communicate to each other, they
+exchange their current term, and, if one server’s term
+is less than anothers, it updates it’s own term to the
+other’s, and converts to a follower.</p>
+<blockquote>
+<p><em>§5. “…If RPC request or response contains…”</em><br><em>§5.1. “…If one server’s current term is smaller…”</em>  </p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (term &gt; server.term) {
+            <span class="hljs-keyword">this</span>.server.logger.trace(<span class="hljs-string">`Received a message with a term (<span class="hljs-subst">${term}</span>) higher than the server term (<span class="hljs-subst">${server.term}</span>); transitioning to follower`</span>);
+            server.term = term;
+            <span class="hljs-keyword">this</span>.transitionTo(<span class="hljs-string">'follower'</span>);
+        }
+    }
+    transitionTo(stateType) {
+        <span class="hljs-keyword">if</span> (stateType != <span class="hljs-keyword">this</span>.type) {
+            <span class="hljs-keyword">this</span>.server.transitionTo(stateType);
+        }
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createBaseState</span>(<span class="hljs-params">server, stateType</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> BaseState(server, stateType);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-74">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-74">&#182;</a>
+              </div>
+              <p><strong>server/state/noop.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/state/noop.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-75">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-75">&#182;</a>
+              </div>
+              <p>The “no-op” state is not part of the Raft
+protocol. It is used by <code>Server</code> as a
+<a href="https://en.wikipedia.org/wiki/Null_object_pattern">null object</a>
+to simplify guarding against null references.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createNoopState</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        enter() { },
+        exit() { },
+        <span class="hljs-attr">type</span>: <span class="hljs-literal">null</span>
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-76">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-76">&#182;</a>
+              </div>
+              <p><strong>server/timer.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** server/timer.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-77">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-77">&#182;</a>
+              </div>
+              <p>The Raft paper recommends an election timeout
+interval of 150–300 milliseconds:</p>
+<blockquote>
+<p>*§9.3 “…We recommend using a conservative election timeout such as 150–300ms…”</p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> DEFAULT_TIMEOUT_INTERVAL = [<span class="hljs-number">150</span>, <span class="hljs-number">300</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-78">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-78">&#182;</a>
+              </div>
+              <p>Raft uses timers to trigger the conversion of followers
+to candidates, and candidates to restart elections.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Timer</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options = {}) {
+        <span class="hljs-keyword">this</span>._running = <span class="hljs-literal">false</span>;
+        <span class="hljs-keyword">this</span>.listeners = {};
+        <span class="hljs-keyword">this</span>._running = <span class="hljs-literal">false</span>,
+            <span class="hljs-keyword">this</span>.timeoutChooser = options.timeoutChooser
+                ? options.timeoutChooser
+                : createTimeoutChooser({});
+        <span class="hljs-keyword">this</span>._timeout = <span class="hljs-keyword">this</span>.timeoutChooser.choose();
+        <span class="hljs-keyword">this</span>.timeoutId = <span class="hljs-literal">null</span>;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-79">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-79">&#182;</a>
+              </div>
+              <p>Notify listeners about the event.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    notifyListeners(event) {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.listeners[event]) {
+            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> listener <span class="hljs-keyword">of</span> <span class="hljs-keyword">this</span>.listeners[event]) {
+                listener(event);
+            }
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-80">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-80">&#182;</a>
+              </div>
+              <p>Register a listener for one or more events.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    on(events, listener) {
+        <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Array</span>.isArray(events))
+            events = [events];
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> event <span class="hljs-keyword">of</span> events) {
+            <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.listeners[event])
+                <span class="hljs-keyword">this</span>.listeners[event] = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>();
+            <span class="hljs-keyword">this</span>.listeners[event].add(listener);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-81">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-81">&#182;</a>
+              </div>
+              <p>Deregister a listener from one or more events.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    off(events, listener) {
+        <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">Array</span>.isArray(events))
+            events = [events];
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> event <span class="hljs-keyword">of</span> events) {
+            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.listeners[event])
+                <span class="hljs-keyword">this</span>.listeners[event].delete(listener);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-82">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-82">&#182;</a>
+              </div>
+              <p>Reset the timer.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    reset() {
+        <span class="hljs-keyword">this</span>.stop();
+        <span class="hljs-keyword">this</span>.start();
+        <span class="hljs-keyword">this</span>.notifyListeners(<span class="hljs-string">'reset'</span>);
+    }
+    <span class="hljs-keyword">get</span> running() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._running;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-83">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-83">&#182;</a>
+              </div>
+              <p>Start the timer.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    start() {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>._running)
+            <span class="hljs-keyword">return</span>;
+        <span class="hljs-keyword">this</span>._running = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">this</span>.notifyListeners(<span class="hljs-string">'started'</span>);
+        <span class="hljs-keyword">this</span>.timeoutId = setTimeout((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            <span class="hljs-keyword">this</span>.stop();
+            <span class="hljs-keyword">this</span>.notifyListeners(<span class="hljs-string">'timeout'</span>);
+        }).bind(<span class="hljs-keyword">this</span>), <span class="hljs-keyword">this</span>._timeout);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-84">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-84">&#182;</a>
+              </div>
+              <p>Stop the timer.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    stop() {
+        <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>._running)
+            <span class="hljs-keyword">return</span>;
+        <span class="hljs-keyword">this</span>._running = <span class="hljs-literal">false</span>;
+        clearTimeout(<span class="hljs-keyword">this</span>.timeoutId);
+        <span class="hljs-keyword">this</span>.notifyListeners(<span class="hljs-string">'stopped'</span>);
+    }
+    <span class="hljs-keyword">get</span> timeout() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._timeout;
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-85">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-85">&#182;</a>
+              </div>
+              <p>Raft uses:</p>
+<blockquote>
+<p>*§5.2 “…randomized election timeouts to ensure that split votes are rare…”</p>
+</blockquote>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TimeoutChooser</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options = {}) {
+        <span class="hljs-keyword">this</span>.interval = options.interval
+            ? options.interval
+            : DEFAULT_TIMEOUT_INTERVAL;
+    }
+    <span class="hljs-comment">/**
+     * Get a random integer between the interval upper and lower bound.
+     * See: https://mzl.la/2Vw9OmR
+     */</span>
+    choose() {
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.random() * (<span class="hljs-keyword">this</span>.interval[<span class="hljs-number">1</span>] - <span class="hljs-keyword">this</span>.interval[<span class="hljs-number">0</span>] + <span class="hljs-number">1</span>)) + <span class="hljs-keyword">this</span>.interval[<span class="hljs-number">0</span>];
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createTimer</span>(<span class="hljs-params">options = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Timer(options);
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createTimeoutChooser</span>(<span class="hljs-params">options = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> TimeoutChooser(options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-86">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-86">&#182;</a>
+              </div>
+              <p><strong>rpc/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** rpc/index.js*/</span>
+<span class="hljs-keyword">import</span> { createRpcReceiverRegistry } <span class="hljs-keyword">from</span> <span class="hljs-string">'./receiver-registry'</span>;
+<span class="hljs-keyword">import</span> { createDefaultCodec, createDefaultTransport } <span class="hljs-keyword">from</span> <span class="hljs-string">'./defaults'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-87">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-87">&#182;</a>
+              </div>
+              <p>Encodes, sends, decodes and receives RPC messages.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RpcService</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options = {}) {
+        <span class="hljs-keyword">this</span>.codec = options.codec
+            ? options.codec
+            : createDefaultCodec();
+        <span class="hljs-keyword">this</span>.receivers = createRpcReceiverRegistry();
+        <span class="hljs-keyword">this</span>.transport = options.transport
+            ? options.transport
+            : createDefaultTransport();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-88">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-88">&#182;</a>
+              </div>
+              <p>When data is received from the underlying transport,
+decode the data to an RPC message and notify any
+receivers of the message.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">this</span>.transport.receive({
+            <span class="hljs-attr">data</span>: (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">endpoint, data</span>) </span>{
+                <span class="hljs-keyword">this</span>.notifyReceivers(endpoint, <span class="hljs-keyword">this</span>.codec.decode(data));
+            }).bind(<span class="hljs-keyword">this</span>),
+            failure(failure) { }
+        });
+    }
+    close() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.transport.close();
+    }
+    listen(endpoint) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.transport.listen(endpoint);
+    }
+    notifyReceivers(endpoint, message) {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> receiver <span class="hljs-keyword">of</span> <span class="hljs-keyword">this</span>.receivers.getAll(message.procedureType, message.callType)) {
+            receiver.notify(endpoint, message);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-89">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-89">&#182;</a>
+              </div>
+              <p>Register to receiver messages of a particular procedure and call type,
+e.g. <code>receive(&#39;append-entries&#39;, &#39;request&#39;, {...})</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    receive(receiver) {
+        <span class="hljs-keyword">this</span>.receivers.add(receiver);
+        <span class="hljs-keyword">return</span> {
+            <span class="hljs-attr">detach</span>: (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                <span class="hljs-keyword">this</span>.receivers.remove(receiver);
+            }).bind(<span class="hljs-keyword">this</span>)
+        };
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-90">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-90">&#182;</a>
+              </div>
+              <p>Send a message to all endpoints in parallel.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    send(endpoints, message) {
+        <span class="hljs-keyword">const</span> encoded = <span class="hljs-keyword">this</span>.codec.encode(message);
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.all(endpoints.map((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">endpoint</span>) </span>{
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve</span>) </span>{
+                <span class="hljs-keyword">this</span>.transport.send(endpoint, encoded).then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> resolve(), () =&gt; resolve());
+            }).bind(<span class="hljs-keyword">this</span>));
+        }).bind(<span class="hljs-keyword">this</span>)));
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createRpcService</span>(<span class="hljs-params">options = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> RpcService(options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-91">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-91">&#182;</a>
+              </div>
+              <p><strong>rpc/defaults.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** rpc/defaults.js*/</span>
+<span class="hljs-keyword">import</span> { createFlatbuffersCodec } <span class="hljs-keyword">from</span> <span class="hljs-string">'../codec'</span>;
+<span class="hljs-keyword">import</span> { createTcpTransport } <span class="hljs-keyword">from</span> <span class="hljs-string">'../transport'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-92">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-92">&#182;</a>
+              </div>
+              <p>By default, <code>RpcService</code> uses
+<a href="https://google.github.io/flatbuffers/">FlatBuffers</a>
+to encode and decode RPC messages to and from
+binary data.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDefaultCodec</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> createFlatbuffersCodec();
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-93">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-93">&#182;</a>
+              </div>
+              <p>By default, <code>RpcService</code> uses TCP as its
+underlying data transport.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDefaultTransport</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> createTcpTransport();
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-94">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-94">&#182;</a>
+              </div>
+              <p><strong>rpc/receiver-registry.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** rpc/receiver-registry.js*/</span>
+<span class="hljs-keyword">import</span> { compilerError } <span class="hljs-keyword">from</span> <span class="hljs-string">'../util/compiler-error'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-95">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-95">&#182;</a>
+              </div>
+              <p>A data structure that maintains an <code>RpcReceiver</code> set for each
+kind of RPC message.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RpcReceiverRegistry</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>.appendEntriesRequestReceivers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>();
+        <span class="hljs-keyword">this</span>.appendEntriesResponseReceivers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>(),
+            <span class="hljs-keyword">this</span>.requestVoteRequestReceivers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>(),
+            <span class="hljs-keyword">this</span>.requestVoteResponseReceivers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-96">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-96">&#182;</a>
+              </div>
+              <p>Add the provided <code>RpcReceiver</code> to the registry.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    add(receiver) {
+        <span class="hljs-keyword">const</span> _procedureType = receiver.procedureType, _callType = receiver.callType;
+        <span class="hljs-keyword">this</span>.internalGetAll(_procedureType, _callType).add(receiver);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-97">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-97">&#182;</a>
+              </div>
+              <p>Get every <code>RpcReceiver</code> registered for the provided RPC message call or response.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    getAll(procedureType, callType) {
+        <span class="hljs-keyword">const</span> _procedureType = procedureType, _callType = callType, _receiverSet = <span class="hljs-keyword">this</span>.internalGetAll(_procedureType, _callType);
+        <span class="hljs-keyword">return</span> _receiverSet;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-98">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-98">&#182;</a>
+              </div>
+              <p>Get a set of registered receivers based on the provided
+procedure and call type.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    internalGetAll(procedureType, callType) {
+        <span class="hljs-keyword">const</span> _callType = callType, _procedureType = procedureType;
+        <span class="hljs-keyword">switch</span> (_procedureType) {
+            <span class="hljs-keyword">case</span> <span class="hljs-string">'append-entries'</span>:
+                <span class="hljs-keyword">switch</span> (_callType) {
+                    <span class="hljs-keyword">case</span> <span class="hljs-string">'request'</span>:
+                        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.appendEntriesRequestReceivers;
+                    <span class="hljs-keyword">case</span> <span class="hljs-string">'response'</span>:
+                        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.appendEntriesResponseReceivers;
+                    <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-99">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-99">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">return</span> compilerError(_callType);
+                }
+            <span class="hljs-keyword">case</span> <span class="hljs-string">'request-vote'</span>:
+                <span class="hljs-keyword">switch</span> (_callType) {
+                    <span class="hljs-keyword">case</span> <span class="hljs-string">'request'</span>:
+                        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.requestVoteRequestReceivers;
+                    <span class="hljs-keyword">case</span> <span class="hljs-string">'response'</span>:
+                        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.requestVoteResponseReceivers;
+                    <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-100">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-100">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">return</span> compilerError(_callType);
+                }
+            <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-101">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-101">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">return</span> compilerError(_procedureType);
+        }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-102">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-102">&#182;</a>
+              </div>
+              <p>Remove the provided <code>RpcReceiver</code> to the registry.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    remove(receiver) {
+        <span class="hljs-keyword">const</span> _procedureType = receiver.procedureType, _callType = receiver.callType;
+        <span class="hljs-keyword">this</span>.internalGetAll(_procedureType, _callType).delete(receiver);
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createRpcReceiverRegistry</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> RpcReceiverRegistry();
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-103">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-103">&#182;</a>
+              </div>
+              <p><strong>transport/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** transport/index.js*/</span>
+<span class="hljs-keyword">export</span> { createTcpTransport } <span class="hljs-keyword">from</span> <span class="hljs-string">'./tcp'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-104">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-104">&#182;</a>
+              </div>
+              <p><strong>transport/tcp.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** transport/tcp.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> net <span class="hljs-keyword">from</span> <span class="hljs-string">'net'</span>;
+<span class="hljs-keyword">import</span> { createEndpoint } <span class="hljs-keyword">from</span> <span class="hljs-string">'../net'</span>;
+<span class="hljs-keyword">import</span> { createConnectionRegistry } <span class="hljs-keyword">from</span> <span class="hljs-string">'./connection-registry'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-105">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-105">&#182;</a>
+              </div>
+              <p>A TCP transport that can accept and create
+TCP sockets, and tries to re-use sockets
+when possible.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TcpTransport</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options) {
+        <span class="hljs-keyword">this</span>.endpoint = <span class="hljs-literal">null</span>;
+        <span class="hljs-keyword">this</span>.endpoint = <span class="hljs-literal">null</span>;
+        <span class="hljs-keyword">this</span>.receivers = [];
+        <span class="hljs-keyword">this</span>.server = net.createServer(<span class="hljs-keyword">this</span>.accept.bind(<span class="hljs-keyword">this</span>));
+        <span class="hljs-keyword">this</span>.sockets = options.sockets || createConnectionRegistry();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-106">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-106">&#182;</a>
+              </div>
+              <p>Store a socket that was produced as the
+result of an incoming or outgoing connection.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    accept(socket) {
+        <span class="hljs-keyword">const</span> endpoint = createEndpoint({
+            <span class="hljs-attr">host</span>: socket.remoteAddress,
+            <span class="hljs-attr">port</span>: socket.remotePort
+        });</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-107">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-107">&#182;</a>
+              </div>
+              <p>If the socket has already been accepted,
+do nothing.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.sockets.has(endpoint))
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-108">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-108">&#182;</a>
+              </div>
+              <p>Try to store the socket, and set up ‘end’
+and ‘data’ handlers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.sockets.save(endpoint, socket)) {
+            socket.on(<span class="hljs-string">'end'</span>, (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                socket.destroy();
+                <span class="hljs-keyword">this</span>.sockets.remove(endpoint);
+            }).bind(<span class="hljs-keyword">this</span>));
+            socket.on(<span class="hljs-string">'data'</span>, (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">data</span>) </span>{
+                <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> receiver <span class="hljs-keyword">of</span> <span class="hljs-keyword">this</span>.receivers) {
+                    receiver.data(endpoint, data);
+                }
+            }).bind(<span class="hljs-keyword">this</span>));
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-109">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-109">&#182;</a>
+              </div>
+              <p>When closing a transport, close all client connections
+and stop listening for connections on the transport endpoint.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    close() {
+        <span class="hljs-keyword">const</span> promise = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            <span class="hljs-keyword">const</span> wrappedResolve = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                <span class="hljs-keyword">if</span> (_clientsClosed &amp;&amp; _serverClosed) {
+                    <span class="hljs-keyword">this</span>.endpoint = <span class="hljs-literal">null</span>;
+                    resolve();
+                }
+            }).bind(<span class="hljs-keyword">this</span>);
+            <span class="hljs-keyword">let</span> _clientsClosed = <span class="hljs-literal">false</span>, _serverClosed = <span class="hljs-literal">false</span>;
+            <span class="hljs-keyword">this</span>.server.close(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err</span>) </span>{
+                _serverClosed = <span class="hljs-literal">true</span>;
+                wrappedResolve();
+            });
+            <span class="hljs-keyword">this</span>.sockets.removeEach(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">socket</span>) </span>{
+                socket.destroy();
+            }, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                _clientsClosed = <span class="hljs-literal">true</span>;
+                wrappedResolve();
+            });
+        }).bind(<span class="hljs-keyword">this</span>));
+        <span class="hljs-keyword">return</span> promise;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-110">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-110">&#182;</a>
+              </div>
+              <p>Make an outgoing TCP connection to the provided endpoint.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    connect(endpoint) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.sockets.has(endpoint)) {
+                resolve(<span class="hljs-keyword">this</span>.sockets.get(endpoint));
+            }
+            <span class="hljs-keyword">else</span> {
+                <span class="hljs-keyword">const</span> socket = net.createConnection(endpoint.port, endpoint.host, (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.accept(socket)) {
+                        resolve(socket);
+                    }
+                    <span class="hljs-keyword">else</span> {
+                        socket.end();
+                        reject(<span class="hljs-string">'failed to save socket'</span>);
+                    }
+                }).bind(<span class="hljs-keyword">this</span>));</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-111">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-111">&#182;</a>
+              </div>
+              <p>Set up a socket error handler to capture
+errors such as ‘connection refused’.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                socket.on(<span class="hljs-string">'error'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err</span>) </span>{
+                    reject(err);
+                });
+            }
+        }).bind(<span class="hljs-keyword">this</span>));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-112">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-112">&#182;</a>
+              </div>
+              <p>Listen for incoming TCP connections on the provided endpoint.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    listen(endpoint) {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.endpoint != <span class="hljs-literal">null</span>)
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(<span class="hljs-string">`TCP transport is already listening on <span class="hljs-subst">${endpoint.toString()}</span>`</span>);
+        <span class="hljs-keyword">this</span>.endpoint = endpoint;
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            <span class="hljs-keyword">this</span>.server.listen(<span class="hljs-keyword">this</span>.endpoint.port, <span class="hljs-keyword">this</span>.endpoint.host, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+                resolve();
+            });
+        }).bind(<span class="hljs-keyword">this</span>));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-113">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-113">&#182;</a>
+              </div>
+              <p>Register a receiver.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    receive(receiver) {
+        <span class="hljs-keyword">this</span>.receivers.push(receiver);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-114">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-114">&#182;</a>
+              </div>
+              <p>Send data to the provided endpoint.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    send(endpoint, data) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            <span class="hljs-keyword">this</span>.connect(endpoint).then(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">socket</span>) </span>{
+                socket.write(data, <span class="hljs-literal">null</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err</span>) </span>{
+                    <span class="hljs-keyword">if</span> (err) {
+                        reject(err);
+                    }
+                    <span class="hljs-keyword">else</span> {
+                        resolve();
+                    }
+                });
+            }, reject);
+        }).bind(<span class="hljs-keyword">this</span>));
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createTcpTransport</span>(<span class="hljs-params">options = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> TcpTransport(options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-115">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-115">&#182;</a>
+              </div>
+              <p><strong>transport/connection-registry.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** transport/connection-registry.js*/</span>
+<span class="hljs-keyword">import</span> { parseEndpoint } <span class="hljs-keyword">from</span> <span class="hljs-string">'../net'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-116">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-116">&#182;</a>
+              </div>
+              <p>A map of endpoint to connections, with methods
+to iterate over or remove all endpoints at once.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ConnectionRegistry</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>.connections = {};
+        <span class="hljs-keyword">this</span>.numConnections = <span class="hljs-number">0</span>;
+    }
+    count() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.numConnections;
+    }
+    <span class="hljs-keyword">get</span>(endpoint) {
+        <span class="hljs-keyword">const</span> connectionId = endpoint.toString();
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.connections[connectionId];
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-117">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-117">&#182;</a>
+              </div>
+              <p>Iterate over each connection, invoking an optional
+callback when all connectinos have been processed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    forEach(onEach, onDone = <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> connectionId <span class="hljs-keyword">in</span> <span class="hljs-keyword">this</span>.connections) {
+            <span class="hljs-keyword">const</span> endpoint = parseEndpoint(connectionId), connection = <span class="hljs-keyword">this</span>.connections[connectionId];
+            onEach(endpoint, connection);
+        }
+        <span class="hljs-keyword">if</span> (onDone)
+            onDone();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-118">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-118">&#182;</a>
+              </div>
+              <p>Get all registered connections.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    getAll() {
+        <span class="hljs-keyword">const</span> values = [];
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> key <span class="hljs-keyword">in</span> <span class="hljs-keyword">this</span>.connections) {
+            values.push(<span class="hljs-keyword">this</span>.connections[key]);
+        }
+        <span class="hljs-keyword">return</span> values;
+    }
+    has(endpoint) {
+        <span class="hljs-keyword">const</span> connectionId = endpoint.toString();
+        <span class="hljs-keyword">return</span> connectionId <span class="hljs-keyword">in</span> <span class="hljs-keyword">this</span>.connections;
+    }
+    remove(endpoint) {
+        <span class="hljs-keyword">const</span> connectionId = endpoint.toString();
+        <span class="hljs-keyword">delete</span> <span class="hljs-keyword">this</span>.connections[connectionId];
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-119">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-119">&#182;</a>
+              </div>
+              <p>Remove all connections, invoking an optional callback after
+all connections have been removed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    removeEach(onRemove, onDone = <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">this</span>.forEach((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">endpoint, connection</span>) </span>{
+            <span class="hljs-keyword">this</span>.remove(endpoint);
+            onRemove(connection);
+        }).bind(<span class="hljs-keyword">this</span>), <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            <span class="hljs-keyword">if</span> (onDone)
+                onDone();
+        });
+    }
+    save(endpoint, connection) {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.has(endpoint))
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+        <span class="hljs-keyword">const</span> connectionId = endpoint.toString();
+        <span class="hljs-keyword">this</span>.connections[connectionId] = connection;
+        <span class="hljs-keyword">this</span>.numConnections++;
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createConnectionRegistry</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> ConnectionRegistry();
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-120">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-120">&#182;</a>
+              </div>
+              <p><strong>codec/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** codec/index.js*/</span>
+<span class="hljs-keyword">export</span> { createFlatbuffersCodec } <span class="hljs-keyword">from</span> <span class="hljs-string">'./flatbuffers'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-121">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-121">&#182;</a>
+              </div>
+              <p><strong>codec/flatbuffers.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** codec/flatbuffers.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-122">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-122">&#182;</a>
+              </div>
+              <p>Encodes messages to data, decodes data to messages,
+using <a href="https://google.github.io/flatbuffers/">FlatBuffers</a>.  </p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> { flatbuffers } <span class="hljs-keyword">from</span> <span class="hljs-string">'flatbuffers'</span>;
+<span class="hljs-keyword">import</span> { compilerError } <span class="hljs-keyword">from</span> <span class="hljs-string">'../util/compiler-error'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-123">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-123">&#182;</a>
+              </div>
+              <p><code>flatbuffers_generated.ts</code> is generated from
+<code>flatbuffers.fbs</code> during the build process.
+Neither file is included in the annotated source.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Schema <span class="hljs-keyword">from</span> <span class="hljs-string">'./flatbuffers_generated'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-124">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-124">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createFlatbuffersCodec</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> { decode, encode };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-125">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-125">&#182;</a>
+              </div>
+              <p>Decode data to a message.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decode</span>(<span class="hljs-params">data</span>) </span>{
+    <span class="hljs-keyword">const</span> buffer = <span class="hljs-keyword">new</span> flatbuffers.ByteBuffer(data), schema = Schema.Message.getRootAsMessage(buffer), procedureType = schema.procedureType();
+    <span class="hljs-keyword">switch</span> (procedureType) {
+        <span class="hljs-keyword">case</span> Schema.ProcedureType.AppendEntries:
+            <span class="hljs-keyword">return</span> decodeAppendEntries(schema);
+        <span class="hljs-keyword">case</span> Schema.ProcedureType.RequestVote:
+            <span class="hljs-keyword">return</span> decodeRequestVote(schema);
+        <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-126">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-126">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> compilerError(procedureType);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-127">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-127">&#182;</a>
+              </div>
+              <p>Decode data to an AppendEntries message.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeAppendEntries</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> callType = schema.callType();
+    <span class="hljs-keyword">switch</span> (callType) {
+        <span class="hljs-keyword">case</span> Schema.CallType.Request:
+            <span class="hljs-keyword">return</span> decodeAppendEntriesRequest(schema);
+        <span class="hljs-keyword">case</span> Schema.CallType.Response:
+            <span class="hljs-keyword">return</span> decodeAppendEntriesResponse(schema);
+        <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-128">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-128">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> compilerError(callType);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-129">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-129">&#182;</a>
+              </div>
+              <p>Decode data to an AppendEntries request.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeAppendEntriesRequest</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> args = schema.arguments(<span class="hljs-keyword">new</span> Schema.AppendEntriesArguments());
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+        <span class="hljs-attr">arguments</span>: {
+            <span class="hljs-attr">entries</span>: [],
+            <span class="hljs-attr">term</span>: args.term()
+        },
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-130">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-130">&#182;</a>
+              </div>
+              <p>Decode data to an AppendEntries response.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeAppendEntriesResponse</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> results = schema.results(<span class="hljs-keyword">new</span> Schema.AppendEntriesResults());
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+        <span class="hljs-attr">results</span>: {
+            <span class="hljs-attr">success</span>: results.success(),
+            <span class="hljs-attr">term</span>: results.term()
+        }
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-131">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-131">&#182;</a>
+              </div>
+              <p>Decode data to a RequestVote message.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeRequestVote</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> callType = schema.callType();
+    <span class="hljs-keyword">switch</span> (callType) {
+        <span class="hljs-keyword">case</span> Schema.CallType.Request:
+            <span class="hljs-keyword">return</span> decodeRequestVoteRequest(schema);
+        <span class="hljs-keyword">case</span> Schema.CallType.Response:
+            <span class="hljs-keyword">return</span> decodeRequestVoteResponse(schema);
+        <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-132">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-132">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> compilerError(callType);
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-133">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-133">&#182;</a>
+              </div>
+              <p>Decode data to a RequestVote request.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeRequestVoteRequest</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> args = schema.arguments(<span class="hljs-keyword">new</span> Schema.RequestVoteArguments());
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+        <span class="hljs-attr">arguments</span>: {
+            <span class="hljs-attr">candidateId</span>: args.candidateId(),
+            <span class="hljs-attr">lastLogIndex</span>: args.lastLogIndex(),
+            <span class="hljs-attr">lastLogTerm</span>: args.lastLogTerm(),
+            <span class="hljs-attr">term</span>: args.term()
+        }
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-134">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-134">&#182;</a>
+              </div>
+              <p>Decode data to a RequestVote response.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">decodeRequestVoteResponse</span>(<span class="hljs-params">schema</span>) </span>{
+    <span class="hljs-keyword">const</span> results = schema.results(<span class="hljs-keyword">new</span> Schema.RequestVoteResults());
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+        <span class="hljs-attr">results</span>: {
+            <span class="hljs-attr">term</span>: results.term(),
+            <span class="hljs-attr">voteGranted</span>: results.voteGranted()
+        }
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-135">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-135">&#182;</a>
+              </div>
+              <p>Encode a message to data.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encode</span>(<span class="hljs-params">message</span>) </span>{
+    <span class="hljs-keyword">const</span> builder = <span class="hljs-keyword">new</span> flatbuffers.Builder();
+    <span class="hljs-keyword">let</span> args = <span class="hljs-literal">null</span>, results = <span class="hljs-literal">null</span>, callType, procedureType;
+    <span class="hljs-keyword">switch</span> (message.procedureType) {
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'append-entries'</span>:
+            procedureType = Schema.ProcedureType.AppendEntries;
+            <span class="hljs-keyword">switch</span> (message.callType) {
+                <span class="hljs-keyword">case</span> <span class="hljs-string">'request'</span>:
+                    args = encodeAppendEntriesArguments(builder, message.arguments);
+                    callType = Schema.CallType.Request;
+                    <span class="hljs-keyword">break</span>;
+                <span class="hljs-keyword">case</span> <span class="hljs-string">'response'</span>:
+                    callType = Schema.CallType.Response;
+                    results = encodeAppendEntriesResults(builder, message.results);
+                    <span class="hljs-keyword">break</span>;
+                <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-136">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-136">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    compilerError(message);
+            }
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'request-vote'</span>:
+            procedureType = Schema.ProcedureType.RequestVote;
+            <span class="hljs-keyword">switch</span> (message.callType) {
+                <span class="hljs-keyword">case</span> <span class="hljs-string">'request'</span>:
+                    args = encodeRequestVoteArguments(builder, message.arguments);
+                    callType = Schema.CallType.Request;
+                    <span class="hljs-keyword">break</span>;
+                <span class="hljs-keyword">case</span> <span class="hljs-string">'response'</span>:
+                    callType = Schema.CallType.Response;
+                    results = encodeRequestVoteResults(builder, message.results);
+                    <span class="hljs-keyword">break</span>;
+                <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-137">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-137">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    compilerError(message);
+            }
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">default</span>:</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-138">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-138">&#182;</a>
+              </div>
+              <p>Used by TypeScript for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            compilerError(message);
+    }
+    Schema.Message.startMessage(builder);
+    Schema.Message.addArguments(builder, args);
+    Schema.Message.addCallType(builder, callType);
+    Schema.Message.addProcedureType(builder, procedureType);
+    Schema.Message.addResults(builder, results);
+    <span class="hljs-keyword">const</span> offset = Schema.Message.endMessage(builder);
+    builder.finish(offset);
+    <span class="hljs-keyword">return</span> builder.asUint8Array();
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-139">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-139">&#182;</a>
+              </div>
+              <p>Encode AppendEntries arguments to a flatbuffers offset.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encodeAppendEntriesArguments</span>(<span class="hljs-params">builder, args</span>) </span>{
+    Schema.AppendEntriesArguments.startAppendEntriesArguments(builder);
+    Schema.AppendEntriesArguments.addTerm(builder, args.term);
+    <span class="hljs-keyword">return</span> Schema.AppendEntriesArguments.endAppendEntriesArguments(builder);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-140">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-140">&#182;</a>
+              </div>
+              <p>Encode AppendEntries results to a flatbuffers offset.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encodeAppendEntriesResults</span>(<span class="hljs-params">builder, results</span>) </span>{
+    Schema.AppendEntriesResults.startAppendEntriesResults(builder);
+    Schema.AppendEntriesResults.addSuccess(builder, results.success);
+    Schema.AppendEntriesResults.addTerm(builder, results.term);
+    <span class="hljs-keyword">return</span> Schema.AppendEntriesResults.endAppendEntriesResults(builder);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-141">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-141">&#182;</a>
+              </div>
+              <p>Encode RequestVote arguments to a flatbuffers offset.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encodeRequestVoteArguments</span>(<span class="hljs-params">builder, args</span>) </span>{
+    Schema.RequestVoteArguments.startRequestVoteArguments(builder);
+    Schema.RequestVoteArguments.addTerm(builder, args.term);
+    <span class="hljs-keyword">return</span> Schema.RequestVoteArguments.endRequestVoteArguments(builder);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-142">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-142">&#182;</a>
+              </div>
+              <p>Encode RequestVote results to a flatbuffers offset.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encodeRequestVoteResults</span>(<span class="hljs-params">builder, results</span>) </span>{
+    Schema.RequestVoteResults.startRequestVoteResults(builder);
+    Schema.RequestVoteResults.addTerm(builder, results.term);
+    Schema.RequestVoteResults.addVoteGranted(builder, results.voteGranted);
+    <span class="hljs-keyword">return</span> Schema.RequestVoteResults.endRequestVoteResults(builder);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-143">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-143">&#182;</a>
+              </div>
+              <p><strong>util/compiler-error.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** util/compiler-error.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-144">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-144">&#182;</a>
+              </div>
+              <p>Used by TypeScript, mainly for <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking">exhaustiveness
+checks</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compilerError</span>(<span class="hljs-params">x</span>) </span>{
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Unreachable code was reached'</span>);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-145">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-145">&#182;</a>
+              </div>
+              <p><strong>message/index.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** message/index.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> AppendEntries_ <span class="hljs-keyword">from</span> <span class="hljs-string">'./append-entries'</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> RequestVote_ <span class="hljs-keyword">from</span> <span class="hljs-string">'./request-vote'</span>;
+<span class="hljs-keyword">export</span> { AppendEntries_ <span class="hljs-keyword">as</span> AppendEntries };
+<span class="hljs-keyword">export</span> { RequestVote_ <span class="hljs-keyword">as</span> RequestVote };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-146">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-146">&#182;</a>
+              </div>
+              <p>Verify that the value is an RPC message. This utility
+is mainly used by TypeScript as a <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards">user-defined type guard</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isMessage</span>(<span class="hljs-params">message</span>) </span>{
+    <span class="hljs-keyword">return</span> !!message
+        &amp;&amp; message.callType
+        &amp;&amp; <span class="hljs-keyword">typeof</span> message.callType == <span class="hljs-string">'string'</span>
+        &amp;&amp; message.procedureType
+        &amp;&amp; <span class="hljs-keyword">typeof</span> message.procedureType == <span class="hljs-string">'string'</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-147">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-147">&#182;</a>
+              </div>
+              <p>Verify that the value is an RPC request. This utility
+is mainly used by TypeScript as a <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards">user-defined type guard</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isRequest</span>(<span class="hljs-params">message</span>) </span>{
+    <span class="hljs-keyword">return</span> isMessage(message) &amp;&amp; message.callType === <span class="hljs-string">'request'</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-148">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-148">&#182;</a>
+              </div>
+              <p>Verify that the value is an RPC response. This utility
+is mainly used by TypeScript as a <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards">user-defined type guard</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isResponse</span>(<span class="hljs-params">message</span>) </span>{
+    <span class="hljs-keyword">return</span> isMessage(message) &amp;&amp; message.callType === <span class="hljs-string">'response'</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-149">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-149">&#182;</a>
+              </div>
+              <p><strong>message/request-vote.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** message/request-vote.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-150">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-150">&#182;</a>
+              </div>
+              <p>Create a RequestVote RPC request with the provided arguments.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createRequest</span>(<span class="hljs-params">args</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+        <span class="hljs-attr">arguments</span>: args
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-151">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-151">&#182;</a>
+              </div>
+              <p>Create a RequestVote RPC response with the provided results.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createResponse</span>(<span class="hljs-params">results</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'request-vote'</span>,
+        results
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-152">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-152">&#182;</a>
+              </div>
+              <p><strong>message/append-entries.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** message/append-entries.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-153">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-153">&#182;</a>
+              </div>
+              <p>Create an AppendEntries RPC request with the provided arguments.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createRequest</span>(<span class="hljs-params">args</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'request'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+        <span class="hljs-attr">arguments</span>: args
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-154">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-154">&#182;</a>
+              </div>
+              <p>Create an AppendEntries RPC response with the provided results.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createResponse</span>(<span class="hljs-params">results</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">callType</span>: <span class="hljs-string">'response'</span>,
+        <span class="hljs-attr">procedureType</span>: <span class="hljs-string">'append-entries'</span>,
+        results
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-155">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-155">&#182;</a>
+              </div>
+              <p><strong>logger.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** logger.js*/</span>
+<span class="hljs-keyword">const</span> pino = <span class="hljs-built_in">require</span>(<span class="hljs-string">'pino'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-156">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-156">&#182;</a>
+              </div>
+              <p>Create a logger.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createLogger</span>(<span class="hljs-params">options = {}</span>) </span>{
+    <span class="hljs-keyword">return</span> pino({
+        <span class="hljs-attr">level</span>: options.level ? options.level : <span class="hljs-string">'error'</span>,
+        <span class="hljs-attr">prettyPrint</span>: <span class="hljs-string">'machineReadable'</span> <span class="hljs-keyword">in</span> options ? !options.machineReadable : <span class="hljs-literal">true</span>
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-157">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-157">&#182;</a>
+              </div>
+              <p><strong>log.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** log.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-158">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-158">&#182;</a>
+              </div>
+              <p>This is stub for for a persistent log of entries.
+Currently, <code>raftjs</code> does not implement handling of
+client requests or replication of log entries
+from leaders to followers. </p>
+<p>Until those features are implemented, no
+implementation of a persistent entry log is required.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Log</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options) {
+        <span class="hljs-keyword">this</span>.entries = [
+            { <span class="hljs-attr">term</span>: options ? options.term : <span class="hljs-number">0</span> }
+        ];
+        <span class="hljs-keyword">this</span>.lastIndex = <span class="hljs-number">0</span>;
+    }
+    getEntry(index) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.entries[index];
+    }
+    getLastIndex() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.lastIndex;
+    }
+    write() {
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createLog</span>(<span class="hljs-params">options</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Log(options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-159">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-159">&#182;</a>
+              </div>
+              <p><strong>storage.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** storage.js*/</span>
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> fs <span class="hljs-keyword">from</span> <span class="hljs-string">'fs'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-160">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-160">&#182;</a>
+              </div>
+              <p>Wraps a value that can be read and written to a path
+on disk. Can be configured with a <code>serializer</code> and a
+<code>deserializer</code> for transforming values read from or
+written to disk.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BaseDurableValue</span> </span>{
+    <span class="hljs-keyword">constructor</span>(options) {
+        <span class="hljs-keyword">this</span>.deserializer = options.deserializer;
+        <span class="hljs-keyword">this</span>._value = <span class="hljs-literal">null</span>;
+        <span class="hljs-keyword">this</span>.path = options.path;
+        <span class="hljs-keyword">this</span>.serializer = options.serializer;
+        <span class="hljs-keyword">this</span>.inSync = <span class="hljs-literal">false</span>;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-161">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-161">&#182;</a>
+              </div>
+              <p>Returns a <code>Promise</code> containing the deserialized
+contents of the path on disk, if present and non
+empty; otherwise, returns the <code>defaultValue</code>.</p>
+<p>If the path on disk cannot be read due, for example
+to insufficient permissions, a rejected <code>Promise</code>
+is returned.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    read(defaultValue = <span class="hljs-literal">null</span>) {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.inSync)
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(<span class="hljs-keyword">this</span>._value);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            fs.readFile(<span class="hljs-keyword">this</span>.path, (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, data</span>) </span>{
+                <span class="hljs-keyword">if</span> (err == <span class="hljs-literal">null</span> || err.code == <span class="hljs-string">'ENOENT'</span>) {
+                    <span class="hljs-keyword">let</span> value = <span class="hljs-literal">null</span>;
+                    <span class="hljs-keyword">if</span> (err != <span class="hljs-literal">null</span>) {
+                        value = defaultValue;
+                    }
+                    <span class="hljs-keyword">else</span> {
+                        value = <span class="hljs-keyword">this</span>.deserializer(data);
+                    }
+                    <span class="hljs-keyword">this</span>.inSync = <span class="hljs-literal">true</span>;
+                    <span class="hljs-keyword">this</span>.value = value;
+                    resolve(<span class="hljs-keyword">this</span>.value);
+                }
+                <span class="hljs-keyword">else</span> {
+                    reject(<span class="hljs-string">'Failed to read durable value: '</span> + err);
+                }
+            }).bind(<span class="hljs-keyword">this</span>));
+        }).bind(<span class="hljs-keyword">this</span>));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-162">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-162">&#182;</a>
+              </div>
+              <p>Returns a <code>Promise</code> that is fulfilled unless the value
+cannot be written to the disk path.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    write() {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.inSync) {
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>((<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+            fs.writeFile(<span class="hljs-keyword">this</span>.path, <span class="hljs-keyword">this</span>.serializer(<span class="hljs-keyword">this</span>.value), { <span class="hljs-attr">flag</span>: <span class="hljs-string">'w'</span> }, (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err</span>) </span>{
+                <span class="hljs-keyword">if</span> (err) {
+                    reject(<span class="hljs-string">'Failed to write durable value: '</span> + err);
+                }
+                <span class="hljs-keyword">else</span> {
+                    resolve(<span class="hljs-keyword">this</span>.value);
+                }
+                <span class="hljs-keyword">this</span>.inSync = <span class="hljs-literal">true</span>;
+            }).bind(<span class="hljs-keyword">this</span>));
+        }).bind(<span class="hljs-keyword">this</span>));
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-163">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-163">&#182;</a>
+              </div>
+              <p>Returns the currently known value.
+The value is null until it is <code>read</code> from the
+disk path, and is null when <code>read</code> is called but
+the disk path does not exist or is empty.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">get</span> value() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._value;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-164">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-164">&#182;</a>
+              </div>
+              <p>Updates the value. Changes to the value are not
+persisted to disk until <code>write</code> is called.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">set</span> value(newValue) {
+        <span class="hljs-keyword">this</span>.inSync = <span class="hljs-literal">false</span>;
+        <span class="hljs-keyword">this</span>._value = newValue;
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-165">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-165">&#182;</a>
+              </div>
+              <p>A durable value that serializes and deserializes
+integers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DurableInteger</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseDurableValue</span> </span>{
+    <span class="hljs-keyword">constructor</span>(path) {
+        <span class="hljs-keyword">super</span>({
+            deserializer(data) {
+                <span class="hljs-keyword">return</span> <span class="hljs-built_in">parseInt</span>(data.toString(<span class="hljs-string">'utf-8'</span>));
+            },
+            path,
+            serializer(value) {
+                <span class="hljs-keyword">if</span> (value == <span class="hljs-literal">null</span>) {
+                    <span class="hljs-keyword">return</span> Buffer.alloc(<span class="hljs-number">0</span>);
+                }
+                <span class="hljs-keyword">else</span> {
+                    <span class="hljs-keyword">return</span> Buffer.from(value + <span class="hljs-string">''</span>);
+                }
+            }
+        });
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-166">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-166">&#182;</a>
+              </div>
+              <p>A durable value that serializes and deserializes
+strings.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DurableString</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">BaseDurableValue</span> </span>{
+    <span class="hljs-keyword">constructor</span>(path) {
+        <span class="hljs-keyword">super</span>({
+            deserializer(data) {
+                <span class="hljs-keyword">return</span> data.toString(<span class="hljs-string">'utf-8'</span>);
+            },
+            path,
+            serializer(value) {
+                <span class="hljs-keyword">if</span> (value == <span class="hljs-literal">null</span>) {
+                    <span class="hljs-keyword">return</span> Buffer.alloc(<span class="hljs-number">0</span>);
+                }
+                <span class="hljs-keyword">else</span> {
+                    <span class="hljs-keyword">return</span> Buffer.from(value);
+                }
+            }
+        });
+    }
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDurableInteger</span>(<span class="hljs-params">path</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> DurableInteger(path);
+}
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDurableString</span>(<span class="hljs-params">path</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> DurableString(path);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-167">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-167">&#182;</a>
+              </div>
+              <p><strong>net.js</strong>  </p>
+<hr>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/** net.js*/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-168">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-168">&#182;</a>
+              </div>
+              <p>A simple wrapper around a <code>{ host, port }</code> object,
+with helpful methods for equality comparisons and
+exporting to a string.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Endpoint</span> </span>{
+    <span class="hljs-keyword">constructor</span>({ host, port }) {
+        <span class="hljs-keyword">this</span>.host = host;
+        <span class="hljs-keyword">this</span>.port = port;
+    }
+    equals(endpoint) {
+        <span class="hljs-keyword">return</span> endpoint.port === <span class="hljs-keyword">this</span>.port &amp;&amp; endpoint.host === <span class="hljs-keyword">this</span>.host;
+    }
+    toString() {
+        <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-keyword">this</span>.host}</span>:<span class="hljs-subst">${<span class="hljs-keyword">this</span>.port}</span>`</span>;
+    }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-169">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-169">&#182;</a>
+              </div>
+              <p>Create an <code>Endpoint</code> from a <code>{ host, port }</code> object.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createEndpoint</span>(<span class="hljs-params">options</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Endpoint(options);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-170">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-170">&#182;</a>
+              </div>
+              <p>Verify that the provided object is an <code>Endpoint</code>. Used by
+TypeScript as a <a href="https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards">user-defined type guard</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEndpoint</span>(<span class="hljs-params">endpoint</span>) </span>{
+    <span class="hljs-keyword">return</span> !!endpoint
+        &amp;&amp; <span class="hljs-keyword">typeof</span> endpoint.host === <span class="hljs-string">'string'</span>
+        &amp;&amp; <span class="hljs-keyword">typeof</span> endpoint.port === <span class="hljs-string">'number'</span>
+        &amp;&amp; <span class="hljs-keyword">typeof</span> endpoint.equals === <span class="hljs-string">'function'</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-171">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-171">&#182;</a>
+              </div>
+              <p>Parse the provided string and return an <code>Endpoint</code>,
+if valid.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">parseEndpoint</span>(<span class="hljs-params">value</span>) </span>{
+    <span class="hljs-keyword">const</span> parts = value.split(<span class="hljs-string">':'</span>);
+    <span class="hljs-keyword">if</span> (parts.length != <span class="hljs-number">2</span>)
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Invalid format; requires &lt;host&gt;:&lt;port&gt;'</span>);
+    <span class="hljs-keyword">const</span> host = parts[<span class="hljs-number">0</span>], port = <span class="hljs-built_in">parseInt</span>(parts[<span class="hljs-number">1</span>]);
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">isNaN</span>(port) || !<span class="hljs-built_in">Number</span>.isInteger(port))
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Invalid port; must be an integer'</span>);
+    <span class="hljs-keyword">return</span> createEndpoint({ host, port });
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
