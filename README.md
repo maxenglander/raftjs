@@ -26,6 +26,10 @@ $> npm install
 $> npm run build
 ```
 
+## Docs
+
+View the [annotated source](https://raftjs.maxenglander.com/annotated-source.html).
+
 ## Example usage
 
 **Start Raftjs servers**
