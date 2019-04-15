@@ -5,7 +5,7 @@ protocol in JavaScript (by way of TypeScript). The purpose of this
 implementation is to educate the author, and any interested readers,
 in what an implementation might look like.
 
-The imlementation aims to be understandable, well-organized and extensible.
+The implementation aims to be understandable, well-organized and extensible.
 It attempts to follow the Raft protocol to the letter. However, there
 are likely places where the language is misinterpreted or followed too
 literally. There are likely to be many bugs and mistakes in this
