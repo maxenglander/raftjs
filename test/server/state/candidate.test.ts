@@ -97,7 +97,7 @@ describe('server candidate state', function() {
             });
 
             initialTerm = server.getCurrentTerm();
-            initialVote = server.vote;
+            initialVote = server.getVote();
 
             server.transitionTo(candidate);
         });
@@ -126,8 +126,8 @@ describe('server candidate state', function() {
         it('votes for itself', function(done) {
             // Wait for vote to be stored to disk
             setTimeout(function() {
-                expect(server.vote).not.to.equal(initialVote);
-                expect(server.vote).to.equal(server.id);
+                expect(server.getVote()).not.to.equal(initialVote);
+                expect(server.getVote()).to.equal(server.id);
                 done();
             }, /*buffer*/10);
         });

@@ -56,13 +56,13 @@ class FollowerState extends BaseState {
         endpoint: IEndpoint,
         message: RequestVote.IRequest
     ): void {
-        const currentTerm = this.server.getCurrentTerm();
-        const { vote: currentVote,
-            electionTimer } = this.server,
+        const currentTerm = this.server.getCurrentTerm(),
+            vote = this.server.getVote(),
+            { electionTimer } = this.server,
             // A receiver of RequestVote RPC will:
             // > *§5. "...reply false if term < currentTerm..."*
             voteGranted = message.arguments.term >= currentTerm
-                       && (currentVote == null || currentVote == message.arguments.candidateId);
+                       && (vote == null || vote == message.arguments.candidateId);
 
         if(voteGranted) {
             this.server.logger.trace(`Granting vote request from server ${endpoint.toString()}`);

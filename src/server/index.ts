@@ -51,6 +51,7 @@ export interface IServer {
     getCluster(): ICluster;
     getCurrentTerm(): number;
     getState(): IState;
+    getVote(): ServerId;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
@@ -58,10 +59,10 @@ export interface IServer {
     sendRpc(endpoint: IEndpoint, message: IMessage): Promise<void[]>;
     sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
     setCurrentTerm(newTerm: number): void;
+    setVote(candidateId: ServerId): void;
     start(): Promise<void>;
     stop(): Promise<void>;
     transitionTo(state: StateType | IState): void;
-    vote: ServerId;
 }
 
 export type ServerId = string;
@@ -100,7 +101,7 @@ class Server implements IServer {
     public readonly logger: ILogger;
     public readonly rpcService: IRpcService;
     private state: IState;
-    private _vote: IDurableValue<string>;
+    private vote: IDurableValue<string>;
 
     constructor(options: IServerOptions) {
         this.cluster = options.cluster;
@@ -117,7 +118,7 @@ class Server implements IServer {
         // ensure that `Server` can always call `enter`
         // and `exit` on `this.state`.
         this.state = createState('noop', null);
-        this._vote = options.vote;
+        this.vote = options.vote;
     }
 
     public getCluster(): ICluster {
@@ -135,6 +136,12 @@ class Server implements IServer {
 
     public getState(): IState {
         return this.state;
+    }
+
+    // The `Server` vote is the...
+    // *§5. "...candidateId that received vote in current term..."*
+    public getVote(): ServerId {
+        return this.vote.value;
     }
 
     // The `onReceive` method can be used to register a
@@ -197,7 +204,16 @@ class Server implements IServer {
         // When a `Server` enters a new election,
         // it has not yet voted for a candidate,
         // so its vote is set here to `null`.
-        this.vote = null;
+        this.setVote(null);
+    }
+
+    // When the vote is updated, it is not immediately
+    // persisted because, as the Raft paper says, the
+    // vote is part of persistent state that is...
+    // > *§5. "...(Updated on stable storage before responding)..."*  
+    // ...to RPC requests.
+    public setVote(candidateId: ServerId): void {
+        this.vote.value = candidateId;
     }
 
     // After the `Server` loads and initializes its term and vote,
@@ -218,7 +234,7 @@ class Server implements IServer {
                             this.term = 0;
                         }
                     }).bind(this)),
-                this._vote.read()
+                this.vote.read()
             ])
             .then(() => {
                 this.logger.debug('Starting RPC service');
@@ -260,22 +276,7 @@ class Server implements IServer {
     private updatePersistentState(): Promise<void> {
         return this.log.write()
             .then(() => this.currentTerm.write())
-            .then(() => this._vote.write());
-    }
-
-    // The `Server` vote is the...
-    // *§5. "...candidateId that received vote in current term..."*
-    public get vote(): ServerId {
-        return this._vote.value;
-    }
-
-    // When the vote is updated, it is not immediately
-    // persisted because, as the Raft paper says, the
-    // vote is part of persistent state that is...
-    // > *§5. "...(Updated on stable storage before responding)..."*  
-    // ...to RPC requests.
-    public set vote(candidateId: ServerId) {
-        this._vote.value = candidateId;
+            .then(() => this.vote.write());
     }
 }
 

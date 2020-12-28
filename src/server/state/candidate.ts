@@ -142,7 +142,7 @@ class CandidateState extends BaseState {
 
     //
     private voteForSelf(): void {
-        this.server.vote = this.server.id;
+        this.server.setVote(this.server.id);
         this.tallyVote(this.server.endpoint);
     }
 }
