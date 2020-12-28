@@ -55,7 +55,7 @@ class CandidateState extends BaseState {
     // A candidate obtains a majority when it receives
     // `(# servers / 2) + 1` votes.
     private isMajorityObtained(): boolean {
-        const numServers = Object.keys(this.server.cluster.servers).length;
+        const numServers = Object.keys(this.server.getCluster().servers).length;
         const majority = Math.floor(numServers / 2) + 1;
         return this.serverVotes.size >= majority;
     }

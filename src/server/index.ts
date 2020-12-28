@@ -42,13 +42,13 @@ interface IDataDir {
 }
 
 export interface IServer {
-    readonly cluster: ICluster;
     readonly electionTimer: ITimer;
     readonly endpoint: IEndpoint;
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
     readonly rpcService: IRpcService;
+    getCluster(): ICluster;
     getCurrentTerm(): number;
     getState(): IState;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
@@ -90,7 +90,7 @@ interface IVote {
 type IVoteOrDataDir = IVote | IDataDir;
 
 class Server implements IServer {
-    private readonly _cluster: ICluster;
+    private readonly cluster: ICluster;
     private currentTerm: IDurableValue<number>;
     public readonly electionTimer: ITimer;
     public readonly endpoint: IEndpoint;
@@ -103,7 +103,7 @@ class Server implements IServer {
     private _vote: IDurableValue<string>;
 
     constructor(options: IServerOptions) {
-        this._cluster = options.cluster;
+        this.cluster = options.cluster;
         this.electionTimer = options.electionTimer;
         this.endpoint = options.cluster.servers[options.id];
         this.id = options.id;
@@ -120,8 +120,8 @@ class Server implements IServer {
         this._vote = options.vote;
     }
 
-    public get cluster(): ICluster {
-        return this._cluster;
+    public getCluster(): ICluster {
+        return this.cluster;
     }
  
     // The `term` is used by a `Server` in a cluster
