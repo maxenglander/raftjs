@@ -59,7 +59,7 @@ describe('server follower state', function() {
 
     context('after it is entered', function() {
         afterEach(function() {
-            server.state.exit();
+            server.getState().exit();
         });
 
         beforeEach(function() {
@@ -71,7 +71,7 @@ describe('server follower state', function() {
                 this.timeout(electionTimer.timeout + /*buffer*/100);
 
                 electionTimer.on('timeout', function() {
-                    expect(server.state.type).to.equal('candidate');
+                    expect(server.getState().type).to.equal('candidate');
                     done();
                 });
             });
@@ -95,7 +95,7 @@ describe('server follower state', function() {
                 beforeEach(function(done) {
                     const waitABit = Math.random() * MIN_TIMEOUT;
                     timeRemaining = electionTimer.timeout - waitABit;
-                    term = server.term + Math.round(Math.random() * 5)
+                    term = server.getCurrentTerm() + Math.round(Math.random() * 5)
 
                     this.timeout(waitABit + /*buffer*/10);
 
@@ -112,7 +112,7 @@ describe('server follower state', function() {
                     this.timeout(electionTimer.timeout + /*buffer*/10);
 
                     setTimeout(function() {
-                        expect(server.state.type).to.equal('follower');
+                        expect(server.getState().type).to.equal('follower');
                         done();
                     }, timeRemaining);
                 });
@@ -122,7 +122,7 @@ describe('server follower state', function() {
                 beforeEach(function(done) {
                     const waitABit = Math.random() * MIN_TIMEOUT;
                     timeRemaining = electionTimer.timeout - waitABit;
-                    term = server.term + Math.min(-1, Math.round(Math.random() * -5));
+                    term = server.getCurrentTerm() + Math.min(-1, Math.round(Math.random() * -5));
 
                     this.timeout(waitABit + /*buffer*/50);
 
@@ -138,7 +138,7 @@ describe('server follower state', function() {
                     this.timeout(electionTimer.timeout + /*buffer*/100);
 
                     electionTimer.on('timeout', function() {
-                        expect(server.state.type).to.equal('candidate');
+                        expect(server.getState().type).to.equal('candidate');
                         done();
                     });
                 });

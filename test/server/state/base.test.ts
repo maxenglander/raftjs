@@ -50,12 +50,12 @@ describe('server base state', function() {
 
         // Set the server term to 10 so that request terms can be
         // less than 10 but greater than zero.
-        return server.start().then(() => server.term = 10);
+        return server.start().then(() => server.setCurrentTerm(10));
     });
 
     context('after it is entered', function() {
         afterEach(function() {
-            server.state.exit();
+            server.getState().exit();
         });
 
         beforeEach(function() {
@@ -105,7 +105,7 @@ describe('server base state', function() {
             context('and the request is valid', function() {
                 beforeEach(function(done) {
                     const waitABit = Math.random() * MIN_TIMEOUT;
-                    term = server.term + Math.round(Math.random() * 5)
+                    term = server.getCurrentTerm() + Math.round(Math.random() * 5)
 
                     this.timeout(waitABit + /*buffer*/10);
 
@@ -129,7 +129,7 @@ describe('server base state', function() {
             context('but the request term is less than the server term', function() {
                 beforeEach(function(done) {
                     const waitABit = Math.random() * MIN_TIMEOUT;
-                    term = server.term + Math.min(-1, Math.round(Math.random() * -5));
+                    term = server.getCurrentTerm() + Math.min(-1, Math.round(Math.random() * -5));
 
                     this.timeout(waitABit + /*buffer*/10);
 

@@ -69,7 +69,7 @@ describe('server leader state', function() {
     context('after #enter is called', function() {
         afterEach(function() {
             leader.exit();
-            server.state.exit();
+            server.getState().exit();
         });
 
         beforeEach(function() {
@@ -96,7 +96,7 @@ describe('server leader state', function() {
                 notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {
                     rpcService.send([endpoint], AppendEntries.createResponse({
                         success: true,
-                        term: server.term
+                        term: server.getCurrentTerm()
                     }));
                     wrappedDone();
                 }

@@ -64,7 +64,7 @@ describe('server candidate state', function() {
         return Promise.all([
             // Set server term to greater than 10 so request
             // terms can be less than 10 but greater than zero.
-            server.start().then(() => server.term = 10),
+            server.start().then(() => server.setCurrentTerm(10)),
             rpcService.listen(peerEndpoint)
         ]);
     });
@@ -82,7 +82,7 @@ describe('server candidate state', function() {
             requestVoteRequestCallback;
 
         afterEach(function() {
-            server.state.exit();
+            server.getState().exit();
         });
 
         beforeEach(function() {
@@ -96,7 +96,7 @@ describe('server candidate state', function() {
                 }
             });
 
-            initialTerm = server.term;
+            initialTerm = server.getCurrentTerm();
             initialVote = server.vote;
 
             server.transitionTo(candidate);
@@ -105,7 +105,7 @@ describe('server candidate state', function() {
         it('increments the term', function() {
             /* Wait for new term to persist to disk*/
             setTimeout(function() {
-                expect(server.term).to.equal(initialTerm + 1);
+                expect(server.getCurrentTerm()).to.equal(initialTerm + 1);
             }, 50);
         });
 
@@ -144,7 +144,7 @@ describe('server candidate state', function() {
                     rpcService.send([server.endpoint],
                         AppendEntries.createRequest({
                             entries: [],
-                            term: server.term
+                            term: server.getCurrentTerm()
                         })
                     ).then(() => done());
                 }, randomWait);
@@ -152,7 +152,7 @@ describe('server candidate state', function() {
 
             it('transitions to a follower', function(done) {
                 setTimeout(function() {
-                    expect(server.state.type).to.equal('follower');
+                    expect(server.getState().type).to.equal('follower');
                     done()
                 }, /*allow time for candidate to process request*/10);
             });
@@ -188,7 +188,7 @@ describe('server candidate state', function() {
 
                 it('transitions to a leader', function(done) {
                     setTimeout(function() {
-                        expect(server.state.type).to.equal('leader');
+                        expect(server.getState().type).to.equal('leader');
                         done();
                     }, /*allow candidate processing time*/20);
                 });
@@ -217,7 +217,7 @@ describe('server candidate state', function() {
 
                 it('restarts the election timer and does not transition state', function(done) {
                     electionTimer.on('reset', function() {
-                        expect(server.state.type).to.equal('candidate');
+                        expect(server.getState().type).to.equal('candidate');
                         done();
                     });
                 });

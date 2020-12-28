@@ -49,9 +49,8 @@ export interface IServer {
     readonly log: ILog;
     readonly logger: ILogger;
     readonly rpcService: IRpcService;
-    readonly state: IState;
-
     getCurrentTerm(): number;
+    getState(): IState;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
@@ -100,7 +99,7 @@ class Server implements IServer {
     public readonly log: ILog;
     public readonly logger: ILogger;
     public readonly rpcService: IRpcService;
-    private _state: IState;
+    private state: IState;
     private _vote: IDurableValue<string>;
 
     constructor(options: IServerOptions) {
@@ -110,14 +109,14 @@ class Server implements IServer {
         this.id = options.id;
         this.log = options.log;
         this.logger = options.logger;
+        this.currentTerm = options.term;
+        this.rpcService = options.rpcService;
         // `noop` is not a state specified by the Raft protocol.
         // It is used here as a ["null
         // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
         // ensure that `Server` can always call `enter`
-        // and `exit` on `this._state`.
-        this._state = createState('noop', null);
-        this.rpcService = options.rpcService;
-        this.currentTerm = options.term;
+        // and `exit` on `this.state`.
+        this.state = createState('noop', null);
         this._vote = options.vote;
     }
 
@@ -134,6 +133,10 @@ class Server implements IServer {
         return this.currentTerm.value;
     }
 
+    public getState(): IState {
+        return this.state;
+    }
+
     // The `onReceive` method can be used to register a
     // receiver of RPC requests from other Raft `Server`
     // instances.
@@ -141,10 +144,6 @@ class Server implements IServer {
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener {
         return this.rpcService.onReceive(receiver);
-    }
-
-    public get state(): IState {
-        return this._state;
     }
 
     public sendRpc(message: IMessage): Promise<void[]>;
@@ -249,10 +248,10 @@ class Server implements IServer {
     // those components access to `Server` data and methods.
     public transitionTo(state: StateType | IState): void {
         const newState = typeof state == 'string' ? createState(state, this) : state;
-        if(this._state.type == newState.type) return;
-        this._state.exit();
-        this._state = newState;
-        this._state.enter();
+        if(this.state.type == newState.type) return;
+        this.state.exit();
+        this.state = newState;
+        this.state.enter();
     }
 
     // Persistent state is data read from and written
