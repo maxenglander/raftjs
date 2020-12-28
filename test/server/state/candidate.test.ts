@@ -86,7 +86,7 @@ describe('server candidate state', function() {
         });
 
         beforeEach(function() {
-            rpcService.receive({
+            rpcService.onReceive({
                 callType: 'request',
                 procedureType: 'request-vote',
                 notify(endpoint: IEndpoint, request: RequestVote.IRequest) {
@@ -175,7 +175,7 @@ describe('server candidate state', function() {
                         done();
                     }
 
-                    requestVoteListener = rpcService.receive({
+                    requestVoteListener = rpcService.onReceive({
                         callType: 'request',
                         procedureType: 'request-vote',
                         notify(endpoint: IEndpoint, request: RequestVote.IRequest) {
@@ -204,7 +204,7 @@ describe('server candidate state', function() {
                         done();
                     }
 
-                    requestVoteListener = rpcService.receive({
+                    requestVoteListener = rpcService.onReceive({
                         callType: 'request',
                         procedureType: 'request-vote',
                         notify(endpoint: IEndpoint, request: RequestVote.IRequest) {

@@ -90,7 +90,7 @@ describe('server leader state', function() {
                 }
             }
 
-            heartbeatListener = rpcService.receive({
+            heartbeatListener = rpcService.onReceive({
                 callType: 'request',
                 procedureType: 'append-entries',
                 notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {

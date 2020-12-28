@@ -18,7 +18,6 @@ class LeaderState extends BaseState {
         this.sendHeartbeats = this.sendHeartbeats.bind(this);
     }
 
-
     // Upon election:
     public enter() {
         super.enter();
@@ -34,7 +33,7 @@ class LeaderState extends BaseState {
     }
 
     private sendHeartbeats() {
-        this.server.send(createAppendEntriesRequest({
+        this.server.sendRpc(createAppendEntriesRequest({
             entries: [],
             term: this.server.term
         }));

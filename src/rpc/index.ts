@@ -36,7 +36,7 @@ export interface IRpcReceiver<P extends IMessage['procedureType'], C extends IMe
 export interface IRpcService {
     close(): Promise<void>;
     listen(endpoint: IEndpoint): Promise<void>;
-    receive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    onReceive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
     ): IRpcEventListener;
     send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
@@ -86,8 +86,8 @@ class RpcService implements IRpcService {
     }
 
     // Register to receiver messages of a particular procedure and call type,
-    // e.g. `receive('append-entries', 'request', {...})`.
-    public receive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    // e.g. `onReceive('append-entries', 'request', {...})`.
+    public onReceive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
     ): IRpcEventListener {
         this.receivers.add(receiver);

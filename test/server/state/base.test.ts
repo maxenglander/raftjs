@@ -89,7 +89,7 @@ describe('server base state', function() {
 
             beforeEach(function() {
                 appendEntriesListener
-                    = rpcService.receive({
+                    = rpcService.onReceive({
                         callType: 'response',
                         procedureType: 'append-entries',
                         notify(endpoint: IEndpoint, response: AppendEntries.IResponse) {

@@ -22,7 +22,7 @@ export class BaseState implements IState {
     constructor(server: IServer, stateType: StateType) {
         this.rpcEventListeners = new Set<IRpcEventListener>();
         this.server = server;
-        this.onAppendEntriesRequest0 = this.onAppendEntriesRequest0.bind(this);
+        this.onAppendEntriesRequestBase = this.onAppendEntriesRequestBase.bind(this);
         this.onRequestOrResponse = this.onRequestOrResponse.bind(this);
         this.transitionTo = this.transitionTo.bind(this);
         this.type = stateType;
@@ -33,36 +33,31 @@ export class BaseState implements IState {
     }
 
     public enter() {
-        this.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'append-entries',
-                callType: 'request',
-                notify: this.onAppendEntriesRequest0
-            }));
-        this.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'append-entries',
-                callType: 'request',
-                notify: this.onRequestOrResponse
-            }));
-        this.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'append-entries',
-                callType: 'response',
-                notify: this.onRequestOrResponse
-            }));
-        this.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'request-vote',
-                callType: 'request',
-                notify: this.onRequestOrResponse
-            }));
-        this.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'request-vote',
-                callType: 'response',
-                notify: this.onRequestOrResponse
-            }));
+        this.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'append-entries',
+            callType: 'request',
+            notify: this.onAppendEntriesRequestBase
+        }));
+        this.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'append-entries',
+            callType: 'request',
+            notify: this.onRequestOrResponse
+        }));
+        this.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'append-entries',
+            callType: 'response',
+            notify: this.onRequestOrResponse
+        }));
+        this.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'request-vote',
+            callType: 'request',
+            notify: this.onRequestOrResponse
+        }));
+        this.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'request-vote',
+            callType: 'response',
+            notify: this.onRequestOrResponse
+        }));
     }
 
     public exit() {
@@ -76,11 +71,11 @@ export class BaseState implements IState {
     // AppendEntries RPC request. At the present time,
     // it only handles responding to heartbeats.
     // > *§5. "...Receiver implementation:..."*  
-    private onAppendEntriesRequest0(
+    private onAppendEntriesRequestBase(
         endpoint: IEndpoint,
         message: AppendEntries.IRequest
     ): void {
-        this.server.send(endpoint, AppendEntries.createResponse({
+        this.server.sendRpc(endpoint, AppendEntries.createResponse({
             // When another `Server` makes an `AppendEntries` RPC
             // request with a `term` less than the `term` on this
             // `Server`, the RPC request is rejected.

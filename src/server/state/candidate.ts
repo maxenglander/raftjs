@@ -26,20 +26,17 @@ class CandidateState extends BaseState {
     // > *§5. "...On conversion to candidate, start election..."*  
     public enter() {
         super.enter();
-        super.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'append-entries',
-                callType: 'request',
-                notify: this.onAppendEntriesRequest1.bind(this)
-            }));
-        super.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'request-vote',
-                callType: 'response',
-                notify: this.onRequestVoteResponse.bind(this)
-            }));
+        super.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'append-entries',
+            callType: 'request',
+            notify: this.onAppendEntriesRequest.bind(this)
+        }));
+        super.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'request-vote',
+            callType: 'response',
+            notify: this.onRequestVoteResponse.bind(this)
+        }));
         this.server.electionTimer.on('timeout', this.onTimeout);
-
         this.startElection();
     }
 
@@ -68,7 +65,7 @@ class CandidateState extends BaseState {
     // to its own, it converts to a follower.
     // > *§5. "...If AppendEntries RPC received..."*  
     // > *§5.2. "...While waiting for votes..."*  
-    private onAppendEntriesRequest1(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
         if(message.arguments.term >= this.server.term) {
             this.server.logger.trace(`Received append-entries request from ${endpoint.toString}; transitioning to follower`);
             this.transitionTo('follower');
@@ -98,7 +95,7 @@ class CandidateState extends BaseState {
 
         const lastLogIndex = this.server.log.getLastIndex();
 
-        this.server.send(RequestVote.createRequest({
+        this.server.sendRpc(RequestVote.createRequest({
             candidateId: this.server.id,
             lastLogIndex,
             lastLogTerm: this.server.log.getEntry(lastLogIndex).term,

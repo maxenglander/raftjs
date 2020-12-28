@@ -57,7 +57,7 @@ describe('rpc service', function() {
                         done();
                 }
 
-                rpcServiceA.receive({
+                rpcServiceA.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
                     notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {
@@ -66,7 +66,7 @@ describe('rpc service', function() {
                     }
                 });
 
-                rpcServiceB.receive({
+                rpcServiceB.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
                     notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {

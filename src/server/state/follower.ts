@@ -16,25 +16,23 @@ class FollowerState extends BaseState {
     constructor(server: IServer) {
         super(server, 'follower');
 
-        this.onAppendEntriesRequest1 = this.onAppendEntriesRequest1.bind(this);
-        this.onRequestVoteRequest1 = this.onRequestVoteRequest1.bind(this);
+        this.onAppendEntriesRequest = this.onAppendEntriesRequest.bind(this);
+        this.onRequestVoteRequest = this.onRequestVoteRequest.bind(this);
         this.onTimeout = this.onTimeout.bind(this);
     }
 
     public enter() {
         super.enter();
-        super.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'append-entries',
-                callType: 'request',
-                notify: this.onAppendEntriesRequest1
-            }));
-        super.addRpcEventListener(this.server.rpcService
-            .receive({
-                procedureType: 'request-vote',
-                callType: 'request',
-                notify: this.onRequestVoteRequest1
-            }));
+        super.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'append-entries',
+            callType: 'request',
+            notify: this.onAppendEntriesRequest
+        }));
+        super.addRpcEventListener(this.server.onReceiveRpc({
+            procedureType: 'request-vote',
+            callType: 'request',
+            notify: this.onRequestVoteRequest
+        }));
         this.server.electionTimer.on('timeout', this.onTimeout);
         this.server.logger.debug(`Starting election timer with timeout ${this.server.electionTimer.timeout}ms`);
         this.server.electionTimer.start();
@@ -49,12 +47,12 @@ class FollowerState extends BaseState {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*  
-    private onAppendEntriesRequest1(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
         this.server.electionTimer.reset();
     }
 
     //
-    private onRequestVoteRequest1(
+    private onRequestVoteRequest(
         endpoint: IEndpoint,
         message: RequestVote.IRequest
     ): void {
@@ -72,7 +70,7 @@ class FollowerState extends BaseState {
             this.server.logger.trace(`Denying vote request from server ${endpoint.toString()}`);
         }
 
-        this.server.send(endpoint, RequestVote.createResponse({
+        this.server.sendRpc(endpoint, RequestVote.createResponse({
             term: currentTerm,
             voteGranted
         })).then(function() {
