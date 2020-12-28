@@ -35,7 +35,7 @@ class LeaderState extends BaseState {
     private sendHeartbeats() {
         this.server.sendRpc(createAppendEntriesRequest({
             entries: [],
-            term: this.server.term
+            term: this.server.getCurrentTerm()
         }));
     }
 }

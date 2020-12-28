@@ -42,24 +42,26 @@ interface IDataDir {
 }
 
 export interface IServer {
+    readonly cluster: ICluster;
     readonly electionTimer: ITimer;
     readonly endpoint: IEndpoint;
-    readonly cluster: ICluster;
-    readonly state: IState;
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
     readonly rpcService: IRpcService;
+    readonly state: IState;
+
+    getCurrentTerm(): number;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
     sendRpc(message: IMessage): Promise<void[]>;
     sendRpc(endpoint: IEndpoint, message: IMessage): Promise<void[]>;
     sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
+    setCurrentTerm(newTerm: number): void;
     start(): Promise<void>;
     stop(): Promise<void>;
-    readonly transitionTo: StateTransition;
-    term: number;
+    transitionTo(state: StateType | IState): void;
     vote: ServerId;
 }
 
@@ -90,6 +92,7 @@ type IVoteOrDataDir = IVote | IDataDir;
 
 class Server implements IServer {
     private readonly _cluster: ICluster;
+    private currentTerm: IDurableValue<number>;
     public readonly electionTimer: ITimer;
     public readonly endpoint: IEndpoint;
     public readonly id: ServerId;
@@ -98,7 +101,6 @@ class Server implements IServer {
     public readonly logger: ILogger;
     public readonly rpcService: IRpcService;
     private _state: IState;
-    private _term: IDurableValue<number>;
     private _vote: IDurableValue<string>;
 
     constructor(options: IServerOptions) {
@@ -115,12 +117,21 @@ class Server implements IServer {
         // and `exit` on `this._state`.
         this._state = createState('noop', null);
         this.rpcService = options.rpcService;
-        this._term = options.term;
+        this.currentTerm = options.term;
         this._vote = options.vote;
     }
 
     public get cluster(): ICluster {
         return this._cluster;
+    }
+ 
+    // The `term` is used by a `Server` in a cluster
+    // to determine if it is ahead or behind of another
+    // `Server` in the same cluster.
+    // > *§5. "...latest term server has seen..."*
+    // > *§5.1. "...Raft divides time into _terms_..."*
+    public getCurrentTerm(): number {
+        return this.currentTerm.value;
     }
 
     // The `onReceive` method can be used to register a
@@ -174,6 +185,22 @@ class Server implements IServer {
         }
     }
 
+    // When the term is updated, it is not immediately
+    // persisted because, as the Raft paper says, the
+    // term is part of persistent state that is:
+    // > *§5. "...(Updated on stable storage before responding)..."*  
+    // to RPC requests.
+    public setCurrentTerm(newTerm: number) {
+        this.currentTerm.value = newTerm;
+        // The `Server` vote is the candidate the `Server`
+        // voted for in the current term...
+        // > *§5. "...or null if none..."*
+        // When a `Server` enters a new election,
+        // it has not yet voted for a candidate,
+        // so its vote is set here to `null`.
+        this.vote = null;
+    }
+
     // After the `Server` loads and initializes its term and vote,
     // and binds to a socket for RPC calls, it transitions to the
     // follower state:
@@ -185,7 +212,7 @@ class Server implements IServer {
         return Promise.all([
                 // The current term is...
                 // > *§5. "...initialized to zero on first boot..."*
-                this._term.read(null)
+                this.currentTerm.read(null)
                     .then((function(value: number) {
                         if(value == null) {
                             this.logger.debug('Term was not found on persistent storage; setting to zero');
@@ -228,37 +255,12 @@ class Server implements IServer {
         this._state.enter();
     }
 
-    // The `term` is used by a `Server` in a cluster
-    // to determine if it is ahead or behind of another
-    // `Server` in the same cluster.
-    // > *§5. "...latest term server has seen..."*
-    // > *§5.1. "...Raft divides time into _terms_..."*
-    public get term(): number {
-        return this._term.value;
-    }
-
-    // When the term is updated, it is not immediately
-    // persisted because, as the Raft paper says, the
-    // term is part of persistent state that is:
-    // > *§5. "...(Updated on stable storage before responding)..."*  
-    // to RPC requests.
-    public set term(newTerm: number) {
-        this._term.value = newTerm;
-        // The `Server` vote is the candidate the `Server`
-        // voted for in the current term...
-        // > *§5. "...or null if none..."*
-        // When a `Server` enters a new election,
-        // it has not yet voted for a candidate,
-        // so its vote is set here to `null`.
-        this.vote = null;
-    }
-
     // Persistent state is data read from and written
     // to stable storage (i.e. a disk).
     // > *§5. "...Persistent state on all servers..."*
     private updatePersistentState(): Promise<void> {
         return this.log.write()
-            .then(() => this._term.write())
+            .then(() => this.currentTerm.write())
             .then(() => this._vote.write());
     }
 

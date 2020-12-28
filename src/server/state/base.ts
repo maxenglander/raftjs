@@ -80,8 +80,8 @@ export class BaseState implements IState {
             // request with a `term` less than the `term` on this
             // `Server`, the RPC request is rejected.
             // > *§5. "...false if term < currentTerm..."*  
-            success: message.arguments.term >= this.server.term,
-            term: this.server.term
+            success: message.arguments.term >= this.server.getCurrentTerm(),
+            term: this.server.getCurrentTerm()
         }));
     }
 
@@ -107,6 +107,7 @@ export class BaseState implements IState {
         }
 
         const server = this.server;
+        const currentTerm = server.getCurrentTerm();
 
         // Whenever Raft server's communicate to each other, they
         // exchange their current term, and, if one server's term
@@ -114,9 +115,9 @@ export class BaseState implements IState {
         // other's, and converts to a follower.
         // > *§5. "...If RPC request or response contains..."*  
         // > *§5.1. "...If one server's current term is smaller..."*  
-        if(term > server.term) {
-            this.server.logger.trace(`Received a message with a term (${term}) higher than the server term (${server.term}); transitioning to follower`);
-            server.term = term;
+        if(term > currentTerm) {
+            this.server.logger.trace(`Received a message with a term (${term}) higher than the server term (${currentTerm}); transitioning to follower`);
+            server.setCurrentTerm(term);
             this.transitionTo('follower');
         }
     }

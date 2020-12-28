@@ -47,9 +47,9 @@ class CandidateState extends BaseState {
     }
 
     private incrementTerm(): void {
-        const nextTerm = this.server.term + 1;
+        const nextTerm = this.server.getCurrentTerm() + 1;
         this.server.logger.trace(`Incrementing term to ${nextTerm}`);
-        this.server.term = nextTerm; 
+        this.server.setCurrentTerm(nextTerm);
     }
 
     // A candidate obtains a majority when it receives
@@ -66,7 +66,7 @@ class CandidateState extends BaseState {
     // > *§5. "...If AppendEntries RPC received..."*  
     // > *§5.2. "...While waiting for votes..."*  
     private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
-        if(message.arguments.term >= this.server.term) {
+        if(message.arguments.term >= this.server.getCurrentTerm()) {
             this.server.logger.trace(`Received append-entries request from ${endpoint.toString}; transitioning to follower`);
             this.transitionTo('follower');
         }
@@ -99,7 +99,7 @@ class CandidateState extends BaseState {
             candidateId: this.server.id,
             lastLogIndex,
             lastLogTerm: this.server.log.getEntry(lastLogIndex).term,
-            term: this.server.term
+            term: this.server.getCurrentTerm()
         }));
     }
 
