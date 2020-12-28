@@ -1,6 +1,6 @@
 export { createFlatbuffersCodec } from './flatbuffers';
 
-import { IMessage } from '../message';
+import { IMessage } from '../';
 
 export interface ICodec {
     decode(data: Uint8Array): IMessage;

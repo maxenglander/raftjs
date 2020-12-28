@@ -1,4 +1,3 @@
-import { ICodec } from '../codec';
 import {
     CallTypeMap,
     IMessage,
@@ -9,7 +8,8 @@ import {
     IResponseTypeFilter,
     isRequest,
     isResponse
-} from '../message';
+} from './message';
+import { ICodec } from './message/codec';
 import { IEndpoint } from '../net';
 import { IFailure, ITransport } from '../transport';
 import { IRpcReceiverRegistry, createRpcReceiverRegistry } from './receiver-registry';

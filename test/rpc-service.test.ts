@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { IRpcService } from './rpc';
-import * as AppendEntries from './message/append-entries';
+import * as AppendEntries from './rpc/message/append-entries';
 import { IEndpoint, createEndpoint } from './net';
 import { createRpcService } from './rpc';
 

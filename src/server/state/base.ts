@@ -1,6 +1,6 @@
 import { ICluster } from '../../cluster';
-import { IMessage } from '../../message';
-import * as AppendEntries from '../../message/append-entries';
+import { IMessage } from '../../rpc/message';
+import * as AppendEntries from '../../rpc/message/append-entries';
 import { IEndpoint } from '../../net';
 import { IRpcEventListener } from '../../rpc';
 import { compilerError } from '../../util/compiler-error';

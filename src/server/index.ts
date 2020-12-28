@@ -19,7 +19,7 @@ import {
     isMessage,
     isRequest,
     isResponse
-} from '../message';
+} from '../rpc/message';
 import { IEndpoint, isEndpoint } from '../net';
 import { IRpcEventListener, IRpcReceiver, IRpcService, createRpcService } from '../rpc';
 import { ITimer, createTimer } from './timer';

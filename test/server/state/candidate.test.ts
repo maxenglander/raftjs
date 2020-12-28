@@ -5,8 +5,8 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import * as AppendEntries from '../../message/append-entries';
-import * as RequestVote from '../../message/request-vote';
+import * as AppendEntries from '../../rpc/message/append-entries';
+import * as RequestVote from '../../rpc/message/request-vote';
 import { IEndpoint, createEndpoint } from '../../net';
 import { IRpcEventListener, IRpcService, createRpcService } from '../../rpc';
 import { IServer, ServerId, createServer } from '../';

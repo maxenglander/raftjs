@@ -1,9 +1,9 @@
 import { TextDecoder, TextEncoder } from 'util';
 import { expect } from 'chai';
 
-import { AppendEntries, IMessage, RequestVote } from '../message';
-import { createRequest as createRequestVoteRequest } from '../message/request-vote';
-import { IEndpoint, createEndpoint } from '../net';
+import { AppendEntries, IMessage, RequestVote } from '../';
+import { createRequest as createRequestVoteRequest } from '../request-vote';
+import { IEndpoint, createEndpoint } from '../../../net';
 
 import { ICodec, createFlatbuffersCodec } from './';
 

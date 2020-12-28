@@ -1,4 +1,4 @@
-import { CallTypeMap, IMessage, ProcedureTypeMap } from '../message';
+import { CallTypeMap, IMessage, ProcedureTypeMap } from './message';
 import { compilerError } from '../util/compiler-error';
 import { IRpcReceiver } from './';
 

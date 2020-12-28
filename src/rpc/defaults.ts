@@ -1,5 +1,5 @@
-import { ICodec, createFlatbuffersCodec } from '../codec';
 import { ITransport, createTcpTransport } from '../transport';
+import { ICodec, createFlatbuffersCodec } from './message/codec';
 
 // By default, `RpcService` uses
 // [FlatBuffers](https://google.github.io/flatbuffers/)

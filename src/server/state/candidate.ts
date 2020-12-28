@@ -1,5 +1,5 @@
-import * as AppendEntries from '../../message/append-entries';
-import * as RequestVote from '../../message/request-vote';
+import * as AppendEntries from '../../rpc/message/append-entries';
+import * as RequestVote from '../../rpc/message/request-vote';
 import { IEndpoint } from '../../net';
 import { IRpcEventListener } from '../../rpc';
 import { IServer } from '../';
