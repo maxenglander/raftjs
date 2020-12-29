@@ -166,21 +166,27 @@ class Server implements IServer {
     }
 
     // *> *§5.3 "...Once a leader has been elected, it begins servicing client requests...*
-    public request(command: Buffer): Promise<Buffer> {
-        if(this.getState().type === 'leader') {
-            // *> *§5.3 "... The leader appends the command to its log as a new entry...*
-            this.log.append({
-                command,
-                index: this.log.getNextIndex(),
-                term: this.getCurrentTerm()
-            });
-            return this.log.write().then(() => {
-                // *> *§5.3 "...then issues AppendEntries RPCs in parallel...*
-                return Promise.resolve(Buffer.alloc(0))
-            })
-        } else {
+    public request(command: Uint8Array): Promise<Uint8Array> {
+        /*
+        if(this.getState().type !== 'leader') {
             return Promise.reject();
         }
+        const commandQueue = this.commandQueue;
+        return new Promise((resolve, reject) => {
+            const invertedPromise = new InvertedPromise(resolve, reject);
+            commandQueue.add(command, invertedPromise);
+        });
+        */
+        // *> *§5.3 "... The leader appends the command to its log as a new entry...*
+        this.log.append({
+            command,
+            index: this.log.getNextIndex(),
+            term: this.getCurrentTerm()
+        });
+        return this.log.write().then(() => {
+            // *> *§5.3 "...then issues AppendEntries RPCs in parallel...*
+            return Promise.resolve(Buffer.alloc(0))
+        })
     }
 
     public sendRpc(message: IMessage): Promise<Promise<void>[]>;

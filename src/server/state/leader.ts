@@ -10,9 +10,8 @@ import { IState, StateType } from './';
 // and replicating log entries to followers. At the present time, this
 // implementation does not implement those requirements.
 class LeaderState extends BaseState {
-    // > *§5 "...for each server, index of highest log entry known to be replicated on server..."
+    private appendEntriesIntervalId: any;
     private matchIndex: { [id: string]: number };
-    // > *§5 "...for each server, index of the next log entry to send to that server..."
     private nextIndex: { [id: string]: number };
     private sendHeartbeatsIntervalId: any;
 
@@ -25,8 +24,12 @@ class LeaderState extends BaseState {
     // Upon election:
     public enter() {
         super.enter();
-        // *§5 "...(Reinitialized after election)..."
-        this.matchIndex = this.nextIndex = {};
+        // > *§5 "...for each server, index of highest log entry known to be replicated on server..."
+        // > *§5 "...(Reinitialized after election)..."
+        this.matchIndex = {}
+        // > *§5 "...for each server, index of the next log entry to send to that server..."
+        // > *§5 "...(Reinitialized after election)..."
+        this.nextIndex = {};
         for(let serverId in this.server.getCluster().servers) {
             if(serverId === this.server.id) {
                 continue;
