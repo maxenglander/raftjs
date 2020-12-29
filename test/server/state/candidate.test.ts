@@ -141,12 +141,16 @@ describe('server candidate state', function() {
                 this.timeout(randomWait + /*buffer*/100);
 
                 setTimeout(function() {
-                    rpcService.send([server.endpoint],
+                    Promise.all(rpcService.send([server.endpoint],
                         AppendEntries.createRequest({
                             entries: [],
+                            leaderCommit: 0,
+                            leaderId: 'leader-id',
+                            prevLogIndex: 0,
+                            prevLogTerm: 0,
                             term: server.getCurrentTerm()
                         })
-                    ).then(() => done());
+                    )).then(() => done());
                 }, randomWait);
             });
 
@@ -180,7 +184,7 @@ describe('server candidate state', function() {
                         procedureType: 'request-vote',
                         notify(endpoint: IEndpoint, request: RequestVote.IRequest) {
                             const term = request.arguments.term + Math.min(0, Math.round(Math.random() * -5));
-                            rpcService.send([endpoint], RequestVote.createResponse({ voteGranted: true, term }))
+                            Promise.all(rpcService.send([endpoint], RequestVote.createResponse({ voteGranted: true, term })))
                                 .then(() => doneOnce());
                         }
                     });

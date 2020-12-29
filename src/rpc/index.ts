@@ -39,7 +39,7 @@ export interface IRpcService {
     onReceive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
     ): IRpcEventListener;
-    send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
+    send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void>[];
 }
 
 // Encodes, sends, decodes and receives RPC messages.
@@ -99,13 +99,13 @@ class RpcService implements IRpcService {
     }
 
     // Send a message to all endpoints in parallel.
-    public send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]> {
+    public send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void>[] {
         const encoded = this.codec.encode(message);
-        return Promise.all(endpoints.map((function(endpoint: IEndpoint) {
+        return endpoints.map((function(endpoint: IEndpoint) {
             return new Promise((function(resolve: any) {
                 this.transport.send(endpoint, encoded).then(() => resolve(), () => resolve());
             }).bind(this));
-        }).bind(this)));
+        }).bind(this));
     }
 }
 

@@ -48,16 +48,18 @@ export interface IServer {
     readonly log: ILog;
     readonly logger: ILogger;
     readonly rpcService: IRpcService;
+    getCommitIndex(): number;
     getCluster(): ICluster;
     getCurrentTerm(): number;
+    getLastApplied(): number;
     getState(): IState;
     getVote(): ServerId;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
-    sendRpc(message: IMessage): Promise<void[]>;
-    sendRpc(endpoint: IEndpoint, message: IMessage): Promise<void[]>;
-    sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
+    sendRpc(message: IMessage): Promise<Promise<void>[]>;
+    sendRpc(endpoint: IEndpoint, message: IMessage): Promise<Promise<void>[]>;
+    sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<Promise<void>[]>;
     setCurrentTerm(newTerm: number): void;
     setVote(candidateId: ServerId): void;
     start(): Promise<void>;
@@ -92,11 +94,13 @@ type IVoteOrDataDir = IVote | IDataDir;
 
 class Server implements IServer {
     private readonly cluster: ICluster;
+    private commitIndex: number;
     private currentTerm: IDurableValue<number>;
     public readonly electionTimer: ITimer;
     public readonly endpoint: IEndpoint;
     public readonly id: ServerId;
     private readonly initialTerm: number;
+    private lastApplied: number;
     public readonly log: ILog;
     public readonly logger: ILogger;
     public readonly rpcService: IRpcService;
@@ -124,6 +128,10 @@ class Server implements IServer {
     public getCluster(): ICluster {
         return this.cluster;
     }
+
+    public getCommitIndex(): number {
+        return this.commitIndex;
+    }
  
     // The `term` is used by a `Server` in a cluster
     // to determine if it is ahead or behind of another
@@ -132,6 +140,10 @@ class Server implements IServer {
     // > *§5.1. "...Raft divides time into _terms_..."*
     public getCurrentTerm(): number {
         return this.currentTerm.value;
+    }
+
+    public getLastApplied(): number {
+        return this.lastApplied;
     }
 
     public getState(): IState {
@@ -153,15 +165,33 @@ class Server implements IServer {
         return this.rpcService.onReceive(receiver);
     }
 
-    public sendRpc(message: IMessage): Promise<void[]>;
-    public sendRpc(endpoint: IEndpoint, message: IMessage): Promise<void[]>;
-    public sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void[]>;
+    // *> *§5.3 "...Once a leader has been elected, it begins servicing client requests...*
+    public request(command: Buffer): Promise<Buffer> {
+        if(this.getState().type === 'leader') {
+            // *> *§5.3 "... The leader appends the command to its log as a new entry...*
+            this.log.append({
+                command,
+                index: this.log.getNextIndex(),
+                term: this.getCurrentTerm()
+            });
+            return this.log.write().then(() => {
+                // *> *§5.3 "...then issues AppendEntries RPCs in parallel...*
+                return Promise.resolve(Buffer.alloc(0))
+            })
+        } else {
+            return Promise.reject();
+        }
+    }
+
+    public sendRpc(message: IMessage): Promise<Promise<void>[]>;
+    public sendRpc(endpoint: IEndpoint, message: IMessage): Promise<Promise<void>[]>;
+    public sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<Promise<void>[]>;
     // RPC requests can be sent to other Raft `Server`
     // instances with the `send` method.
     public sendRpc(
         arg0: IMessage | IEndpoint | ReadonlyArray<IEndpoint>,
         arg1: IMessage = null
-    ): Promise<void[]> {
+    ): Promise<Promise<void>[]> {
         let message: IMessage;
         let endpoints: ReadonlyArray<IEndpoint>;
 
@@ -180,7 +210,7 @@ class Server implements IServer {
         }
 
         if(isRequest(message)) {
-            return this.rpcService.send(endpoints, message);
+            return Promise.resolve(this.rpcService.send(endpoints, message));
         } else if(isResponse(message)) {
             // Before responding to an RPC request, the recipient `Server`
             // updates persistent state on stable storage.
@@ -222,6 +252,9 @@ class Server implements IServer {
     // > *§5. "...When servers start up, they begin as followers..."*
     public start(): Promise<void> {
         this.logger.info(`Starting Raftjs server ${this.id}`);
+
+        // > *§5. "...Volatile state on all servers...(initialized to 0, increases monotonically)..."
+        this.commitIndex = this.lastApplied = 0;
 
         this.logger.debug('Loading persistent state');
         return Promise.all([

@@ -103,7 +103,15 @@ describe('server follower state', function() {
                     // of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            createAppendEntriesRequest({ entries: [], term }));
+                            createAppendEntriesRequest({
+                                entries: [],
+                                leaderCommit: 0,
+                                leaderId: 'leader-id',
+                                prevLogIndex: 0,
+                                prevLogTerm: 0,
+                                term
+                            })
+                        );
                         done();
                     }, waitABit);
                 });
@@ -129,7 +137,15 @@ describe('server follower state', function() {
                     // Wait a little bit
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            createAppendEntriesRequest({ entries: [], term }));
+                            createAppendEntriesRequest({
+                                entries: [],
+                                leaderCommit: 0,
+                                leaderId: 'leader-id',
+                                prevLogIndex: 0,
+                                prevLogTerm: 0,
+                                term
+                            })
+                        );
                         done();
                     }, waitABit);
                 });

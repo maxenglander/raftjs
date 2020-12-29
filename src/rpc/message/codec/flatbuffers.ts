@@ -56,12 +56,24 @@ function decodeAppendEntries(schema: Schema.Message): AppendEntries.IExchange {
 // Decode data to an AppendEntries request.
 function decodeAppendEntriesRequest(schema: Schema.Message): AppendEntries.IRequest {
     const args: Schema.AppendEntriesArguments = schema.arguments(new Schema.AppendEntriesArguments());
+    const entries = Array.from({ length: args.entriesLength() }, (_, i) => i).map(i => {
+        const entry = args.entries(i);
+        return {
+            command: entry.commandArray(),
+            index: entry.index(),
+            term: entry.term()
+        };
+    });
 
     return {
         callType: 'request',
         procedureType: 'append-entries',
         arguments: {
-            entries: [],
+            entries: entries,
+            leaderCommit: args.leaderCommit(),
+            leaderId: args.leaderId(),
+            prevLogIndex: args.prevLogIndex(),
+            prevLogTerm: args.prevLogTerm(),
             term: args.term()
         },
     };
@@ -190,7 +202,21 @@ function encode(message: IMessage): Uint8Array {
 
 // Encode AppendEntries arguments to a flatbuffers offset.
 function encodeAppendEntriesArguments(builder: flatbuffers.Builder, args: AppendEntries.IArguments): flatbuffers.Offset {
+    const leaderId = builder.createString(args.leaderId);
+    const entries = Schema.AppendEntriesArguments.createEntriesVector(builder, args.entries.map((entry) => {
+        const command = Schema.LogEntry.createCommandVector(builder, entry.command);
+        Schema.LogEntry.startLogEntry(builder);
+        Schema.LogEntry.addCommand(builder, command);
+        Schema.LogEntry.addIndex(builder, entry.index);
+        Schema.LogEntry.addTerm(builder, entry.term);
+        return Schema.LogEntry.endLogEntry(builder);
+    }));
     Schema.AppendEntriesArguments.startAppendEntriesArguments(builder);
+    Schema.AppendEntriesArguments.addEntries(builder, entries);
+    Schema.AppendEntriesArguments.addLeaderId(builder, leaderId);
+    Schema.AppendEntriesArguments.addLeaderCommit(builder, args.leaderCommit);
+    Schema.AppendEntriesArguments.addPrevLogIndex(builder, args.prevLogIndex);
+    Schema.AppendEntriesArguments.addPrevLogTerm(builder, args.prevLogTerm);
     Schema.AppendEntriesArguments.addTerm(builder, args.term);
     return Schema.AppendEntriesArguments.endAppendEntriesArguments(builder);
 }

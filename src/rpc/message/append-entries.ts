@@ -1,7 +1,18 @@
 import * as Base from './base';
 
+export interface ILogEntry {
+    readonly command: Uint8Array;
+    readonly index: number;
+    readonly term: number;
+}
+
 export interface IArguments extends Base.IArguments {
-    readonly entries: ReadonlyArray<string>;
+    readonly entries: ReadonlyArray<ILogEntry>;
+    readonly leaderCommit: number;
+    readonly leaderId: string;
+    readonly prevLogIndex: number;
+    readonly prevLogTerm: number;
+    readonly term: number;
 }
 
 export type IExchange = IRequest | IResponse;

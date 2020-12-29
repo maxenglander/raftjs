@@ -9,11 +9,22 @@ enum ProcedureType: byte {
 }
 
 table AppendEntriesArguments {
+  entries: [LogEntry];
+  leader_commit: uint32;
+  leader_id: string;
+  prev_log_index: uint32;
+  prev_log_term: uint32;
   term: uint32;
 }
 
 table AppendEntriesResults {
   success: bool;
+  term: uint32;
+}
+
+table LogEntry {
+  command: [ubyte];
+  index: uint32;
   term: uint32;
 }
 

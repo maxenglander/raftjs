@@ -113,7 +113,15 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRequest({ entries: [], term }));
+                            AppendEntries.createRequest({
+                                entries: [],
+                                leaderCommit: 0,
+                                leaderId: 'leader-id',
+                                prevLogIndex: 0,
+                                prevLogTerm: 0,
+                                term
+                            })
+                        );
                         done();
                     }, waitABit);
                 });
@@ -137,7 +145,15 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRequest({ entries: [], term }));
+                            AppendEntries.createRequest({
+                                entries: [],
+                                leaderCommit: 0,
+                                leaderId: 'leader-id',
+                                prevLogIndex: 0,
+                                prevLogTerm: 0,
+                                term
+                            })
+                        );
                         done();
                     }, waitABit);
                 });

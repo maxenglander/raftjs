@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 
-import { IRpcService } from './rpc';
-import * as AppendEntries from './rpc/message/append-entries';
-import { IEndpoint, createEndpoint } from './net';
-import { createRpcService } from './rpc';
+import { IRpcService } from '../rpc';
+import * as AppendEntries from '../rpc/message/append-entries';
+import { IEndpoint, createEndpoint } from '../net';
+import { createRpcService } from '../rpc';
 
 describe('rpc service', function() {
     const endpointA = createEndpoint({
@@ -77,6 +77,10 @@ describe('rpc service', function() {
 
                 rpcServiceC.send([endpointA, endpointB], AppendEntries.createRequest({
                     entries: [],
+                    leaderCommit: 0,
+                    leaderId: 'leader-id',
+                    prevLogIndex: 0,
+                    prevLogTerm: 0,
                     term: 1
                 }));
             });
