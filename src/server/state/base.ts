@@ -1,5 +1,5 @@
 import { ICluster } from '../../cluster';
-import { IMessage } from '../../rpc/message';
+import { IRpcMessage } from '../../rpc/message';
 import * as AppendEntries from '../../rpc/message/append-entries';
 import { IEndpoint } from '../../net';
 import { IRpcEventListener } from '../../rpc';
@@ -73,9 +73,9 @@ export class BaseState implements IState {
     // > *§5. "...Receiver implementation:..."*  
     private onAppendEntriesRequestBase(
         endpoint: IEndpoint,
-        message: AppendEntries.IRequest
+        message: AppendEntries.IRpcRequest
     ): void {
-        this.server.sendRpc(endpoint, AppendEntries.createResponse({
+        this.server.sendRpc(endpoint, AppendEntries.createRpcResponse({
             // When another `Server` makes an `AppendEntries` RPC
             // request with a `term` less than the `term` on this
             // `Server`, the RPC request is rejected.
@@ -85,10 +85,10 @@ export class BaseState implements IState {
         }));
     }
 
-    private onRequestOrResponse(endpoint: IEndpoint, message: IMessage): void {
+    private onRequestOrResponse(endpoint: IEndpoint, message: IRpcMessage): void {
         this.server.logger.trace(`Received ${message.procedureType} ${message.callType} from ${endpoint.toString()}`);
-        const callType: IMessage['callType'] = message.callType,
-            procedureType: IMessage['procedureType'] = message.procedureType;
+        const callType: IRpcMessage['callType'] = message.callType,
+            procedureType: IRpcMessage['procedureType'] = message.procedureType;
 
         let term: number;
 

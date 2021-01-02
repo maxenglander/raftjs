@@ -6,7 +6,7 @@ export interface ILogEntry {
     readonly term: number;
 }
 
-export interface IArguments extends Base.IArguments {
+export interface IRpcArguments extends Base.IRpcArguments {
     readonly entries: ReadonlyArray<ILogEntry>;
     readonly leaderCommit: number;
     readonly leaderId: string;
@@ -15,18 +15,18 @@ export interface IArguments extends Base.IArguments {
     readonly term: number;
 }
 
-export type IExchange = IRequest | IResponse;
+export type IRpcExchange = IRpcRequest | IRpcResponse;
 
-export type IRequest = Base.IRequest<'append-entries', IArguments>;
+export type IRpcRequest = Base.IRpcRequest<'append-entries', IRpcArguments>;
 
-export type IResponse = Base.IResponse<'append-entries', IResults>;
+export type IRpcResponse = Base.IRpcResponse<'append-entries', IRpcResults>;
 
-export interface IResults extends Base.IResults{
+export interface IRpcResults extends Base.IRpcResults{
     readonly success: boolean;
 }
 
 // Create an AppendEntries RPC request with the provided arguments.
-export function createRequest(args: IArguments): IRequest {
+export function createRpcRequest(args: IRpcArguments): IRpcRequest {
     return {
         callType: 'request',
         procedureType: 'append-entries',
@@ -35,7 +35,7 @@ export function createRequest(args: IArguments): IRequest {
 }
 
 // Create an AppendEntries RPC response with the provided results.
-export function createResponse(results: IResults): IResponse {
+export function createRpcResponse(results: IRpcResults): IRpcResponse {
     return {
         callType: 'response',
         procedureType: 'append-entries',

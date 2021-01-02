@@ -47,14 +47,14 @@ class FollowerState extends BaseState {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*  
-    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRpcRequest): void {
         this.server.electionTimer.reset();
     }
 
     //
     private onRequestVoteRequest(
         endpoint: IEndpoint,
-        message: RequestVote.IRequest
+        message: RequestVote.IRpcRequest
     ): void {
         const currentTerm = this.server.getCurrentTerm(),
             vote = this.server.getVotedFor(),
@@ -70,7 +70,7 @@ class FollowerState extends BaseState {
             this.server.logger.trace(`Denying vote request from server ${endpoint.toString()}`);
         }
 
-        this.server.sendRpc(endpoint, RequestVote.createResponse({
+        this.server.sendRpc(endpoint, RequestVote.createRpcResponse({
             term: currentTerm,
             voteGranted
         })).then(function() {

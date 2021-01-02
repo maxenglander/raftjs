@@ -75,7 +75,7 @@ describe('server base state', function() {
                 }),
                 rpcService = createRpcService();
 
-            let appendEntriesResponse: AppendEntries.IResponse,
+            let appendEntriesResponse: AppendEntries.IRpcResponse,
                 appendEntriesResponseCallback,
                 appendEntriesListener: IRpcEventListener,
                 term: number;
@@ -92,7 +92,7 @@ describe('server base state', function() {
                     = rpcService.onReceive({
                         callType: 'response',
                         procedureType: 'append-entries',
-                        notify(endpoint: IEndpoint, response: AppendEntries.IResponse) {
+                        notify(endpoint: IEndpoint, response: AppendEntries.IRpcResponse) {
                             appendEntriesResponse = response;
                             if(appendEntriesResponseCallback != null)
                                 appendEntriesResponseCallback(response);
@@ -113,7 +113,7 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRequest({
+                            AppendEntries.createRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',
@@ -145,7 +145,7 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRequest({
+                            AppendEntries.createRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',

@@ -1,8 +1,8 @@
 import { TextDecoder, TextEncoder } from 'util';
 import { expect } from 'chai';
 
-import { AppendEntries, IMessage, RequestVote } from '../';
-import { createRequest as createRequestVoteRequest } from '../request-vote';
+import { AppendEntries, IRpcMessage, RequestVote } from '../';
+import { createRpcRequest as createRequestVoteRequest } from '../request-vote';
 import { IEndpoint, createEndpoint } from '../../../net';
 
 import { ICodec, createFlatbuffersCodec } from './';
@@ -16,7 +16,7 @@ describe('The Flatbuffers codec', function() {
         textDecoder = new TextDecoder,
         textEncoder = new TextEncoder();
 
-    let data: Uint8Array = null, originalMessage: IMessage = null;
+    let data: Uint8Array = null, originalMessage: IRpcMessage = null;
 
     describe('.decode', function() {
         context('when given binary data representing a "request-vote" request', function() {
@@ -31,21 +31,21 @@ describe('The Flatbuffers codec', function() {
             });
 
             it('decodes a "request-vote" request from binary data', function() {
-                const message: IMessage = codec.decode(data);
+                const message: IRpcMessage = codec.decode(data);
                 expect(message.callType).to.equal("request");
                 expect(message.procedureType).to.equal("request-vote");
             });
 
             describe('the decoded message', function() {
-                let decodedMessage: RequestVote.IRequest;
+                let decodedMessage: RequestVote.IRpcRequest;
 
                 beforeEach(function() {
-                    decodedMessage = codec.decode(data) as RequestVote.IRequest;
+                    decodedMessage = codec.decode(data) as RequestVote.IRpcRequest;
                 });
 
                 it('has the same term as the original message', function() {
                     expect(decodedMessage.arguments.term)
-                        .to.equal((originalMessage as RequestVote.IRequest).arguments.term);
+                        .to.equal((originalMessage as RequestVote.IRpcRequest).arguments.term);
                 });
             });
         });

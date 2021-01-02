@@ -93,8 +93,8 @@ describe('server leader state', function() {
             heartbeatListener = rpcService.onReceive({
                 callType: 'request',
                 procedureType: 'append-entries',
-                notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {
-                    rpcService.send([endpoint], AppendEntries.createResponse({
+                notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
+                    rpcService.send([endpoint], AppendEntries.createRpcResponse({
                         success: true,
                         term: server.getCurrentTerm()
                     }));

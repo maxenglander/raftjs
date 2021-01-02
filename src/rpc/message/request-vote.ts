@@ -1,23 +1,23 @@
 import * as Base from './base';
 
-export interface IArguments extends Base.IArguments {
+export interface IRpcArguments extends Base.IRpcArguments {
     readonly candidateId: string;
     readonly lastLogIndex: number;
     readonly lastLogTerm: number;
 }
 
-export type IExchange = IRequest | IResponse;
+export type IRpcExchange = IRpcRequest | IRpcResponse;
 
-export type IRequest  = Base.IRequest<'request-vote', IArguments>;
+export type IRpcRequest  = Base.IRpcRequest<'request-vote', IRpcArguments>;
 
-export type IResponse = Base.IResponse<'request-vote', IResults>;
+export type IRpcResponse = Base.IRpcResponse<'request-vote', IRpcResults>;
 
-export interface IResults extends Base.IResults {
+export interface IRpcResults extends Base.IRpcResults {
     readonly voteGranted: boolean;
 }
 
 // Create a RequestVote RPC request with the provided arguments.
-export function createRequest(args: IArguments): IRequest {
+export function createRpcRequest(args: IRpcArguments): IRpcRequest {
     return {
         callType: 'request',
         procedureType: 'request-vote',
@@ -26,7 +26,7 @@ export function createRequest(args: IArguments): IRequest {
 }
 
 // Create a RequestVote RPC response with the provided results.
-export function createResponse(results: IResults): IResponse {
+export function createRpcResponse(results: IRpcResults): IRpcResponse {
     return {
         callType: 'response',
         procedureType: 'request-vote',

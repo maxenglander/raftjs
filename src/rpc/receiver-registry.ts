@@ -1,17 +1,17 @@
-import { CallTypeMap, IMessage, ProcedureTypeMap } from './message';
+import { RpcCallTypeMap, IRpcMessage, RpcProcedureTypeMap } from './message';
 import { compilerError } from '../util/compiler-error';
 import { IRpcReceiver } from './';
 
 export interface IRpcReceiverRegistry {
-  add:    <P extends IMessage['procedureType'], C extends IMessage['callType']>(
-      receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+  add:    <P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+      receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
   ) => void;
-  getAll: <P extends IMessage['procedureType'], C extends IMessage['callType']>(
-      procedureType: ProcedureTypeMap[P],
-      callType: CallTypeMap[C]
-  ) => ReadonlySet<IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>>;
-  remove: <P extends IMessage['procedureType'], C extends IMessage['callType']>(
-      receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+  getAll: <P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+      procedureType: RpcProcedureTypeMap[P],
+      callType: RpcCallTypeMap[C]
+  ) => ReadonlySet<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>>;
+  remove: <P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+      receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
   ) => void;
 }
 
@@ -31,21 +31,21 @@ class RpcReceiverRegistry implements IRpcReceiverRegistry {
     }
 
     // Add the provided `RpcReceiver` to the registry.
-    public add<P extends IMessage['procedureType'], C extends IMessage['callType']>(
-        receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+    public add<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): void {
-        const _procedureType: IMessage['procedureType'] = receiver.procedureType,
-            _callType: IMessage['callType'] = receiver.callType;
+        const _procedureType: IRpcMessage['procedureType'] = receiver.procedureType,
+            _callType: IRpcMessage['callType'] = receiver.callType;
         this.internalGetAll(_procedureType, _callType).add(receiver);
     }
 
     // Get every `RpcReceiver` registered for the provided RPC message call or response.
-    public getAll<P extends IMessage['procedureType'], C extends IMessage['callType']>(
-        procedureType: ProcedureTypeMap[P],
-        callType: CallTypeMap[C]
-    ): ReadonlySet<IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>> {
-        type _ProcedureType = ProcedureTypeMap[P];
-        type _CallType = CallTypeMap[C];
+    public getAll<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+        procedureType: RpcProcedureTypeMap[P],
+        callType: RpcCallTypeMap[C]
+    ): ReadonlySet<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>> {
+        type _ProcedureType = RpcProcedureTypeMap[P];
+        type _CallType = RpcCallTypeMap[C];
 
         const _procedureType: _ProcedureType = procedureType,
             _callType: _CallType = callType,
@@ -56,14 +56,14 @@ class RpcReceiverRegistry implements IRpcReceiverRegistry {
 
     // Get a set of registered receivers based on the provided
     // procedure and call type.
-    private internalGetAll<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    private internalGetAll<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         procedureType: P,
         callType: C
-    ): Set<IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>> {
-        type _ReturnType = Set<IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>>;
+    ): Set<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>> {
+        type _ReturnType = Set<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>>;
 
-        const _callType: IMessage['callType'] = callType,
-            _procedureType: IMessage['procedureType'] = procedureType;
+        const _callType: IRpcMessage['callType'] = callType,
+            _procedureType: IRpcMessage['procedureType'] = procedureType;
 
         switch(_procedureType) {
             case 'append-entries':
@@ -96,11 +96,11 @@ class RpcReceiverRegistry implements IRpcReceiverRegistry {
     }
 
     // Remove the provided `RpcReceiver` to the registry.
-    public remove<P extends IMessage['procedureType'], C extends IMessage['callType']>(
-        receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+    public remove<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): void {
-        const _procedureType: IMessage['procedureType'] = receiver.procedureType,
-            _callType: IMessage['callType'] = receiver.callType;
+        const _procedureType: IRpcMessage['procedureType'] = receiver.procedureType,
+            _callType: IRpcMessage['callType'] = receiver.callType;
         this.internalGetAll(_procedureType, _callType).delete(receiver);
     }
 }

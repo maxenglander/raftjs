@@ -1,13 +1,13 @@
 import {
-    CallTypeMap,
-    IMessage,
-    IMessageTypeFilter,
-    ProcedureTypeMap,
-    IRequest,
-    IRequestTypeFilter,
-    IResponseTypeFilter,
-    isRequest,
-    isResponse
+    RpcCallTypeMap,
+    IRpcMessage,
+    IRpcMessageTypeFilter,
+    RpcProcedureTypeMap,
+    IRpcRequest,
+    IRpcRequestTypeFilter,
+    IRpcResponseTypeFilter,
+    isRpcRequest,
+    isRpcResponse
 } from './message';
 import { ICodec } from './message/codec';
 import { IEndpoint } from '../net';
@@ -24,22 +24,22 @@ export interface IRpcEventListener {
     detach(): void;
 }
 
-export interface IRpcReceiver<P extends IMessage['procedureType'], C extends IMessage['callType']> {
-    procedureType: ProcedureTypeMap[P];
-    callType: CallTypeMap[C];
+export interface IRpcReceiver<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']> {
+    procedureType: RpcProcedureTypeMap[P];
+    callType: RpcCallTypeMap[C];
     notify(
         endpoint: IEndpoint,
-        message: IMessageTypeFilter<ProcedureTypeMap[P], CallTypeMap[C]>
+        message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): void;
 }
 
 export interface IRpcService {
     close(): Promise<void>;
     listen(endpoint: IEndpoint): Promise<void>;
-    onReceive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
-        receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+    onReceive<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): IRpcEventListener;
-    send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void>[];
+    send(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<void>[];
 }
 
 // Encodes, sends, decodes and receives RPC messages.
@@ -50,20 +50,20 @@ class RpcService implements IRpcService {
 
     constructor(options: IRpcServiceOptions = {}) {
         this.codec = options.codec
-                ? options.codec
-                : createDefaultCodec();
+            ? options.codec
+            : createDefaultCodec();
         this.receivers = createRpcReceiverRegistry();
         this.transport = options.transport
-                ? options.transport
-                : createDefaultTransport();
+            ? options.transport
+            : createDefaultTransport();
 
         // When data is received from the underlying transport,
         // decode the data to an RPC message and notify any
         // receivers of the message.
         this.transport.receive({
-            data: (function(endpoint: IEndpoint, data: Uint8Array) {
+            data: (endpoint: IEndpoint, data: Uint8Array) => {
                 this.notifyReceivers(endpoint, this.codec.decode(data));
-            }).bind(this),
+            },
             failure(failure: IFailure): void {}
         });
     }
@@ -76,9 +76,9 @@ class RpcService implements IRpcService {
         return this.transport.listen(endpoint);
     }
 
-    private notifyReceivers<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    private notifyReceivers<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         endpoint: IEndpoint,
-        message: IMessageTypeFilter<ProcedureTypeMap[P], CallTypeMap[C]>
+        message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): void {
         for(let receiver of this.receivers.getAll(message.procedureType, message.callType)) {
             receiver.notify(endpoint, message);
@@ -87,25 +87,25 @@ class RpcService implements IRpcService {
 
     // Register to receiver messages of a particular procedure and call type,
     // e.g. `onReceive('append-entries', 'request', {...})`.
-    public onReceive<P extends IMessage['procedureType'], C extends IMessage['callType']>(
-        receiver: IRpcReceiver<ProcedureTypeMap[P], CallTypeMap[C]>
+    public onReceive<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): IRpcEventListener {
         this.receivers.add(receiver);
         return {
-            detach: (function(): void {
+            detach: (): void => {
                 this.receivers.remove(receiver);
-            }).bind(this)
+            }
         };
     }
 
     // Send a message to all endpoints in parallel.
-    public send(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<void>[] {
+    public send(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<void>[] {
         const encoded = this.codec.encode(message);
-        return endpoints.map((function(endpoint: IEndpoint) {
-            return new Promise((function(resolve: any) {
+        return endpoints.map((endpoint: IEndpoint) => {
+            return new Promise((resolve: any) => {
                 this.transport.send(endpoint, encoded).then(() => resolve(), () => resolve());
-            }).bind(this));
-        }).bind(this));
+            });
+        });
     }
 }
 

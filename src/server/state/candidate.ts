@@ -65,7 +65,7 @@ class CandidateState extends BaseState {
     // to its own, it converts to a follower.
     // > *§5. "...If AppendEntries RPC received..."*  
     // > *§5.2. "...While waiting for votes..."*  
-    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRpcRequest): void {
         if(message.arguments.term >= this.server.getCurrentTerm()) {
             this.server.logger.trace(`Received append-entries request from ${endpoint.toString}; transitioning to follower`);
             this.transitionTo('follower');
@@ -73,7 +73,7 @@ class CandidateState extends BaseState {
     }
 
     //
-    private onRequestVoteResponse(endpoint: IEndpoint, message: RequestVote.IResponse): void {
+    private onRequestVoteResponse(endpoint: IEndpoint, message: RequestVote.IRpcResponse): void {
         if(!message.results.voteGranted) return;
         this.tallyVote(endpoint);
     }
@@ -95,7 +95,7 @@ class CandidateState extends BaseState {
 
         const lastLogIndex = this.server.log.getLastIndex();
 
-        this.server.sendRpc(RequestVote.createRequest({
+        this.server.sendRpc(RequestVote.createRpcRequest({
             candidateId: this.server.id,
             lastLogIndex,
             lastLogTerm: this.server.log.getEntry(lastLogIndex).term,

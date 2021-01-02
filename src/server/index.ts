@@ -11,14 +11,12 @@ import { IDurableValue, createDurableInteger, createDurableString } from '../sto
 import { ILog, createLog } from '../log';
 import { ILogger, createLogger } from '../logger';
 import {
-    IMessage,
-    IRequest,
-    IRequestTypeFilter,
-    IResponse,
-    IResponseTypeFilter,
-    isMessage,
-    isRequest,
-    isResponse
+    IRpcMessage,
+    IRpcRequest,
+    IRpcResponse,
+    isRpcMessage,
+    isRpcRequest,
+    isRpcResponse
 } from '../rpc/message';
 import { IEndpoint, isEndpoint } from '../net';
 import { IRpcEventListener, IRpcReceiver, IRpcService, createRpcService } from '../rpc';
@@ -54,12 +52,12 @@ export interface IServer {
     getLastApplied(): number;
     getState(): IState;
     getVotedFor(): ServerId;
-    onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    onReceiveRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
-    sendRpc(message: IMessage): Promise<Promise<void>[]>;
-    sendRpc(endpoint: IEndpoint, message: IMessage): Promise<Promise<void>[]>;
-    sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<Promise<void>[]>;
+    sendRpc(message: IRpcMessage): Promise<Promise<void>[]>;
+    sendRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
+    sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
     setCurrentTerm(newTerm: number): void;
     setVotedFor(candidateId: ServerId): void;
     start(): Promise<void>;
@@ -159,7 +157,7 @@ class Server implements IServer {
     // The `onReceive` method can be used to register a
     // receiver of RPC requests from other Raft `Server`
     // instances.
-    public onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
+    public onReceiveRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener {
         return this.rpcService.onReceive(receiver);
@@ -189,19 +187,19 @@ class Server implements IServer {
         })
     }
 
-    public sendRpc(message: IMessage): Promise<Promise<void>[]>;
-    public sendRpc(endpoint: IEndpoint, message: IMessage): Promise<Promise<void>[]>;
-    public sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<Promise<void>[]>;
+    public sendRpc(message: IRpcMessage): Promise<Promise<void>[]>;
+    public sendRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
+    public sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
     // RPC requests can be sent to other Raft `Server`
     // instances with the `send` method.
     public sendRpc(
-        arg0: IMessage | IEndpoint | ReadonlyArray<IEndpoint>,
-        arg1: IMessage = null
+        arg0: IRpcMessage | IEndpoint | ReadonlyArray<IEndpoint>,
+        arg1: IRpcMessage = null
     ): Promise<Promise<void>[]> {
-        let message: IMessage;
+        let message: IRpcMessage;
         let endpoints: ReadonlyArray<IEndpoint>;
 
-        if(isMessage(arg0)) {
+        if(isRpcMessage(arg0)) {
             endpoints = Object.keys(this.cluster.servers)
                 .filter(serverId => serverId != this.id)
                 .map(serverId => this.cluster.servers[serverId]);
@@ -215,9 +213,9 @@ class Server implements IServer {
             message = arg1;
         }
 
-        if(isRequest(message)) {
+        if(isRpcRequest(message)) {
             return Promise.resolve(this.rpcService.send(endpoints, message));
-        } else if(isResponse(message)) {
+        } else if(isRpcResponse(message)) {
             // Before responding to an RPC request, the recipient `Server`
             // updates persistent state on stable storage.
             // > *§5. "...(Updated on stable storage before responding)..."*  

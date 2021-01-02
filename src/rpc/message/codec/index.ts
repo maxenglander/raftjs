@@ -1,8 +1,8 @@
 export { createFlatbuffersCodec } from './flatbuffers';
 
-import { IMessage } from '../';
+import { IRpcMessage } from '../';
 
 export interface ICodec {
-    decode(data: Uint8Array): IMessage;
-    encode(message: IMessage): Uint8Array;
+    decode(data: Uint8Array): IRpcMessage;
+    encode(message: IRpcMessage): Uint8Array;
 }

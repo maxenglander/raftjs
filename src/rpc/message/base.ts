@@ -1,20 +1,20 @@
-export interface IArguments {
+export interface IRpcArguments {
     readonly term: number;
 }
 
-export type IExchange<P, A extends IArguments, R extends IResults> = IRequest<P, A> | IResponse<P, R>;
+export type IRpcExchange<P, A extends IRpcArguments, R extends IRpcResults> = IRpcRequest<P, A> | IRpcResponse<P, R>;
 
-interface IMessage<P, C, A extends IArguments, R extends IResults> {
+interface IRpcMessage<P, C, A extends IRpcArguments, R extends IRpcResults> {
     readonly arguments?: A;
     readonly callType: C;
     readonly procedureType: P;
     readonly results?: R;
 }
 
-export type IRequest<P, A extends IResults> = IMessage<P, 'request', A, null>;
+export type IRpcRequest<P, A extends IRpcResults> = IRpcMessage<P, 'request', A, null>;
 
-export type IResponse<P, R extends IResults> = IMessage<P, 'response', null, R>;
+export type IRpcResponse<P, R extends IRpcResults> = IRpcMessage<P, 'response', null, R>;
 
-export interface IResults {
+export interface IRpcResults {
     readonly term: number;
 }

@@ -60,7 +60,7 @@ describe('rpc service', function() {
                 rpcServiceA.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
-                    notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {
+                    notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
                         expect(message.arguments.term).to.equal(1);
                         wrappedDone();
                     }
@@ -69,13 +69,13 @@ describe('rpc service', function() {
                 rpcServiceB.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
-                    notify(endpoint: IEndpoint, message: AppendEntries.IRequest) {
+                    notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
                         expect(message.arguments.term).to.equal(1);
                         wrappedDone();
                     }
                 });
 
-                rpcServiceC.send([endpointA, endpointB], AppendEntries.createRequest({
+                rpcServiceC.send([endpointA, endpointB], AppendEntries.createRpcRequest({
                     entries: [],
                     leaderCommit: 0,
                     leaderId: 'leader-id',
