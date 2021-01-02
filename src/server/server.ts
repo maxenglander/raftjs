@@ -33,12 +33,12 @@ export interface IServer {
     getLastApplied(): number;
     getState(): IState;
     getVotedFor(): ServerId;
-    onReceiveRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+    onReceivePeerRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
-    sendRpc(message: IRpcMessage): Promise<Promise<void>[]>;
-    sendRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
-    sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
+    sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
+    sendPeerRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
+    sendPeerRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
     setCurrentTerm(newTerm: number): void;
     setVotedFor(candidateId: ServerId): void;
     start(): Promise<void>;
@@ -123,10 +123,10 @@ export class Server implements IServer {
         return this.votedFor.getValue();
     }
 
-    // The `onReceive` method can be used to register a
+    // The `onReceivePeerRpc` method can be used to register a
     // receiver of RPC requests from other Raft `Server`
     // instances.
-    public onReceiveRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
+    public onReceivePeerRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener {
         return this.peerApi.onReceive(receiver);
@@ -156,12 +156,12 @@ export class Server implements IServer {
         })
     }
 
-    public sendRpc(message: IRpcMessage): Promise<Promise<void>[]>;
-    public sendRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
-    public sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
+    public sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
+    public sendPeerRpc(endpoint: IEndpoint, message: IRpcMessage): Promise<Promise<void>[]>;
+    public sendPeerRpc(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<Promise<void>[]>;
     // RPC requests can be sent to other Raft `Server`
-    // instances with the `send` method.
-    public sendRpc(
+    // instances with the `sendPeerRpc` method.
+    public sendPeerRpc(
         arg0: IRpcMessage | IEndpoint | ReadonlyArray<IEndpoint>,
         arg1: IRpcMessage = null
     ): Promise<Promise<void>[]> {

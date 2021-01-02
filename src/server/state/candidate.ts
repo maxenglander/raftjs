@@ -26,12 +26,12 @@ class CandidateState extends BaseState {
     // > *§5. "...On conversion to candidate, start election..."*  
     public enter() {
         super.enter();
-        super.addRpcEventListener(this.server.onReceiveRpc({
+        super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'request',
             notify: this.onAppendEntriesRequest.bind(this)
         }));
-        super.addRpcEventListener(this.server.onReceiveRpc({
+        super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'request-vote',
             callType: 'response',
             notify: this.onRequestVoteResponse.bind(this)
@@ -95,7 +95,7 @@ class CandidateState extends BaseState {
 
         const lastLogIndex = this.server.log.getLastIndex();
 
-        this.server.sendRpc(RequestVote.createRpcRequest({
+        this.server.sendPeerRpc(RequestVote.createRpcRequest({
             candidateId: this.server.id,
             lastLogIndex,
             lastLogTerm: this.server.log.getEntry(lastLogIndex).term,

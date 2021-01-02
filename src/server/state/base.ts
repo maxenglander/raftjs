@@ -33,27 +33,27 @@ export class BaseState implements IState {
     }
 
     public enter() {
-        this.addRpcEventListener(this.server.onReceiveRpc({
+        this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'request',
             notify: this.onAppendEntriesRequestBase
         }));
-        this.addRpcEventListener(this.server.onReceiveRpc({
+        this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'request',
             notify: this.onRequestOrResponse
         }));
-        this.addRpcEventListener(this.server.onReceiveRpc({
+        this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'response',
             notify: this.onRequestOrResponse
         }));
-        this.addRpcEventListener(this.server.onReceiveRpc({
+        this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'request-vote',
             callType: 'request',
             notify: this.onRequestOrResponse
         }));
-        this.addRpcEventListener(this.server.onReceiveRpc({
+        this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'request-vote',
             callType: 'response',
             notify: this.onRequestOrResponse
@@ -75,7 +75,7 @@ export class BaseState implements IState {
         endpoint: IEndpoint,
         message: AppendEntries.IRpcRequest
     ): void {
-        this.server.sendRpc(endpoint, AppendEntries.createRpcResponse({
+        this.server.sendPeerRpc(endpoint, AppendEntries.createRpcResponse({
             // When another `Server` makes an `AppendEntries` RPC
             // request with a `term` less than the `term` on this
             // `Server`, the RPC request is rejected.

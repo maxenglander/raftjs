@@ -23,12 +23,12 @@ class FollowerState extends BaseState {
 
     public enter() {
         super.enter();
-        super.addRpcEventListener(this.server.onReceiveRpc({
+        super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'request',
             notify: this.onAppendEntriesRequest
         }));
-        super.addRpcEventListener(this.server.onReceiveRpc({
+        super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'request-vote',
             callType: 'request',
             notify: this.onRequestVoteRequest
@@ -70,7 +70,7 @@ class FollowerState extends BaseState {
             this.server.logger.trace(`Denying vote request from server ${endpoint.toString()}`);
         }
 
-        this.server.sendRpc(endpoint, RequestVote.createRpcResponse({
+        this.server.sendPeerRpc(endpoint, RequestVote.createRpcResponse({
             term: currentTerm,
             voteGranted
         })).then(function() {

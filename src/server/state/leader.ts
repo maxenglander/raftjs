@@ -51,7 +51,7 @@ class LeaderState extends BaseState {
     }
 
     private sendHeartbeats() {
-        this.server.sendRpc(createAppendEntriesRequest({
+        this.server.sendPeerRpc(createAppendEntriesRequest({
             entries: [],
             leaderCommit: this.server.getCommitIndex(),
             leaderId: this.server.id,
