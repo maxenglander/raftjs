@@ -57,7 +57,7 @@ class FollowerState extends BaseState {
         message: RequestVote.IRequest
     ): void {
         const currentTerm = this.server.getCurrentTerm(),
-            vote = this.server.getVote(),
+            vote = this.server.getVotedFor(),
             { electionTimer } = this.server,
             // A receiver of RequestVote RPC will:
             // > *§5. "...reply false if term < currentTerm..."*

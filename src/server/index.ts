@@ -35,7 +35,7 @@ interface IBaseCreateServerOptions {
 }
 
 export type ICreateServerOptions =
-    IBaseCreateServerOptions & ITermOrDataDir & IVoteOrDataDir;
+    IBaseCreateServerOptions & ICurrentTermOrDataDir & IVotedForOrDataDir;
 
 interface IDataDir {
     dataDir: string;
@@ -53,7 +53,7 @@ export interface IServer {
     getCurrentTerm(): number;
     getLastApplied(): number;
     getState(): IState;
-    getVote(): ServerId;
+    getVotedFor(): ServerId;
     onReceiveRpc<P extends IMessage['procedureType'], C extends IMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener;
@@ -61,7 +61,7 @@ export interface IServer {
     sendRpc(endpoint: IEndpoint, message: IMessage): Promise<Promise<void>[]>;
     sendRpc(endpoints: ReadonlyArray<IEndpoint>, message: IMessage): Promise<Promise<void>[]>;
     setCurrentTerm(newTerm: number): void;
-    setVote(candidateId: ServerId): void;
+    setVotedFor(candidateId: ServerId): void;
     start(): Promise<void>;
     stop(): Promise<void>;
     transitionTo(state: StateType | IState): void;
@@ -71,26 +71,26 @@ export type ServerId = string;
 
 export interface IServerOptions {
     readonly cluster: ICluster;
+    readonly currentTerm: IDurableValue<number>;
     readonly electionTimer: ITimer;
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
     readonly rpcService: IRpcService;
-    readonly term: IDurableValue<number>;
-    readonly vote: IDurableValue<string>;
+    readonly votedFor: IDurableValue<string>;
 }
 
-interface ITerm {
-    term: IDurableValue<number>;
+interface ICurrentTerm {
+    currentTerm: IDurableValue<number>;
 }
 
-type ITermOrDataDir = ITerm | IDataDir;
+type ICurrentTermOrDataDir = ICurrentTerm | IDataDir;
 
-interface IVote {
-    vote: IDurableValue<string>;
+interface IVotedFor {
+    votedFor: IDurableValue<string>;
 }
 
-type IVoteOrDataDir = IVote | IDataDir;
+type IVotedForOrDataDir = IVotedFor | IDataDir;
 
 class Server implements IServer {
     private readonly cluster: ICluster;
@@ -105,16 +105,16 @@ class Server implements IServer {
     public readonly logger: ILogger;
     public readonly rpcService: IRpcService;
     private state: IState;
-    private vote: IDurableValue<string>;
+    private votedFor: IDurableValue<string>;
 
     constructor(options: IServerOptions) {
         this.cluster = options.cluster;
+        this.currentTerm = options.currentTerm;
         this.electionTimer = options.electionTimer;
         this.endpoint = options.cluster.servers[options.id];
         this.id = options.id;
         this.log = options.log;
         this.logger = options.logger;
-        this.currentTerm = options.term;
         this.rpcService = options.rpcService;
         // `noop` is not a state specified by the Raft protocol.
         // It is used here as a ["null
@@ -122,7 +122,7 @@ class Server implements IServer {
         // ensure that `Server` can always call `enter`
         // and `exit` on `this.state`.
         this.state = createState('noop', null);
-        this.vote = options.vote;
+        this.votedFor = options.votedFor;
     }
 
     public getCluster(): ICluster {
@@ -139,7 +139,7 @@ class Server implements IServer {
     // > *§5. "...latest term server has seen..."*
     // > *§5.1. "...Raft divides time into _terms_..."*
     public getCurrentTerm(): number {
-        return this.currentTerm.value;
+        return this.currentTerm.getValue();
     }
 
     public getLastApplied(): number {
@@ -152,8 +152,8 @@ class Server implements IServer {
 
     // The `Server` vote is the...
     // *§5. "...candidateId that received vote in current term..."*
-    public getVote(): ServerId {
-        return this.vote.value;
+    public getVotedFor(): ServerId {
+        return this.votedFor.getValue();
     }
 
     // The `onReceive` method can be used to register a
@@ -233,14 +233,14 @@ class Server implements IServer {
     // > *§5. "...(Updated on stable storage before responding)..."*  
     // to RPC requests.
     public setCurrentTerm(newTerm: number) {
-        this.currentTerm.value = newTerm;
+        this.currentTerm.setValue(newTerm);
         // The `Server` vote is the candidate the `Server`
         // voted for in the current term...
         // > *§5. "...or null if none..."*
         // When a `Server` enters a new election,
         // it has not yet voted for a candidate,
         // so its vote is set here to `null`.
-        this.setVote(null);
+        this.setVotedFor(null);
     }
 
     // When the vote is updated, it is not immediately
@@ -248,8 +248,8 @@ class Server implements IServer {
     // vote is part of persistent state that is...
     // > *§5. "...(Updated on stable storage before responding)..."*  
     // ...to RPC requests.
-    public setVote(candidateId: ServerId): void {
-        this.vote.value = candidateId;
+    public setVotedFor(candidateId: ServerId): void {
+        this.votedFor.setValue(candidateId);
     }
 
     // After the `Server` loads and initializes its term and vote,
@@ -266,14 +266,7 @@ class Server implements IServer {
         return Promise.all([
                 // The current term is...
                 // > *§5. "...initialized to zero on first boot..."*
-                this.currentTerm.read(null)
-                    .then((function(value: number) {
-                        if(value == null) {
-                            this.logger.debug('Term was not found on persistent storage; setting to zero');
-                            this.term = 0;
-                        }
-                    }).bind(this)),
-                this.vote.read()
+                this.currentTerm.readIfExistsElseSetAndWrite(0),
             ])
             .then(() => {
                 this.logger.debug('Starting RPC service');
@@ -292,7 +285,7 @@ class Server implements IServer {
         this.state.exit();
         this.logger.debug('Stopping RPC service');
         return this.rpcService.close()
-        .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));
+            .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));
     }
 
     // A `Server` transitions between multiple states:
@@ -315,39 +308,39 @@ class Server implements IServer {
     private updatePersistentState(): Promise<void> {
         return this.log.write()
             .then(() => this.currentTerm.write())
-            .then(() => this.vote.write());
+            .then(() => this.votedFor.write());
     }
 }
 
 // The `createServer` method produces a `Server` configured
 // by the provided `options`.
 export function createServer(options: ICreateServerOptions): IServer {
-    let term: IDurableValue<number>;
-    if('term' in options) {
-        term = options.term;
+    let currentTerm: IDurableValue<number>;
+    if('currentTerm' in options) {
+        currentTerm = options.currentTerm;
     } else if('dataDir' in options) {
-        term = createDurableInteger(path.join(options.dataDir, 'term'));
+        currentTerm = createDurableInteger(path.join(options.dataDir, 'currentTerm'));
     } else {
-        throw new Error('Must supply either term or dataDir');
+        throw new Error('Must supply either currentTerm or dataDir');
     }
 
-    let vote: IDurableValue<string>;
-    if('vote' in options) {
-        vote = options.vote;
+    let votedFor: IDurableValue<string>;
+    if('votedFor' in options) {
+        votedFor = options.votedFor;
     } else if('dataDir' in options) {
-        vote = createDurableString(path.join(options.dataDir, 'vote'));
+        votedFor = createDurableString(path.join(options.dataDir, 'votedFor'));
     } else {
-        throw new Error('Must supply either vote or dataDir');
+        throw new Error('Must supply either votedFor or dataDir');
     }
 
     return new Server({
         cluster: options.cluster,
+        currentTerm,
         electionTimer: options.electionTimer || createTimer(),
         id: options.id,
         log: options.log || createLog(),
         logger: options.logger || createLogger(),
         rpcService: options.rpcService || createRpcService(),
-        term,
-        vote
+        votedFor
     });
 }

@@ -5,9 +5,12 @@ export type DurableType = number | string;
 export type DurableTypeMap = { [T in DurableType]: T };
 
 export interface IDurableValue<T extends DurableType> {
-    read(defaultValue?: T): Promise<T>;
+    exists(): Promise<boolean>;
+    getValue(): T;
+    read(): Promise<T>;
+    readIfExistsElseSetAndWrite(value: T): Promise<T>;
+    setValue(value: T): void;
     write(): Promise<void>;
-    value: T;
 }
 
 export interface IDurableValueOptions<T extends DurableType> {
@@ -25,14 +28,28 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
     private path: string;
     private serializer: (value: T) => Uint8Array;
     private inSync: boolean;
-    private _value: T;
+    private value: T;
 
     constructor(options: IDurableValueOptions<T>) {
         this.deserializer = options.deserializer;
-        this._value = null;
         this.path = options.path;
         this.serializer = options.serializer;
         this.inSync = false;
+        this.value = null;
+    }
+
+    // Returns a resolved Promise containing `true` if the
+    // path exists on disk,  otherwise, resolved with `false`.
+    public exists(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            fs.access(this.path, fs.constants.F_OK, (err) => {
+                if(err) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
     }
 
     // Returns a `Promise` containing the deserialized
@@ -42,60 +59,69 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
     // If the path on disk cannot be read due, for example
     // to insufficient permissions, a rejected `Promise`
     // is returned.
-    public read(defaultValue: T = null): Promise<T> {
-        if(this.inSync) return Promise.resolve(this._value);
-
-        return new Promise((function(resolve: any, reject: any) {
-            fs.readFile(this.path, (function(err: any, data: Buffer) {
-                if(err == null || err.code == 'ENOENT') {
-                    let value = null;
-                    if(err != null) {
-                        value = defaultValue;
-                    } else {
-                        value = this.deserializer(data);
-                    }
-                    this.inSync = true;
-                    this.value = value;
-                    resolve(this.value);
-                } else {
+    public read(): Promise<T> {
+        return new Promise((resolve: any, reject: any) => {
+            fs.readFile(this.path, (err: any, data: Buffer) => {
+                if(err != null)
                     reject('Failed to read durable value: ' + err);
-                }
-            }).bind(this));
-        }).bind(this));
+                this.value = this.deserializer(data);
+                this.inSync = true;
+                resolve(this.value);
+            });
+        });
     }
 
-    // Returns a `Promise` that is fulfilled unless the value
+    // If the path exists, read its value and return a Promise
+    // resolved with the deserialized contents.
+    //
+    // Otherwise, set the provided value and write to disk,
+    // returning a Promise resolved with the provided value.
+    public readIfExistsElseSetAndWrite(value: T): Promise<T> {
+        return this.exists()
+            .then(exists => {
+                if(exists) {
+                    return this.read();
+                } else {
+                    this.setValue(value);
+                    return this.write().then(() => {
+                        return value;
+                    });
+                }
+            });
+    }
+
+    // Returns a `Promise` that is resolved unless the value
     // cannot be written to the disk path.
     public write(): Promise<void> {
         if(this.inSync) {
             return Promise.resolve();
         }
 
-        return new Promise((function(resolve: any, reject: any) {
-            fs.writeFile(this.path, this.serializer(this.value), { flag: 'w' }, (function(err: string) {
+        return new Promise((resolve: any, reject: any) => {
+            fs.writeFile(this.path, this.serializer(this.value), { flag: 'w' }, (err: any) => {
                 if(err) {
                     reject('Failed to write durable value: ' + err);
                 } else {
-                    resolve(this.value);
+                    resolve();
                 }
                 this.inSync = true;
-            }).bind(this));
-        }).bind(this));
+            });
+        });
     }
 
     // Returns the currently known value.
     // The value is null until it is `read` from the
     // disk path, and is null when `read` is called but
     // the disk path does not exist or is empty.
-    public get value(): T {
-        return this._value;
+    public getValue(): T {
+        return this.value;
     }
 
     // Updates the value. Changes to the value are not
     // persisted to disk until `write` is called.
-    public set value(newValue: T) {
+    public setValue(newValue: T) {
         this.inSync = false;
-        this._value = newValue;
+        this.value = newValue;
     }
 }
 
