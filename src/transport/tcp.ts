@@ -47,8 +47,7 @@ class TcpTransport implements ITransport {
             socket.on('data', (data: Uint8Array) => {
                 for(let receiver of this.receivers) {
                     receiver(endpoint, data);
-                }
-            });
+                } });
 
             return true;
         }

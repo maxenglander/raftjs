@@ -3,7 +3,7 @@ import { expect } from 'chai';
 
 import { AppendEntries, IRpcMessage, RequestVote } from '../';
 import { createRpcRequest as createRequestVoteRequest } from '../request-vote';
-import { IEndpoint, createEndpoint } from '../../../net';
+import { IEndpoint, createEndpoint } from '../../../../net';
 
 import { ICodec, createFlatbuffersCodec } from './';
 

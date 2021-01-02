@@ -1,4 +1,4 @@
-import { ITransport, createTcpTransport } from '../transport';
+import { ITransport, createTcpTransport } from '../../transport';
 import { ICodec, createFlatbuffersCodec } from './message/codec';
 
 // By default, `RpcService` uses

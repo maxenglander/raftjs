@@ -5,9 +5,9 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import * as AppendEntries from '../../rpc/message/append-entries';
+import * as AppendEntries from '../rpc/message/append-entries';
 import { IEndpoint, createEndpoint } from '../../net';
-import { IRpcEventListener, createRpcService } from '../../rpc';
+import { IRpcEventListener, createRpcService } from '../rpc';
 import { IServer, createServer } from '../';
 import { ITimer, createTimer, createTimeoutChooser } from '../timer';
 import { IState, StateTransition } from './';

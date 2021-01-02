@@ -1,5 +1,5 @@
 import { RpcCallTypeMap, IRpcMessage, RpcProcedureTypeMap } from './message';
-import { compilerError } from '../util/compiler-error';
+import { compilerError } from '../../util/compiler-error';
 import { IRpcReceiver } from './';
 
 export interface IRpcReceiverRegistry {

@@ -1,4 +1,4 @@
-import { createRpcRequest as createAppendEntriesRequest } from '../../rpc/message/append-entries';
+import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
 import { IServer, ServerId } from '../';
 import { BaseState, createBaseState } from './base';
 import { IState, StateType } from './';

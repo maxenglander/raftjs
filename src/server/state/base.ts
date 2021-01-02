@@ -1,8 +1,8 @@
 import { ICluster } from '../../cluster';
-import { IRpcMessage } from '../../rpc/message';
-import * as AppendEntries from '../../rpc/message/append-entries';
+import { IRpcMessage } from '../rpc/message';
+import * as AppendEntries from '../rpc/message/append-entries';
 import { IEndpoint } from '../../net';
-import { IRpcEventListener } from '../../rpc';
+import { IRpcEventListener } from '../rpc';
 import { compilerError } from '../../util/compiler-error';
 import { IServer } from '../';
 import { IState, StateType } from './';
