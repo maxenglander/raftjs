@@ -29,7 +29,7 @@ interface IBaseCreateServerOptions {
     readonly id: ServerId;
     readonly log?: ILog;
     readonly logger?: ILogger;
-    readonly rpcService?: IRpcService;
+    readonly peerApi?: IRpcService;
 }
 
 export type ICreateServerOptions =
@@ -45,7 +45,7 @@ export interface IServer {
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
-    readonly rpcService: IRpcService;
+    readonly peerApi: IRpcService;
     getCommitIndex(): number;
     getCluster(): ICluster;
     getCurrentTerm(): number;
@@ -74,7 +74,7 @@ export interface IServerOptions {
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
-    readonly rpcService: IRpcService;
+    readonly peerApi: IRpcService;
     readonly votedFor: IDurableValue<string>;
 }
 
@@ -101,7 +101,7 @@ class Server implements IServer {
     private lastApplied: number;
     public readonly log: ILog;
     public readonly logger: ILogger;
-    public readonly rpcService: IRpcService;
+    public readonly peerApi: IRpcService;
     private state: IState;
     private votedFor: IDurableValue<string>;
 
@@ -113,7 +113,7 @@ class Server implements IServer {
         this.id = options.id;
         this.log = options.log;
         this.logger = options.logger;
-        this.rpcService = options.rpcService;
+        this.peerApi = options.peerApi;
         // `noop` is not a state specified by the Raft protocol.
         // It is used here as a ["null
         // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
@@ -160,7 +160,7 @@ class Server implements IServer {
     public onReceiveRpc<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
         receiver: IRpcReceiver<P, C>
     ): IRpcEventListener {
-        return this.rpcService.onReceive(receiver);
+        return this.peerApi.onReceive(receiver);
     }
 
     // *> *§5.3 "...Once a leader has been elected, it begins servicing client requests...*
@@ -214,14 +214,14 @@ class Server implements IServer {
         }
 
         if(isRpcRequest(message)) {
-            return Promise.resolve(this.rpcService.send(endpoints, message));
+            return Promise.resolve(this.peerApi.send(endpoints, message));
         } else if(isRpcResponse(message)) {
             // Before responding to an RPC request, the recipient `Server`
             // updates persistent state on stable storage.
             // > *§5. "...(Updated on stable storage before responding)..."*  
             // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
             return this.updatePersistentState()
-                .then(() => this.rpcService.send(endpoints, message));
+                .then(() => this.peerApi.send(endpoints, message));
         }
     }
 
@@ -268,7 +268,7 @@ class Server implements IServer {
             ])
             .then(() => {
                 this.logger.debug('Starting RPC service');
-                return this.rpcService.listen(this.endpoint);
+                return this.peerApi.listen(this.endpoint);
             })
             .then(() => {
                 this.logger.debug('Transitioning to follower');
@@ -282,7 +282,7 @@ class Server implements IServer {
         this.logger.debug('Exiting current state');
         this.state.exit();
         this.logger.debug('Stopping RPC service');
-        return this.rpcService.close()
+        return this.peerApi.close()
             .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));
     }
 
@@ -338,7 +338,7 @@ export function createServer(options: ICreateServerOptions): IServer {
         id: options.id,
         log: options.log || createLog(),
         logger: options.logger || createLogger(),
-        rpcService: options.rpcService || createRpcService(),
+        peerApi: options.peerApi || createRpcService(),
         votedFor
     });
 }

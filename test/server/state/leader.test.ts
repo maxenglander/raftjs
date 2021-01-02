@@ -27,13 +27,13 @@ describe('server leader state', function() {
 
     let leader: IState,
         electionTimer: ITimer,
-        rpcService: IRpcService,
+        peerApi: IRpcService,
         server: IServer;
 
     afterEach(function() {
         return Promise.all([
-            rpcService.close(),
-            server.rpcService.close()
+            peerApi.close(),
+            server.peerApi.close()
         ]);
     });
 
@@ -58,11 +58,11 @@ describe('server leader state', function() {
 
         leader = createLeaderState(server);
 
-        rpcService = createRpcService();
+        peerApi = createRpcService();
 
         return Promise.all([
-            server.rpcService.listen(server.endpoint),
-            rpcService.listen(peerEndpoint)
+            server.peerApi.listen(server.endpoint),
+            peerApi.listen(peerEndpoint)
         ]);
     });
 
@@ -90,11 +90,11 @@ describe('server leader state', function() {
                 }
             }
 
-            heartbeatListener = rpcService.onReceive({
+            heartbeatListener = peerApi.onReceive({
                 callType: 'request',
                 procedureType: 'append-entries',
                 notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
-                    rpcService.send([endpoint], AppendEntries.createRpcResponse({
+                    peerApi.send([endpoint], AppendEntries.createRpcResponse({
                         success: true,
                         term: server.getCurrentTerm()
                     }));
