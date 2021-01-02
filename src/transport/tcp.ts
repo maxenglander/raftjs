@@ -39,16 +39,16 @@ class TcpTransport implements ITransport {
         // Try to store the socket, and set up 'end'
         // and 'data' handlers.
         if(this.sockets.save(endpoint, socket)) {
-            socket.on('end', (function() {
+            socket.on('end', () => {
                 socket.destroy();
                 this.sockets.remove(endpoint);
-            }).bind(this));
+            });
 
-            socket.on('data', (function(data: Uint8Array) {
+            socket.on('data', (data: Uint8Array) => {
                 for(let receiver of this.receivers) {
                     receiver.data(endpoint, data);
                 }
-            }).bind(this));
+            });
 
             return true;
         }
@@ -59,13 +59,13 @@ class TcpTransport implements ITransport {
     // When closing a transport, close all client connections
     // and stop listening for connections on the transport endpoint.
     public close(): Promise<void> {
-        const promise: Promise<void> = new Promise((function(resolve: any, reject: any) {
-            const wrappedResolve = (function() {
+        const promise: Promise<void> = new Promise((resolve: any, reject: any) => {
+            const wrappedResolve = () => {
                 if(_clientsClosed && _serverClosed) {
                     this.endpoint = null;
                     resolve();
                 }
-            }).bind(this);
+            };
 
             let _clientsClosed: boolean = false,
                 _serverClosed: boolean = false;
@@ -81,25 +81,25 @@ class TcpTransport implements ITransport {
                 _clientsClosed = true;
                 wrappedResolve();
             });
-        }).bind(this));
+        });
 
         return promise;
     }
 
     // Make an outgoing TCP connection to the provided endpoint.
     private connect(endpoint: IEndpoint): Promise<net.Socket> {
-        return new Promise((function(resolve: any, reject: any) {
+        return new Promise((resolve: any, reject: any) => {
             if(this.sockets.has(endpoint)) {
                 resolve(this.sockets.get(endpoint));
             } else {
-                const socket = net.createConnection(endpoint.port, endpoint.host, (function() {
+                const socket = net.createConnection(endpoint.port, endpoint.host, () => {
                     if(this.accept(socket)) {
                         resolve(socket);
                     } else {
                         socket.end();
                         reject('failed to save socket');
                     }
-                }).bind(this));
+                });
 
                 // Set up a socket error handler to capture
                 // errors such as 'connection refused'.
@@ -107,7 +107,7 @@ class TcpTransport implements ITransport {
                     reject(err);
                 });
             }
-        }).bind(this));
+        });
     }
 
     // Listen for incoming TCP connections on the provided endpoint.
@@ -117,11 +117,11 @@ class TcpTransport implements ITransport {
 
         this.endpoint = endpoint;
 
-        return new Promise((function(resolve: any, reject: any) {
-            this.server.listen(this.endpoint.port, this.endpoint.host, function() {
+        return new Promise((resolve: any, reject: any) => {
+            this.server.listen(this.endpoint.port, this.endpoint.host, () => {
                 resolve();
             });
-        }).bind(this));
+        });
     }
 
     // Register a receiver.
@@ -131,9 +131,9 @@ class TcpTransport implements ITransport {
 
     // Send data to the provided endpoint.
     public send(endpoint: IEndpoint, data: Uint8Array): Promise<void> {
-        return new Promise((function(resolve: any, reject: any) {
-            this.connect(endpoint).then(function(socket: net.Socket) {
-                socket.write(data, null, function(err: string) {
+        return new Promise((resolve: any, reject: any) => {
+            this.connect(endpoint).then((socket: net.Socket) => {
+                socket.write(data, null, (err: string) => {
                     if(err) {
                         reject(err);
                     } else {
@@ -141,7 +141,7 @@ class TcpTransport implements ITransport {
                     }
                 });
             }, reject);
-        }).bind(this));
+        });
     }
 }
 

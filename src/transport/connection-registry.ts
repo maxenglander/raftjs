@@ -67,10 +67,10 @@ export default class ConnectionRegistry<T> implements IConnectionRegistry<T> {
     // Remove all connections, invoking an optional callback after
     // all connections have been removed.
     public removeEach(onRemove: Callback<T>, onDone: NoArgsCallback = null): void {
-        this.forEach((function(endpoint: IEndpoint, connection: T) {
+        this.forEach((endpoint: IEndpoint, connection: T) => {
             this.remove(endpoint);
             onRemove(connection);
-        }).bind(this), function() {
+        }, () => {
             if(onDone) onDone()
         });
     }

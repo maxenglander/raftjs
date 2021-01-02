@@ -104,10 +104,10 @@ class Timer implements ITimer {
 
         this.notifyListeners('started');
 
-        this.timeoutId = setTimeout((function() {
+        this.timeoutId = setTimeout(() => {
             this.stop();
             this.notifyListeners('timeout');
-        }).bind(this), this._timeout);
+        }, this._timeout);
     }
 
     // Stop the timer.
