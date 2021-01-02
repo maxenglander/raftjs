@@ -7,7 +7,7 @@ export function createMockTransport(options): ITransport {
         listen = options.listen ? options.listen: function(x: never): Promise<void> {
             throw new Error('Not implemented');
         },
-        receive = options.receive ? options.receive: function(x: never): void {
+        onReceive = options.receive ? options.receive: function(x: never): void {
             throw new Error('Not implemented');
         },
         send = options.send ? options.send: function(x: never, y: never): Promise<void> {
@@ -17,7 +17,7 @@ export function createMockTransport(options): ITransport {
     return {
         close,
         listen,
-        receive,
+        onReceive,
         send
     };
 }

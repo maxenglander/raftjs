@@ -269,14 +269,9 @@ describe('tcp transport', function() {
                             done();
                     }
 
-                    transport.receive({
-                        data: function(address, data) {
-                            expect(data.toString()).to.equal(expectedMessages[2 - leftToReceive]);
-                            wrappedDone();
-                        },
-                        failure: function(failure) {
-                            done(failure);
-                        }
+                    transport.onReceive((address, data) => {
+                        expect(data.toString()).to.equal(expectedMessages[2 - leftToReceive]);
+                        wrappedDone();
                     });
                 });
             });

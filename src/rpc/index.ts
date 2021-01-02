@@ -60,11 +60,8 @@ class RpcService implements IRpcService {
         // When data is received from the underlying transport,
         // decode the data to an RPC message and notify any
         // receivers of the message.
-        this.transport.receive({
-            data: (endpoint: IEndpoint, data: Uint8Array) => {
-                this.notifyReceivers(endpoint, this.codec.decode(data));
-            },
-            failure(failure: IFailure): void {}
+        this.transport.onReceive((endpoint: IEndpoint, data: Uint8Array) => {
+            this.notifyReceivers(endpoint, this.codec.decode(data));
         });
     }
 
@@ -94,8 +91,7 @@ class RpcService implements IRpcService {
         return {
             detach: (): void => {
                 this.receivers.remove(receiver);
-            }
-        };
+            } };
     }
 
     // Send a message to all endpoints in parallel.
