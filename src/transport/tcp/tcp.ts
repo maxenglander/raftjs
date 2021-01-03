@@ -1,8 +1,8 @@
 import * as net from 'net';
 
-import { IEndpoint, createEndpoint } from '../net/endpoint';
-import { IReceiver, ITransport } from './';
-import { IConnectionRegistry, createConnectionRegistry } from './connection-registry';
+import { IEndpoint, createEndpoint } from '../../net/endpoint';
+import { IReceiver, ITransport } from '../';
+import { IConnectionRegistry, createConnectionRegistry } from '../connection-registry';
 
 export interface ITcpTransportOptions {
     sockets?: IConnectionRegistry<net.Socket>;
@@ -11,7 +11,7 @@ export interface ITcpTransportOptions {
 // A TCP transport that can accept and create
 // TCP sockets, and tries to re-use sockets
 // when possible.
-class TcpTransport implements ITransport {
+export class TcpTransport implements ITransport {
     private endpoint: IEndpoint = null;
     private receivers: Array<IReceiver>;
     private server: any;
@@ -142,8 +142,4 @@ class TcpTransport implements ITransport {
             }, reject);
         });
     }
-}
-
-export function createTcpTransport(options: ITcpTransportOptions = {}): ITransport {
-    return new TcpTransport(options);
 }
