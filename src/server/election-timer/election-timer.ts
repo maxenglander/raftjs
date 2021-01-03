@@ -1,5 +1,8 @@
 import { Callback } from '../../util/callback';
 
+import { ElectionTimeout, ElectionTimeoutInterval } from './election-timeout';
+import { IElectionTimeoutChooser } from './election-timeout-chooser';
+
 export interface IElectionTimer {
     getTimeout: () => number;
     isRunning: () => boolean;
@@ -17,23 +20,6 @@ export interface IElectionTimerOptions {
 }
 
 export type ElectionTimerEvent = 'reset' | 'started' | 'stopped' | 'timeout';
-
-export type ElectionTimeout = number;
-
-export interface IElectionTimeoutChooser {
-    choose(): ElectionTimeout;
-}
-
-export interface IElectionTimeoutChooserOptions {
-    readonly interval?: ElectionTimeoutInterval;
-}
-
-export type ElectionTimeoutInterval = [number, number];
-
-// The Raft paper recommends an election timeout
-// interval of 150–300 milliseconds:
-// > *§9.3 "...We recommend using a conservative election timeout such as 150–300ms..."
-export const DEFAULT_ELECTION_TIMEOUT_INTERVAL: ElectionTimeoutInterval = [150, 300];
 
 // Raft uses timers to trigger the conversion of followers
 // to candidates, and candidates to restart elections.
@@ -118,25 +104,5 @@ export class ElectionTimer implements IElectionTimer {
         this.running = false;
         clearTimeout(this.timeoutId);
         this.notifyListeners('stopped');
-    }
-}
-
-// Raft uses:
-// > *§5.2 "...randomized election timeouts to ensure that split votes are rare..."
-export class ElectionTimeoutChooser implements IElectionTimeoutChooser {
-    private interval: ElectionTimeoutInterval;
-
-    constructor(options: IElectionTimeoutChooserOptions = {}) {
-        this.interval = options.interval
-            ? options.interval
-            : DEFAULT_ELECTION_TIMEOUT_INTERVAL;
-    }
-
-    /**
-     * Get a random integer between the interval upper and lower bound.
-     * See: https://mzl.la/2Vw9OmR
-     */
-    public choose(): ElectionTimeout {
-        return Math.floor(Math.random() * (this.interval[1] - this.interval[0] + 1)) + this.interval[0];
     }
 }
