@@ -1,5 +1,5 @@
-import { IEndpoint, createEndpoint, parseEndpoint } from '../net/endpoint';
-import { Callback, NoArgsCallback } from '../util/callback';
+import { IEndpoint, createEndpoint, parseEndpoint } from '../../net/endpoint';
+import { Callback, NoArgsCallback } from '../../util/callback';
 
 export interface IConnectionRegistry<T> {
     count(): number;
@@ -14,7 +14,7 @@ export interface IConnectionRegistry<T> {
 
 // A map of endpoint to connections, with methods
 // to iterate over or remove all endpoints at once.
-export default class ConnectionRegistry<T> implements IConnectionRegistry<T> {
+export class ConnectionRegistry<T> implements IConnectionRegistry<T> {
     private connections: { [key: string]: T };
     private numConnections: number;
 
@@ -81,8 +81,4 @@ export default class ConnectionRegistry<T> implements IConnectionRegistry<T> {
         this.numConnections++;
         return true;
     }
-}
-
-export function createConnectionRegistry<T>(): IConnectionRegistry<T> {
-    return new ConnectionRegistry();
 }
