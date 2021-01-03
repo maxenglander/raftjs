@@ -1,5 +1,5 @@
 import { IRpcService, IRpcServiceOptions, RpcService } from './service';
-import { createFlatbuffersCodec } from './message/codec';
+import { createFlatbuffersCodec } from './codec';
 import { createTcpTransport } from '../../transport';
 
 export function createRpcService(options: IRpcServiceOptions = {}): IRpcService {

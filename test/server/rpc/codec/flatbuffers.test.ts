@@ -1,9 +1,9 @@
 import { TextDecoder, TextEncoder } from 'util';
 import { expect } from 'chai';
 
-import { AppendEntries, IRpcMessage, RequestVote } from '../';
-import { createRpcRequest as createRequestVoteRequest } from '../request-vote';
-import { IEndpoint, createEndpoint } from '../../../../net/endpoint';
+import { AppendEntries, IRpcMessage, RequestVote } from '../message';
+import { createRpcRequest as createRequestVoteRequest } from '../message/request-vote';
+import { IEndpoint, createEndpoint } from '../../../net/endpoint';
 
 import { ICodec, createFlatbuffersCodec } from './';
 

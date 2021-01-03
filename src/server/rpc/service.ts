@@ -9,7 +9,7 @@ import {
     isRpcRequest,
     isRpcResponse
 } from './message';
-import { ICodec } from './message/codec';
+import { ICodec } from './codec';
 import { IEndpoint } from '../../net/endpoint';
 import { IFailure, ITransport } from '../../transport';
 import { IRpcReceiverRegistry, createRpcReceiverRegistry } from './receiver-registry';

@@ -4,8 +4,8 @@
 //
 import { flatbuffers } from 'flatbuffers';
 
-import { AppendEntries, IRpcMessage, RequestVote } from '../';
-import { compilerError } from '../../../../util/compiler-error';
+import { AppendEntries, IRpcMessage, RequestVote } from '../message';
+import { compilerError } from '../../../util/compiler-error';
 
 import { ICodec } from './';
 
