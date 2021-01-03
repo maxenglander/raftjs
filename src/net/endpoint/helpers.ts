@@ -1,4 +1,4 @@
-import { IEndpoint } from './endpoint';
+import { IEndpoint } from './@types';
 import { createEndpoint } from './factory';
 
 // Verify that the provided object is an `Endpoint`. Used by

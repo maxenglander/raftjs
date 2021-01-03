@@ -73,9 +73,7 @@ function decodeAppendEntriesRequest(schema: Schema.Message): IAppendEntriesRpcRe
     });
 
     return {
-        callType: 'request',
-        procedureType: 'append-entries',
-        arguments: {
+        callType: 'request', procedureType: 'append-entries', arguments: {
             entries: entries,
             leaderCommit: args.leaderCommit(),
             leaderId: args.leaderId(),

@@ -2,8 +2,8 @@ import { CandidateState } from './candidate';
 import { BaseState } from './base';
 import { FollowerState } from './follower';
 import { LeaderState } from './leader';
-import { IServer } from '../server';
-import { IState, StateType } from './state';
+import { IServer } from '../@types';
+import { IState, StateType } from './@types';
 import { compilerError } from '../../util/compiler-error';
 
 // The "no-op" state is not part of the Raft

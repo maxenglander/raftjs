@@ -1,6 +1,4 @@
-export type ElectionTimeout = number;
-
-export type ElectionTimeoutInterval = [number, number];
+import { ElectionTimeoutInterval } from './@types';
 
 // The Raft paper recommends an election timeout
 // interval of 150–300 milliseconds:

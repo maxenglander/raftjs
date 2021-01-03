@@ -1,9 +1,4 @@
-export interface IEndpoint {
-    equals: (endpoint: IEndpoint) => boolean;
-    host: string;
-    port: number;
-    toString: () => string;
-}
+import { IEndpoint } from './@types';
 
 // A simple wrapper around a `{ host, port }` object,
 // with helpful methods for equality comparisons and

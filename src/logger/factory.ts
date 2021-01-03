@@ -1,7 +1,7 @@
 import * as Pino from 'pino';
 const pino = require('pino');
 
-import { ILogger, ILoggerOptions } from './logger';
+import { ILogger, ILoggerOptions } from './@types';
 
 // Create a logger.
 export function createLogger(options: ILoggerOptions = {}): ILogger {

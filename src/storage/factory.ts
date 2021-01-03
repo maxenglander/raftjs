@@ -1,4 +1,5 @@
-import { IDurableValue, DurableInteger, DurableString } from './storage';
+import { IDurableValue } from './@types';
+import { DurableInteger, DurableString } from './storage';
 
 export function createDurableInteger(path: string): IDurableValue<number> {
     return new DurableInteger(path);

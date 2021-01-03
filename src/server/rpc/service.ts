@@ -11,35 +11,9 @@ import {
 } from './message';
 import { ICodec } from './codec';
 import { IEndpoint } from '../../net/endpoint';
-import { IFailure, ITransport } from '../../transport';
 import { IRpcReceiverRegistry, createRpcReceiverRegistry } from './receiver-registry';
-
-export interface IRpcServiceOptions {
-    readonly codec?: ICodec;
-    readonly transport?: ITransport;
-}
-
-export interface IRpcEventListener {
-    detach(): void;
-}
-
-export interface IRpcReceiver<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']> {
-    procedureType: RpcProcedureTypeMap[P];
-    callType: RpcCallTypeMap[C];
-    notify(
-        endpoint: IEndpoint,
-        message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-    ): void;
-}
-
-export interface IRpcService {
-    close(): Promise<void>;
-    listen(endpoint: IEndpoint): Promise<void>;
-    onReceive<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
-        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-    ): IRpcEventListener;
-    send(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<void>[];
-}
+import { IRpcEventListener, IRpcReceiver, IRpcService, IRpcServiceOptions } from './@types';
+import { ITransport } from '../../transport';
 
 // Encodes, sends, decodes and receives RPC messages.
 export class RpcService implements IRpcService {
@@ -80,8 +54,7 @@ export class RpcService implements IRpcService {
     // Register to receiver messages of a particular procedure and call type,
     // e.g. `onReceive('append-entries', 'request', {...})`.
     public onReceive<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
-        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-    ): IRpcEventListener {
+        receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>): IRpcEventListener {
         this.receivers.add(receiver);
         return {
             detach: (): void => {

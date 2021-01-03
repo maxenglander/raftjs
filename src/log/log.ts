@@ -1,22 +1,8 @@
-export interface ILog {
-    append(entry: ILogEntry): void;
-    getEntry(index: number): ILogEntry;
-    getLastEntry(): ILogEntry;
-    getLastIndex(): number;
-    getLastTerm(): number;
-    getNextIndex(): number;
-    write(): Promise<void>;
-}
-
-export interface ILogEntry {
-    readonly command: Uint8Array;
-    readonly index: number;
-    readonly term: number;
-}
-
-export interface ILogOptions {
-    term: number;
-}
+import {
+    ILog,
+    ILogEntry,
+    ILogOptions
+} from './@types';
 
 // This is stub for for a persistent log of entries.
 // Currently, `raftjs` does not implement handling of

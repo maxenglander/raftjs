@@ -1,25 +1,15 @@
 import { Callback } from '../../util/callback';
 
-import { ElectionTimeout, ElectionTimeoutInterval } from './election-timeout';
-import { IElectionTimeoutChooser } from './election-timeout-chooser';
+import {
+    ElectionTimerEvent,
+    ElectionTimerListener,
+    ElectionTimeout,
+    ElectionTimeoutInterval,
+    IElectionTimer,
+    IElectionTimerOptions,
+    IElectionTimeoutChooser
+} from './@types';
 
-export interface IElectionTimer {
-    getTimeout: () => number;
-    isRunning: () => boolean;
-    on:  (events: ElectionTimerEvent | Array<ElectionTimerEvent>, listener: ElectionTimerListener) => void;
-    off: (events: ElectionTimerEvent | Array<ElectionTimerEvent>, listener: ElectionTimerListener) => void;
-    reset: () => void;
-    start: () => void;
-    stop:  () => void;
-}
-
-export type ElectionTimerListener = Callback<ElectionTimerEvent>;
-
-export interface IElectionTimerOptions {
-    readonly timeoutChooser?: IElectionTimeoutChooser;
-}
-
-export type ElectionTimerEvent = 'reset' | 'started' | 'stopped' | 'timeout';
 
 // Raft uses timers to trigger the conversion of followers
 // to candidates, and candidates to restart elections.

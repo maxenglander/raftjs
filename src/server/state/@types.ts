@@ -1,4 +1,4 @@
-import { IServer } from '../server';
+import { IServer } from '../@types';
 
 export interface IState {
     enter: () => void;

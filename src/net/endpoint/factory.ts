@@ -1,4 +1,5 @@
-import { Endpoint, IEndpoint } from './endpoint';
+import { IEndpoint } from './@types';
+import { Endpoint } from './endpoint';
 
 // Create an `Endpoint` from a `{ host, port }` object.
 export function createEndpoint(options: { host: string, port: number }): IEndpoint {

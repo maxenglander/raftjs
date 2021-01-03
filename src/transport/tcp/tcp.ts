@@ -3,10 +3,7 @@ import * as net from 'net';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IReceiver, ITransport } from '../';
 import { IConnectionRegistry, createConnectionRegistry } from '../connection-registry';
-
-export interface ITcpTransportOptions {
-    sockets?: IConnectionRegistry<net.Socket>;
-}
+import { ITcpTransportOptions } from './@types';
 
 // A TCP transport that can accept and create
 // TCP sockets, and tries to re-use sockets

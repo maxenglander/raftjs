@@ -1,2 +1,2 @@
-export * from './connection-registry';
+export * from './@types';
 export * from './factory';

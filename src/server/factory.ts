@@ -6,40 +6,13 @@
 import * as path from 'path';
 
 import { ICluster } from '../cluster';
+import { ICreateServerOptions, IServer, ServerId } from './@types';
 import { IDurableValue, createDurableInteger, createDurableString } from '../storage';
 import { IElectionTimer, createElectionTimer } from './election-timer';
 import { ILog, createLog } from '../log';
 import { ILogger, createLogger } from '../logger';
 import { IRpcService, createRpcService } from './rpc';
-import { IServer, Server, ServerId } from './server';
-
-interface IBaseCreateServerOptions {
-    readonly cluster: ICluster;
-    readonly electionTimer?: IElectionTimer;
-    readonly id: ServerId;
-    readonly log?: ILog;
-    readonly logger?: ILogger;
-    readonly peerApi?: IRpcService;
-}
-
-export type ICreateServerOptions =
-    IBaseCreateServerOptions & ICurrentTermOrDataDir & IVotedForOrDataDir;
-
-interface IDataDir {
-    dataDir: string;
-}
-
-interface ICurrentTerm {
-    currentTerm: IDurableValue<number>;
-}
-
-type ICurrentTermOrDataDir = ICurrentTerm | IDataDir;
-
-interface IVotedFor {
-    votedFor: IDurableValue<string>;
-}
-
-type IVotedForOrDataDir = IVotedFor | IDataDir;
+import { Server } from './server';
 
 // The `createServer` method produces a `Server` configured
 // by the provided `options`.

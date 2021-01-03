@@ -1,16 +1,8 @@
-import {
-    ElectionTimer,
-    IElectionTimerOptions,
-    IElectionTimer
-} from './election-timer';
+import { IElectionTimer, IElectionTimerOptions, IElectionTimeoutChooser, IElectionTimeoutChooserOptions } from './@types';
+import { DEFAULT_ELECTION_TIMEOUT_INTERVAL } from './constants';
+import { ElectionTimer } from './election-timer';
+import { ElectionTimeoutChooser } from './election-timeout-chooser';
 
-import { DEFAULT_ELECTION_TIMEOUT_INTERVAL } from './election-timeout';
-
-import {
-    ElectionTimeoutChooser,
-    IElectionTimeoutChooserOptions,
-    IElectionTimeoutChooser
-} from './election-timeout-chooser';
 
 export function createElectionTimer(options: IElectionTimerOptions = {}): IElectionTimer {
     const timeoutChooser = options.timeoutChooser ? options.timeoutChooser : createElectionTimeoutChooser();
