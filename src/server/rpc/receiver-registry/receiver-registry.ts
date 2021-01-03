@@ -1,6 +1,6 @@
-import { RpcCallTypeMap, IRpcMessage, RpcProcedureTypeMap } from './message';
-import { compilerError } from '../../util/compiler-error';
-import { IRpcReceiver } from './';
+import { RpcCallTypeMap, IRpcMessage, RpcProcedureTypeMap } from '../message';
+import { compilerError } from '../../../util/compiler-error';
+import { IRpcReceiver } from '../service';
 
 export interface IRpcReceiverRegistry {
   add:    <P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
@@ -17,7 +17,7 @@ export interface IRpcReceiverRegistry {
 
 // A data structure that maintains an `RpcReceiver` set for each
 // kind of RPC message.
-class RpcReceiverRegistry implements IRpcReceiverRegistry {
+export class RpcReceiverRegistry implements IRpcReceiverRegistry {
     private appendEntriesRequestReceivers:  Set<IRpcReceiver<'append-entries', 'request'>>;
     private appendEntriesResponseReceivers: Set<IRpcReceiver<'append-entries', 'response'>>;
     private requestVoteRequestReceivers:    Set<IRpcReceiver<'request-vote',  'request'>>;
@@ -103,8 +103,4 @@ class RpcReceiverRegistry implements IRpcReceiverRegistry {
             _callType: IRpcMessage['callType'] = receiver.callType;
         this.internalGetAll(_procedureType, _callType).delete(receiver);
     }
-}
-
-export function createRpcReceiverRegistry(): IRpcReceiverRegistry {
-    return new RpcReceiverRegistry();
 }
