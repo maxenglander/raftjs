@@ -13,7 +13,6 @@ import { ICodec } from './message/codec';
 import { IEndpoint } from '../../net/endpoint';
 import { IFailure, ITransport } from '../../transport';
 import { IRpcReceiverRegistry, createRpcReceiverRegistry } from './receiver-registry';
-import { createDefaultCodec, createDefaultTransport } from './defaults';
 
 export interface IRpcServiceOptions {
     readonly codec?: ICodec;
@@ -49,13 +48,9 @@ export class RpcService implements IRpcService {
     private transport: ITransport;
 
     constructor(options: IRpcServiceOptions = {}) {
-        this.codec = options.codec
-            ? options.codec
-            : createDefaultCodec();
+        this.codec = options.codec;
         this.receivers = createRpcReceiverRegistry();
-        this.transport = options.transport
-            ? options.transport
-            : createDefaultTransport();
+        this.transport = options.transport;
 
         // When data is received from the underlying transport,
         // decode the data to an RPC message and notify any
