@@ -119,7 +119,7 @@ class CandidateState extends BaseState {
         this.voteForSelf()
 
         // > *§5. "...reset election timer..."*
-        this.server.logger.trace(`Resetting election timer with timeout ${this.server.electionTimer.timeout}ms`); 
+        this.server.logger.trace(`Resetting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`); 
         this.server.electionTimer.reset();
 
         // > *§5.2 "...issues RequestVote RPCs..."*

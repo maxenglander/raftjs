@@ -7,15 +7,15 @@ import * as path from 'path';
 
 import { ICluster } from '../cluster';
 import { IDurableValue, createDurableInteger, createDurableString } from '../storage';
+import { IElectionTimer, createElectionTimer } from './election-timer';
 import { ILog, createLog } from '../log';
 import { ILogger, createLogger } from '../logger';
 import { IRpcService, createRpcService } from './rpc';
 import { IServer, Server, ServerId } from './server';
-import { ITimer, createTimer } from './timer';
 
 interface IBaseCreateServerOptions {
     readonly cluster: ICluster;
-    readonly electionTimer?: ITimer;
+    readonly electionTimer?: IElectionTimer;
     readonly id: ServerId;
     readonly log?: ILog;
     readonly logger?: ILogger;
@@ -65,7 +65,7 @@ export function createServer(options: ICreateServerOptions): IServer {
     return new Server({
         cluster: options.cluster,
         currentTerm,
-        electionTimer: options.electionTimer || createTimer(),
+        electionTimer: options.electionTimer || createElectionTimer(),
         id: options.id,
         log: options.log || createLog(),
         logger: options.logger || createLogger(),

@@ -7,10 +7,10 @@ import sinon from 'sinon';
 
 import * as AppendEntries from '../rpc/message/append-entries';
 import * as RequestVote from '../rpc/message/request-vote';
+import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
-import { ITimer, createTimer, createTimeoutChooser } from '../timer';
 import { IState, StateTransition, StateType } from './';
 import { createCandidateState } from './candidate';
 
@@ -27,7 +27,7 @@ describe('server candidate state', function() {
         });
 
     let candidate: IState,
-        electionTimer: ITimer,
+        electionTimer: IElectionTimer,
         rpcService: IRpcService,
         server: IServer;
 
@@ -39,8 +39,8 @@ describe('server candidate state', function() {
     });
 
     beforeEach(function() {
-        electionTimer = createTimer({
-            timeoutChooser: createTimeoutChooser({
+        electionTimer = createElectionTimer({
+            timeoutChooser: createElectionTimeoutChooser({
                 interval: [MIN_TIMEOUT, MAX_TIMEOUT]
             })
         });

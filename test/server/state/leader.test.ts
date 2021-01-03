@@ -6,10 +6,10 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import * as AppendEntries from '../rpc/message/append-entries';
+import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
-import { ITimer, createTimer, createTimeoutChooser } from '../timer';
 import { IState, StateTransition, StateType } from './';
 import { createLeaderState } from './leader';
 
@@ -26,7 +26,7 @@ describe('server leader state', function() {
         });
 
     let leader: IState,
-        electionTimer: ITimer,
+        electionTimer: IElectionTimer,
         peerApi: IRpcService,
         server: IServer;
 
@@ -38,8 +38,8 @@ describe('server leader state', function() {
     });
 
     beforeEach(function() {
-        electionTimer = createTimer({
-            timeoutChooser: createTimeoutChooser({
+        electionTimer = createElectionTimer({
+            timeoutChooser: createElectionTimeoutChooser({
                 interval: [MIN_TIMEOUT, MAX_TIMEOUT]
             })
         });

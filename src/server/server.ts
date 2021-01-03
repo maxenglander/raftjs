@@ -17,11 +17,11 @@ import {
 } from './rpc/message';
 import { IEndpoint, isEndpoint } from '../net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
-import { ITimer } from './timer';
+import { IElectionTimer } from './election-timer';
 import { IState, StateType, StateTransition, createState } from './state';
 
 export interface IServer {
-    readonly electionTimer: ITimer;
+    readonly electionTimer: IElectionTimer;
     readonly endpoint: IEndpoint;
     readonly id: ServerId;
     readonly log: ILog;
@@ -51,7 +51,7 @@ export type ServerId = string;
 export interface IServerOptions {
     readonly cluster: ICluster;
     readonly currentTerm: IDurableValue<number>;
-    readonly electionTimer: ITimer;
+    readonly electionTimer: IElectionTimer;
     readonly id: ServerId;
     readonly log: ILog;
     readonly logger: ILogger;
@@ -63,7 +63,7 @@ export class Server implements IServer {
     private readonly cluster: ICluster;
     private commitIndex: number;
     private currentTerm: IDurableValue<number>;
-    public readonly electionTimer: ITimer;
+    public readonly electionTimer: IElectionTimer;
     public readonly endpoint: IEndpoint;
     public readonly id: ServerId;
     private readonly initialTerm: number;

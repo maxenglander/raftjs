@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { createTimer } from './timer';
+import { createElectionTimer } from './election-timer';
 
 describe('timer', function() {
     let timer,
@@ -19,7 +19,7 @@ describe('timer', function() {
             choose: sinon.fake.returns(timeout)
         };
 
-        timer = createTimer({
+        timer = createElectionTimer({
             timeoutChooser
         });
     });

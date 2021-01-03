@@ -34,7 +34,7 @@ class FollowerState extends BaseState {
             notify: this.onRequestVoteRequest
         }));
         this.server.electionTimer.on('timeout', this.onTimeout);
-        this.server.logger.debug(`Starting election timer with timeout ${this.server.electionTimer.timeout}ms`);
+        this.server.logger.debug(`Starting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`);
         this.server.electionTimer.start();
     }
 
