@@ -25,7 +25,7 @@ export interface ILogOptions {
 //
 // Until those features are implemented, no
 // implementation of a persistent entry log is required.
-class Log implements ILog {
+export class Log implements ILog {
     private entries: Array<ILogEntry>;
 
     constructor(options?: ILogOptions) {
@@ -65,8 +65,4 @@ class Log implements ILog {
     public write(): Promise<void> {
         return Promise.resolve();
     }
-}
-
-export function createLog(options?: ILogOptions) {
-    return new Log(options);
 }
