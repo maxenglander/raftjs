@@ -127,7 +127,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
 
 // A durable value that serializes and deserializes
 // integers.
-class DurableInteger extends BaseDurableValue<number> {
+export class DurableInteger extends BaseDurableValue<number> {
     constructor(path: string) {
         super({
             deserializer(data: Buffer): number {
@@ -147,7 +147,7 @@ class DurableInteger extends BaseDurableValue<number> {
 
 // A durable value that serializes and deserializes
 // strings.
-class DurableString extends BaseDurableValue<string> {
+export class DurableString extends BaseDurableValue<string> {
     constructor(path: string) {
         super({
             deserializer(data: Buffer): string {
@@ -163,12 +163,4 @@ class DurableString extends BaseDurableValue<string> {
             }
         });
     }
-}
-
-export function createDurableInteger(path: string): IDurableValue<number> {
-    return new DurableInteger(path);
-}
-
-export function createDurableString(path: string): IDurableValue<string> {
-    return new DurableString(path);
 }
