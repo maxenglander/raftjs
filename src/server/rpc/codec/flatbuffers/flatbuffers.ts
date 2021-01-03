@@ -4,23 +4,18 @@
 //
 import { flatbuffers } from 'flatbuffers';
 
-import { AppendEntries, IRpcMessage, RequestVote } from '../message';
-import { compilerError } from '../../../util/compiler-error';
+import { AppendEntries, IRpcMessage, RequestVote } from '../../message';
+import { compilerError } from '../../../../util/compiler-error';
 
-import { ICodec } from './';
+import { ICodec } from '../';
 
 // `flatbuffers_generated.ts` is generated from
 // `flatbuffers.fbs` during the build process.
 // Neither file is included in the annotated source.
-import * as Schema from './flatbuffers_generated';
-
-//
-export function createFlatbuffersCodec(): ICodec {
-    return { decode, encode };
-}
+import * as Schema from './schema_generated';
 
 // Decode data to a message.
-function decode(data: Uint8Array): IRpcMessage {
+export function decode(data: Uint8Array): IRpcMessage {
     const buffer = new flatbuffers.ByteBuffer(data),
         schema = Schema.Message.getRootAsMessage(buffer),
         procedureType = schema.procedureType();
@@ -140,7 +135,7 @@ function decodeRequestVoteResponse(schema: Schema.Message): RequestVote.IRpcResp
 }
 
 // Encode a message to data.
-function encode(message: IRpcMessage): Uint8Array {
+export function encode(message: IRpcMessage): Uint8Array {
     const builder = new flatbuffers.Builder();
 
     let args: flatbuffers.Offset = null,

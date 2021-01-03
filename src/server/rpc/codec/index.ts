@@ -1,5 +1,4 @@
 export { createFlatbuffersCodec } from './flatbuffers';
-
 import { IRpcMessage } from '../message';
 
 export interface ICodec {
