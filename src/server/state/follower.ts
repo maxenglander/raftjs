@@ -4,7 +4,7 @@ import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
 import { IState, StateType } from './';
-import { BaseState, createBaseState } from './base';
+import { BaseState } from './base';
 
 // Followers:
 // > *§5. "...Respond to RPC requests from candidates and leaders..."*  
@@ -12,7 +12,7 @@ import { BaseState, createBaseState } from './base';
 // Followers remain in that state until either:  
 // > *§5. "...an election timeout elapses without receiving AppendEntries RPC from
 // curren leader or granting vote to candidate..."*  
-class FollowerState extends BaseState {
+export class FollowerState extends BaseState {
     constructor(server: IServer) {
         super(server, 'follower');
 
@@ -92,9 +92,4 @@ class FollowerState extends BaseState {
         this.server.logger.debug('Timer elapsed; transitioning to candidate');
         this.transitionTo('candidate');
     }
-}
-
-//
-export function createFollowerState(server: IServer): IState {
-    return new FollowerState(server);
 }

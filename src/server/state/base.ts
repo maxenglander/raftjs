@@ -128,7 +128,3 @@ export class BaseState implements IState {
         }
     }
 }
-
-export function createBaseState(server: IServer, stateType: StateType): IState {
-    return new BaseState(server, stateType);
-}

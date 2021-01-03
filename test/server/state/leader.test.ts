@@ -11,7 +11,7 @@ import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
 import { IState, StateTransition, StateType } from './';
-import { createLeaderState } from './leader';
+import { LeaderState } from './leader';
 
 describe('server leader state', function() {
     const MIN_TIMEOUT: number = 100,
@@ -56,7 +56,7 @@ describe('server leader state', function() {
             id: 'server0'
         });
 
-        leader = createLeaderState(server);
+        leader = new LeaderState(server);
 
         peerApi = createRpcService();
 

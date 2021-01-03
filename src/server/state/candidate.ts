@@ -4,7 +4,7 @@ import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
 import { IState, StateType } from './';
-import { BaseState, createBaseState } from './base';
+import { BaseState } from './base';
 
 // A candidate:
 // > *§5.1 "...votes for itself and issues RequestVote RPCs in parallel..."*  
@@ -13,7 +13,7 @@ import { BaseState, createBaseState } from './base';
 // > *§5.1 "...(a) it wins the election..."*  
 // > *§5.1 "...(b) another server establishes itself as leader..."*  
 // > *§5.1 "...(c) a period of time goes by with no winner..."*  
-class CandidateState extends BaseState {
+export class CandidateState extends BaseState {
     private serverVotes: Set<string>;
 
     constructor(server: IServer) {
@@ -145,8 +145,4 @@ class CandidateState extends BaseState {
         this.server.setVotedFor(this.server.id);
         this.tallyVote(this.server.endpoint);
     }
-}
-
-export function createCandidateState(server: IServer): IState {
-    return new CandidateState(server);
 }

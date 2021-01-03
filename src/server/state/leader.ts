@@ -1,6 +1,6 @@
 import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
 import { IServer, ServerId } from '../';
-import { BaseState, createBaseState } from './base';
+import { BaseState } from './base';
 import { IState, StateType } from './';
 
 // Leaders:
@@ -9,7 +9,7 @@ import { IState, StateType } from './';
 // Leaders are also responsible for accepting request from clients
 // and replicating log entries to followers. At the present time, this
 // implementation does not implement those requirements.
-class LeaderState extends BaseState {
+export class LeaderState extends BaseState {
     private appendEntriesIntervalId: any;
     private matchIndex: { [id: string]: number };
     private nextIndex: { [id: string]: number };
@@ -60,8 +60,4 @@ class LeaderState extends BaseState {
             term: this.server.getCurrentTerm()
         }));
     }
-}
-
-export function createLeaderState(server: IServer): IState {
-    return new LeaderState(server);
 }

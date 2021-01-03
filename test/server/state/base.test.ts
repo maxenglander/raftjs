@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import * as AppendEntries from '../rpc/message/append-entries';
+import { BaseState } from './base';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, createRpcService } from '../rpc';
 import { IServer, createServer } from '../';
 import { IState, StateTransition } from './';
-import { createBaseState } from './base';
 
 describe('server base state', function() {
     const MIN_TIMEOUT: number = 100,
@@ -46,7 +46,7 @@ describe('server base state', function() {
             id: 'server1'
         });
 
-        base = createBaseState(server, null);
+        base = new BaseState(server, null);
 
         // Set the server term to 10 so that request terms can be
         // less than 10 but greater than zero.

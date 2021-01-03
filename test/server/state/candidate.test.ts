@@ -7,12 +7,12 @@ import sinon from 'sinon';
 
 import * as AppendEntries from '../rpc/message/append-entries';
 import * as RequestVote from '../rpc/message/request-vote';
+import { CandidateState } from './candidate';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
 import { IState, StateTransition, StateType } from './';
-import { createCandidateState } from './candidate';
 
 describe('server candidate state', function() {
     const MIN_TIMEOUT: number = 100,
@@ -57,7 +57,7 @@ describe('server candidate state', function() {
             id: 'server0'
         });
 
-        candidate = createCandidateState(server);
+        candidate = new CandidateState(server);
 
         rpcService = createRpcService();
 

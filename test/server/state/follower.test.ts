@@ -5,13 +5,13 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
+import { FollowerState } from './follower';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
-import { createRpcService } from '../rpc';
 import { IServer, createServer } from '../';
 import { IState, StateTransition, StateType } from './';
-import { createFollowerState } from './follower';
+import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
+import { createRpcService } from '../rpc';
 
 describe('server follower state', function() {
     const MIN_TIMEOUT: number = 100,
@@ -52,7 +52,7 @@ describe('server follower state', function() {
             id: 'server0'
         });
 
-        follower = createFollowerState(server);
+        follower = new FollowerState(server);
 
         return server.start();
     });
