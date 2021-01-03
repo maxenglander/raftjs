@@ -1,5 +1,4 @@
-import * as AppendEntries from '../rpc/message/append-entries';
-import * as RequestVote from '../rpc/message/request-vote';
+import { IAppendEntriesRpcRequest, IRequestVoteRpcResponse, createRequestVoteRpcRequest } from '../rpc/message';
 import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
@@ -65,7 +64,7 @@ export class CandidateState extends BaseState {
     // to its own, it converts to a follower.
     // > *§5. "...If AppendEntries RPC received..."*  
     // > *§5.2. "...While waiting for votes..."*  
-    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRpcRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): void {
         if(message.arguments.term >= this.server.getCurrentTerm()) {
             this.server.logger.trace(`Received append-entries request from ${endpoint.toString}; transitioning to follower`);
             this.transitionTo('follower');
@@ -73,7 +72,7 @@ export class CandidateState extends BaseState {
     }
 
     //
-    private onRequestVoteResponse(endpoint: IEndpoint, message: RequestVote.IRpcResponse): void {
+    private onRequestVoteResponse(endpoint: IEndpoint, message: IRequestVoteRpcResponse): void {
         if(!message.results.voteGranted) return;
         this.tallyVote(endpoint);
     }
@@ -95,7 +94,7 @@ export class CandidateState extends BaseState {
 
         const lastLogIndex = this.server.log.getLastIndex();
 
-        this.server.sendPeerRpc(RequestVote.createRpcRequest({
+        this.server.sendPeerRpc(createRequestVoteRpcRequest({
             candidateId: this.server.id,
             lastLogIndex,
             lastLogTerm: this.server.log.getEntry(lastLogIndex).term,

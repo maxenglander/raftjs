@@ -1,8 +1,11 @@
 import { TextDecoder, TextEncoder } from 'util';
 import { expect } from 'chai';
 
-import { AppendEntries, IRpcMessage, RequestVote } from '../message';
-import { createRpcRequest as createRequestVoteRequest } from '../message/request-vote';
+import {
+    IRequestVoteRpcRequest,
+    IRpcMessage,
+    createRequestVoteRpcRequest
+} from '../message';
 import { IEndpoint, createEndpoint } from '../../../net/endpoint';
 
 import { ICodec, createFlatbuffersCodec } from './';
@@ -21,7 +24,7 @@ describe('The Flatbuffers codec', function() {
     describe('.decode', function() {
         context('when given binary data representing a "request-vote" request', function() {
             beforeEach(function() {
-                originalMessage = createRequestVoteRequest({
+                originalMessage = createRequestVoteRpcRequest({
                     candidateId: 'server-0',
                     lastLogIndex: 3,
                     lastLogTerm: 5,
@@ -37,15 +40,15 @@ describe('The Flatbuffers codec', function() {
             });
 
             describe('the decoded message', function() {
-                let decodedMessage: RequestVote.IRpcRequest;
+                let decodedMessage: IRequestVoteRpcRequest;
 
                 beforeEach(function() {
-                    decodedMessage = codec.decode(data) as RequestVote.IRpcRequest;
+                    decodedMessage = codec.decode(data) as IRequestVoteRpcRequest;
                 });
 
                 it('has the same term as the original message', function() {
                     expect(decodedMessage.arguments.term)
-                        .to.equal((originalMessage as RequestVote.IRpcRequest).arguments.term);
+                        .to.equal((originalMessage as IRequestVoteRpcRequest).arguments.term);
                 });
             });
         });
@@ -54,7 +57,7 @@ describe('The Flatbuffers codec', function() {
     describe('.encode', function() {
         context('when passed a "request-vote" request', function() {
             beforeEach(function() {
-                originalMessage = createRequestVoteRequest({
+                originalMessage = createRequestVoteRpcRequest({
                     candidateId: 'server-10',
                     lastLogIndex: 9,
                     lastLogTerm: 3,

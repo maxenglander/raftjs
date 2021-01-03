@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { IRpcService } from '../rpc';
-import * as AppendEntries from '../rpc/message/append-entries';
+import { IAppendEntriesRpcRequest, createAppendEntriesRpcRequest } from '../rpc/message';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { createRpcService } from '../rpc';
 
@@ -60,7 +60,7 @@ describe('rpc service', function() {
                 rpcServiceA.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
-                    notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
+                    notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
                         expect(message.arguments.term).to.equal(1);
                         wrappedDone();
                     }
@@ -69,13 +69,13 @@ describe('rpc service', function() {
                 rpcServiceB.onReceive({
                     callType: 'request',
                     procedureType: 'append-entries',
-                    notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
+                    notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
                         expect(message.arguments.term).to.equal(1);
                         wrappedDone();
                     }
                 });
 
-                rpcServiceC.send([endpointA, endpointB], AppendEntries.createRpcRequest({
+                rpcServiceC.send([endpointA, endpointB], createAppendEntriesRpcRequest({
                     entries: [],
                     leaderCommit: 0,
                     leaderId: 'leader-id',

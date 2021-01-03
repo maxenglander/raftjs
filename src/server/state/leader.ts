@@ -1,4 +1,4 @@
-import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
+import { createAppendEntriesRpcRequest } from '../rpc/message';
 import { IServer, ServerId } from '../';
 import { BaseState } from './base';
 import { IState, StateType } from './';
@@ -51,7 +51,7 @@ export class LeaderState extends BaseState {
     }
 
     private sendHeartbeats() {
-        this.server.sendPeerRpc(createAppendEntriesRequest({
+        this.server.sendPeerRpc(createAppendEntriesRpcRequest({
             entries: [],
             leaderCommit: this.server.getCommitIndex(),
             leaderId: this.server.id,

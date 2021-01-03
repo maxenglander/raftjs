@@ -5,8 +5,11 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import * as AppendEntries from '../rpc/message/append-entries';
-import * as RequestVote from '../rpc/message/request-vote';
+import {
+    IRequestVoteRpcRequest,
+    createAppendEntriesRpcRequest,
+    createRequestVoteRpcResponse
+} from '../rpc/message';
 import { CandidateState } from './candidate';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
@@ -89,7 +92,7 @@ describe('server candidate state', function() {
             rpcService.onReceive({
                 callType: 'request',
                 procedureType: 'request-vote',
-                notify(endpoint: IEndpoint, request: RequestVote.IRpcRequest) {
+                notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
                     requestVoteRequest = request;
                     if(requestVoteRequestCallback)
                         requestVoteRequestCallback(requestVoteRequest);
@@ -118,7 +121,7 @@ describe('server candidate state', function() {
                 done();
             }
 
-            waitForRequestVoteRequest(function(request: RequestVote.IRpcRequest) {
+            waitForRequestVoteRequest(function(request: IRequestVoteRpcRequest) {
                 doneOnce();
             });
         });
@@ -142,7 +145,7 @@ describe('server candidate state', function() {
 
                 setTimeout(function() {
                     Promise.all(rpcService.send([server.endpoint],
-                        AppendEntries.createRpcRequest({
+                        createAppendEntriesRpcRequest({
                             entries: [],
                             leaderCommit: 0,
                             leaderId: 'leader-id',
@@ -182,9 +185,9 @@ describe('server candidate state', function() {
                     requestVoteListener = rpcService.onReceive({
                         callType: 'request',
                         procedureType: 'request-vote',
-                        notify(endpoint: IEndpoint, request: RequestVote.IRpcRequest) {
+                        notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
                             const term = request.arguments.term + Math.min(0, Math.round(Math.random() * -5));
-                            Promise.all(rpcService.send([endpoint], RequestVote.createRpcResponse({ voteGranted: true, term })))
+                            Promise.all(rpcService.send([endpoint], createRequestVoteRpcResponse({ voteGranted: true, term })))
                                 .then(() => doneOnce());
                         }
                     });
@@ -211,9 +214,9 @@ describe('server candidate state', function() {
                     requestVoteListener = rpcService.onReceive({
                         callType: 'request',
                         procedureType: 'request-vote',
-                        notify(endpoint: IEndpoint, request: RequestVote.IRpcRequest) {
+                        notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
                             const term = request.arguments.term + Math.min(0, Math.round(Math.random() * -5));
-                            rpcService.send([endpoint], RequestVote.createRpcResponse({ voteGranted: false, term }));
+                            rpcService.send([endpoint], createRequestVoteRpcResponse({ voteGranted: false, term }));
                             doneOnce();
                         }
                     });

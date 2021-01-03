@@ -5,7 +5,7 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import * as AppendEntries from '../rpc/message/append-entries';
+import { IAppendEntriesRpcResponse, createAppendEntriesRpcRequest } from '../rpc/message';
 import { BaseState } from './base';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
@@ -75,7 +75,7 @@ describe('server base state', function() {
                 }),
                 rpcService = createRpcService();
 
-            let appendEntriesResponse: AppendEntries.IRpcResponse,
+            let appendEntriesResponse: IAppendEntriesRpcResponse,
                 appendEntriesResponseCallback,
                 appendEntriesListener: IRpcEventListener,
                 term: number;
@@ -92,7 +92,7 @@ describe('server base state', function() {
                     = rpcService.onReceive({
                         callType: 'response',
                         procedureType: 'append-entries',
-                        notify(endpoint: IEndpoint, response: AppendEntries.IRpcResponse) {
+                        notify(endpoint: IEndpoint, response: IAppendEntriesRpcResponse) {
                             appendEntriesResponse = response;
                             if(appendEntriesResponseCallback != null)
                                 appendEntriesResponseCallback(response);
@@ -113,7 +113,7 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRpcRequest({
+                            createAppendEntriesRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',
@@ -145,7 +145,7 @@ describe('server base state', function() {
                     // elapse of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            AppendEntries.createRpcRequest({
+                            createAppendEntriesRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',

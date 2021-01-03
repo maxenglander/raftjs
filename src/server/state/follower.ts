@@ -1,5 +1,4 @@
-import * as AppendEntries from '../rpc/message/append-entries';
-import * as RequestVote from '../rpc/message/request-vote';
+import { IAppendEntriesRpcRequest, IRequestVoteRpcRequest, createRequestVoteRpcResponse  } from '../rpc/message';
 import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
@@ -47,14 +46,14 @@ export class FollowerState extends BaseState {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*  
-    private onAppendEntriesRequest(endpoint: IEndpoint, message: AppendEntries.IRpcRequest): void {
+    private onAppendEntriesRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): void {
         this.server.electionTimer.reset();
     }
 
     //
     private onRequestVoteRequest(
         endpoint: IEndpoint,
-        message: RequestVote.IRpcRequest
+        message: IRequestVoteRpcRequest
     ): void {
         const currentTerm = this.server.getCurrentTerm(),
             vote = this.server.getVotedFor(),
@@ -70,7 +69,7 @@ export class FollowerState extends BaseState {
             this.server.logger.trace(`Denying vote request from server ${endpoint.toString()}`);
         }
 
-        this.server.sendPeerRpc(endpoint, RequestVote.createRpcResponse({
+        this.server.sendPeerRpc(endpoint, createRequestVoteRpcResponse({
             term: currentTerm,
             voteGranted
         })).then(function() {

@@ -1,11 +1,10 @@
 import { ICluster } from '../../cluster';
-import { IRpcMessage } from '../rpc/message';
-import * as AppendEntries from '../rpc/message/append-entries';
 import { IEndpoint } from '../../net/endpoint';
+import { IRpcMessage, IAppendEntriesRpcRequest, createAppendEntriesRpcResponse } from '../rpc/message';
 import { IRpcEventListener } from '../rpc';
-import { compilerError } from '../../util/compiler-error';
 import { IServer } from '../';
 import { IState, StateType } from './';
+import { compilerError } from '../../util/compiler-error';
 
 // The base server state is not named as such in
 // the Raft paper, but is used in the `raftjs`
@@ -73,9 +72,9 @@ export class BaseState implements IState {
     // > *§5. "...Receiver implementation:..."*  
     private onAppendEntriesRequestBase(
         endpoint: IEndpoint,
-        message: AppendEntries.IRpcRequest
+        message: IAppendEntriesRpcRequest
     ): void {
-        this.server.sendPeerRpc(endpoint, AppendEntries.createRpcResponse({
+        this.server.sendPeerRpc(endpoint, createAppendEntriesRpcResponse({
             // When another `Server` makes an `AppendEntries` RPC
             // request with a `term` less than the `term` on this
             // `Server`, the RPC request is rejected.

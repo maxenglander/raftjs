@@ -10,7 +10,7 @@ import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } fro
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IServer, createServer } from '../';
 import { IState, StateTransition, StateType } from './';
-import { createRpcRequest as createAppendEntriesRequest } from '../rpc/message/append-entries';
+import { createAppendEntriesRpcRequest } from '../rpc/message';
 import { createRpcService } from '../rpc';
 
 describe('server follower state', function() {
@@ -103,7 +103,7 @@ describe('server follower state', function() {
                     // of the election timer.
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            createAppendEntriesRequest({
+                            createAppendEntriesRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',
@@ -137,7 +137,7 @@ describe('server follower state', function() {
                     // Wait a little bit
                     setTimeout(function() {
                         rpcService.send([server.endpoint],
-                            createAppendEntriesRequest({
+                            createAppendEntriesRpcRequest({
                                 entries: [],
                                 leaderCommit: 0,
                                 leaderId: 'leader-id',

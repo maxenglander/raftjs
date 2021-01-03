@@ -4,7 +4,19 @@
 //
 import { flatbuffers } from 'flatbuffers';
 
-import { AppendEntries, IRpcMessage, RequestVote } from '../../message';
+import {
+    IAppendEntriesRpcArguments,
+    IAppendEntriesRpcExchange,
+    IAppendEntriesRpcRequest,
+    IAppendEntriesRpcResponse,
+    IAppendEntriesRpcResults,
+    IRequestVoteRpcArguments,
+    IRequestVoteRpcExchange,
+    IRequestVoteRpcRequest,
+    IRequestVoteRpcResponse,
+    IRequestVoteRpcResults,
+    IRpcMessage
+} from '../../message';
 import { compilerError } from '../../../../util/compiler-error';
 
 import { ICodec } from '../';
@@ -33,7 +45,7 @@ export function decode(data: Uint8Array): IRpcMessage {
 }
 
 // Decode data to an AppendEntries message.
-function decodeAppendEntries(schema: Schema.Message): AppendEntries.IRpcExchange {
+function decodeAppendEntries(schema: Schema.Message): IAppendEntriesRpcExchange {
     const callType = schema.callType();
 
     switch(callType) {
@@ -49,7 +61,7 @@ function decodeAppendEntries(schema: Schema.Message): AppendEntries.IRpcExchange
 }
 
 // Decode data to an AppendEntries request.
-function decodeAppendEntriesRequest(schema: Schema.Message): AppendEntries.IRpcRequest {
+function decodeAppendEntriesRequest(schema: Schema.Message): IAppendEntriesRpcRequest {
     const args: Schema.AppendEntriesArguments = schema.arguments(new Schema.AppendEntriesArguments());
     const entries = Array.from({ length: args.entriesLength() }, (_, i) => i).map(i => {
         const entry = args.entries(i);
@@ -75,7 +87,7 @@ function decodeAppendEntriesRequest(schema: Schema.Message): AppendEntries.IRpcR
 }
 
 // Decode data to an AppendEntries response.
-function decodeAppendEntriesResponse(schema: Schema.Message): AppendEntries.IRpcResponse {
+function decodeAppendEntriesResponse(schema: Schema.Message): IAppendEntriesRpcResponse {
     const results: Schema.AppendEntriesResults = schema.results(new Schema.AppendEntriesResults());
 
     return {
@@ -89,7 +101,7 @@ function decodeAppendEntriesResponse(schema: Schema.Message): AppendEntries.IRpc
 }
 
 // Decode data to a RequestVote message.
-function decodeRequestVote(schema: Schema.Message): RequestVote.IRpcExchange {
+function decodeRequestVote(schema: Schema.Message): IRequestVoteRpcExchange {
     const callType = schema.callType();
 
     switch(callType) {
@@ -105,7 +117,7 @@ function decodeRequestVote(schema: Schema.Message): RequestVote.IRpcExchange {
 }
 
 // Decode data to a RequestVote request.
-function decodeRequestVoteRequest(schema: Schema.Message): RequestVote.IRpcRequest {
+function decodeRequestVoteRequest(schema: Schema.Message): IRequestVoteRpcRequest {
     const args: Schema.RequestVoteArguments = schema.arguments(new Schema.RequestVoteArguments());
 
     return {
@@ -121,7 +133,7 @@ function decodeRequestVoteRequest(schema: Schema.Message): RequestVote.IRpcReque
 }
 
 // Decode data to a RequestVote response.
-function decodeRequestVoteResponse(schema: Schema.Message): RequestVote.IRpcResponse {
+function decodeRequestVoteResponse(schema: Schema.Message): IRequestVoteRpcResponse {
     const results: Schema.RequestVoteResults = schema.results(new Schema.RequestVoteResults());
 
     return {
@@ -148,12 +160,12 @@ export function encode(message: IRpcMessage): Uint8Array {
             procedureType = Schema.ProcedureType.AppendEntries;
             switch(message.callType) {
                 case 'request':
-                    args = encodeAppendEntriesArguments(builder, (message as AppendEntries.IRpcRequest).arguments);
+                    args = encodeAppendEntriesArguments(builder, (message as IAppendEntriesRpcRequest).arguments);
                     callType = Schema.CallType.Request;
                     break;
                 case 'response':
                     callType = Schema.CallType.Response;
-                    results = encodeAppendEntriesResults(builder, (message as AppendEntries.IRpcResponse).results);
+                    results = encodeAppendEntriesResults(builder, (message as IAppendEntriesRpcResponse).results);
                     break;
                 default:
                     // Used by TypeScript for [exhaustiveness
@@ -165,12 +177,12 @@ export function encode(message: IRpcMessage): Uint8Array {
             procedureType = Schema.ProcedureType.RequestVote;
             switch(message.callType) {
                 case 'request':
-                    args = encodeRequestVoteArguments(builder, (message as RequestVote.IRpcRequest).arguments);
+                    args = encodeRequestVoteArguments(builder, (message as IRequestVoteRpcRequest).arguments);
                     callType = Schema.CallType.Request;
                     break;
                 case 'response':
                     callType = Schema.CallType.Response;
-                    results = encodeRequestVoteResults(builder, (message as RequestVote.IRpcResponse).results);
+                    results = encodeRequestVoteResults(builder, (message as IRequestVoteRpcResponse).results);
                     break;
                 default:
                     // Used by TypeScript for [exhaustiveness
@@ -196,7 +208,7 @@ export function encode(message: IRpcMessage): Uint8Array {
 }
 
 // Encode AppendEntries arguments to a flatbuffers offset.
-function encodeAppendEntriesArguments(builder: flatbuffers.Builder, args: AppendEntries.IRpcArguments): flatbuffers.Offset {
+function encodeAppendEntriesArguments(builder: flatbuffers.Builder, args: IAppendEntriesRpcArguments): flatbuffers.Offset {
     const leaderId = builder.createString(args.leaderId);
     const entries = Schema.AppendEntriesArguments.createEntriesVector(builder, args.entries.map((entry) => {
         const command = Schema.LogEntry.createCommandVector(builder, entry.command);
@@ -217,7 +229,7 @@ function encodeAppendEntriesArguments(builder: flatbuffers.Builder, args: Append
 }
 
 // Encode AppendEntries results to a flatbuffers offset.
-function encodeAppendEntriesResults(builder: flatbuffers.Builder, results: AppendEntries.IRpcResults): flatbuffers.Offset {
+function encodeAppendEntriesResults(builder: flatbuffers.Builder, results: IAppendEntriesRpcResults): flatbuffers.Offset {
     Schema.AppendEntriesResults.startAppendEntriesResults(builder);
     Schema.AppendEntriesResults.addSuccess(builder, results.success);
     Schema.AppendEntriesResults.addTerm(builder, results.term);
@@ -225,14 +237,14 @@ function encodeAppendEntriesResults(builder: flatbuffers.Builder, results: Appen
 }
 
 // Encode RequestVote arguments to a flatbuffers offset.
-function encodeRequestVoteArguments(builder: flatbuffers.Builder, args: RequestVote.IRpcArguments): flatbuffers.Offset {
+function encodeRequestVoteArguments(builder: flatbuffers.Builder, args: IRequestVoteRpcArguments): flatbuffers.Offset {
     Schema.RequestVoteArguments.startRequestVoteArguments(builder);
     Schema.RequestVoteArguments.addTerm(builder, args.term);
     return Schema.RequestVoteArguments.endRequestVoteArguments(builder);
 }
 
 // Encode RequestVote results to a flatbuffers offset.
-function encodeRequestVoteResults(builder: flatbuffers.Builder, results: RequestVote.IRpcResults): flatbuffers.Offset {
+function encodeRequestVoteResults(builder: flatbuffers.Builder, results: IRequestVoteRpcResults): flatbuffers.Offset {
     Schema.RequestVoteResults.startRequestVoteResults(builder);
     Schema.RequestVoteResults.addTerm(builder, results.term);
     Schema.RequestVoteResults.addVoteGranted(builder, results.voteGranted);

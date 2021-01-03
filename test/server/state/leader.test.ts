@@ -5,7 +5,7 @@ import * as os from 'os';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import * as AppendEntries from '../rpc/message/append-entries';
+import { IAppendEntriesRpcRequest, createAppendEntriesRpcResponse } from '../rpc/message';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
@@ -93,8 +93,8 @@ describe('server leader state', function() {
             heartbeatListener = peerApi.onReceive({
                 callType: 'request',
                 procedureType: 'append-entries',
-                notify(endpoint: IEndpoint, message: AppendEntries.IRpcRequest) {
-                    peerApi.send([endpoint], AppendEntries.createRpcResponse({
+                notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
+                    peerApi.send([endpoint], createAppendEntriesRpcResponse({
                         success: true,
                         term: server.getCurrentTerm()
                     }));
