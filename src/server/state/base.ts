@@ -1,7 +1,7 @@
 import { ICluster } from '../../cluster';
 import { IRpcMessage } from '../rpc/message';
 import * as AppendEntries from '../rpc/message/append-entries';
-import { IEndpoint } from '../../net';
+import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { compilerError } from '../../util/compiler-error';
 import { IServer } from '../';

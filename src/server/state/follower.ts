@@ -1,6 +1,6 @@
 import * as AppendEntries from '../rpc/message/append-entries';
 import * as RequestVote from '../rpc/message/request-vote';
-import { IEndpoint } from '../../net';
+import { IEndpoint } from '../../net/endpoint';
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
 import { IState, StateType } from './';

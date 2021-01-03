@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import * as AppendEntries from '../rpc/message/append-entries';
-import { IEndpoint, createEndpoint } from '../../net';
+import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
 import { ITimer, createTimer, createTimeoutChooser } from '../timer';

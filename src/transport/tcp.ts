@@ -1,6 +1,6 @@
 import * as net from 'net';
 
-import { IEndpoint, createEndpoint } from '../net';
+import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { IReceiver, ITransport } from './';
 import { IConnectionRegistry, createConnectionRegistry } from './connection-registry';
 

@@ -10,7 +10,7 @@ import {
     isRpcResponse
 } from './message';
 import { ICodec } from './message/codec';
-import { IEndpoint } from '../../net';
+import { IEndpoint } from '../../net/endpoint';
 import { IFailure, ITransport } from '../../transport';
 import { IRpcReceiverRegistry, createRpcReceiverRegistry } from './receiver-registry';
 import { createDefaultCodec, createDefaultTransport } from './defaults';

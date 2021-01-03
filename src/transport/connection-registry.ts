@@ -1,5 +1,4 @@
-import { IEndpoint } from '../net';
-import { createEndpoint, parseEndpoint } from '../net';
+import { IEndpoint, createEndpoint, parseEndpoint } from '../net/endpoint';
 import { Callback, NoArgsCallback } from '../util/callback';
 
 export interface IConnectionRegistry<T> {

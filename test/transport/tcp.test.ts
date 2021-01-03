@@ -4,7 +4,7 @@ import * as net from 'net';
 
 import { expect } from 'chai';
 
-import { createEndpoint } from '../net';
+import { createEndpoint } from '../net/endpoint';
 import { IConnectionRegistry, createConnectionRegistry } from './connection-registry';
 import { createTcpTransport } from './tcp';
 

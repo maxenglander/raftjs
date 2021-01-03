@@ -1,6 +1,6 @@
 export { createTcpTransport } from './tcp';
 
-import { IEndpoint } from '../net';
+import { IEndpoint } from '../net/endpoint';
 
 export interface IFailure {
     cause: any;

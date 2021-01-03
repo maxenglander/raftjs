@@ -15,7 +15,7 @@ import {
     isRpcRequest,
     isRpcResponse
 } from './rpc/message';
-import { IEndpoint, isEndpoint } from '../net';
+import { IEndpoint, isEndpoint } from '../net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { ITimer } from './timer';
 import { IState, StateType, StateTransition, createState } from './state';
