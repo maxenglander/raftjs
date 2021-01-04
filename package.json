@@ -16,6 +16,7 @@
   "homepage": "https://github.com/maxenglander/raftjs",
   "scripts": {
     "build": "./node_modules/gulp-cli/bin/gulp.js compile",
+    "docs": "./node_modules/gulp-cli/bin/gulp.js docs",
     "lint": "./node_modules/gulp-cli/bin/gulp.js lint",
     "test": "./node_modules/gulp-cli/bin/gulp.js test"
   },
