@@ -11,7 +11,7 @@ import { ITcpTransportOptions } from './@types';
 export class TcpTransport implements ITransport {
     private endpoint: IEndpoint = null;
     private receivers: Array<IReceiver>;
-    private server: any;
+    private server: net.Server;
     private sockets: IConnectionRegistry<net.Socket>;
 
     constructor(options: ITcpTransportOptions) {
@@ -42,7 +42,7 @@ export class TcpTransport implements ITransport {
             });
 
             socket.on('data', (data: Uint8Array) => {
-                for(let receiver of this.receivers) {
+                for(const receiver of this.receivers) {
                     receiver(endpoint, data);
                 } });
 
@@ -55,7 +55,7 @@ export class TcpTransport implements ITransport {
     // When closing a transport, close all client connections
     // and stop listening for connections on the transport endpoint.
     public close(): Promise<void> {
-        const promise: Promise<void> = new Promise((resolve: any, reject: any) => {
+        const promise: Promise<void> = new Promise((resolve) => {
             const wrappedResolve = () => {
                 if(_clientsClosed && _serverClosed) {
                     this.endpoint = null;
@@ -63,10 +63,10 @@ export class TcpTransport implements ITransport {
                 }
             };
 
-            let _clientsClosed: boolean = false,
-                _serverClosed: boolean = false;
+            let _clientsClosed = false,
+                _serverClosed = false;
 
-            this.server.close(function(err: string) {
+            this.server.close(function() {
                 _serverClosed = true;
                 wrappedResolve();
             });
@@ -84,7 +84,7 @@ export class TcpTransport implements ITransport {
 
     // Make an outgoing TCP connection to the provided endpoint.
     private connect(endpoint: IEndpoint): Promise<net.Socket> {
-        return new Promise((resolve: any, reject: any) => {
+        return new Promise((resolve, reject) => {
             if(this.sockets.has(endpoint)) {
                 resolve(this.sockets.get(endpoint));
             } else {
@@ -113,9 +113,13 @@ export class TcpTransport implements ITransport {
 
         this.endpoint = endpoint;
 
-        return new Promise((resolve: any, reject: any) => {
-            this.server.listen(this.endpoint.port, this.endpoint.host, () => {
-                resolve();
+        return new Promise((resolve, reject) => {
+            this.server.listen(this.endpoint.port, this.endpoint.host, (err: unknown) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
             });
         });
     }
@@ -127,7 +131,7 @@ export class TcpTransport implements ITransport {
 
     // Send data to the provided endpoint.
     public send(endpoint: IEndpoint, data: Uint8Array): Promise<void> {
-        return new Promise((resolve: any, reject: any) => {
+        return new Promise((resolve, reject) => {
             this.connect(endpoint).then((socket: net.Socket) => {
                 socket.write(data, null, (err: string) => {
                     if(err) {

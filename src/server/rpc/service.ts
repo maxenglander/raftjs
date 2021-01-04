@@ -2,12 +2,7 @@ import {
     RpcCallTypeMap,
     IRpcMessage,
     IRpcMessageTypeFilter,
-    RpcProcedureTypeMap,
-    IRpcRequest,
-    IRpcRequestTypeFilter,
-    IRpcResponseTypeFilter,
-    isRpcRequest,
-    isRpcResponse
+    RpcProcedureTypeMap
 } from './message';
 import { ICodec } from './codec';
 import { IEndpoint } from '../../net/endpoint';
@@ -46,7 +41,7 @@ export class RpcService implements IRpcService {
         endpoint: IEndpoint,
         message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
     ): void {
-        for(let receiver of this.receivers.getAll(message.procedureType, message.callType)) {
+        for(const receiver of this.receivers.getAll(message.procedureType, message.callType)) {
             receiver.notify(endpoint, message);
         }
     }
@@ -66,7 +61,7 @@ export class RpcService implements IRpcService {
     public send(endpoints: ReadonlyArray<IEndpoint>, message: IRpcMessage): Promise<void>[] {
         const encoded = this.codec.encode(message);
         return endpoints.map((endpoint: IEndpoint) => {
-            return new Promise((resolve: any) => {
+            return new Promise((resolve) => {
                 this.transport.send(endpoint, encoded).then(() => resolve(), () => resolve());
             });
         });

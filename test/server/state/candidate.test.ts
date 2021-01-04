@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import {
     IRequestVoteRpcRequest,
@@ -15,11 +14,10 @@ import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } fro
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
-import { IState, StateTransition, StateType } from './';
+import { IState } from './';
 
 describe('server candidate state', function() {
-    const MIN_TIMEOUT: number = 100,
-        MAX_TIMEOUT: number = 500,
+    const MIN_TIMEOUT = 100, MAX_TIMEOUT = 500,
         peerEndpoint: IEndpoint = createEndpoint({
             host: '0.0.0.0',
             port: 31391
@@ -121,7 +119,7 @@ describe('server candidate state', function() {
                 done();
             }
 
-            waitForRequestVoteRequest(function(request: IRequestVoteRpcRequest) {
+            waitForRequestVoteRequest(function() {
                 doneOnce();
             });
         });
@@ -174,7 +172,7 @@ describe('server candidate state', function() {
 
             context('with a majority of the cluster granting the request', function() {
                 beforeEach(function(done) {
-                    let calledDone: boolean = false;
+                    let calledDone = false;
 
                     function doneOnce() {
                         if(calledDone) return;
@@ -203,7 +201,7 @@ describe('server candidate state', function() {
 
             context('without a majority of the cluster granting the request', function() {
                 beforeEach(function(done) {
-                    let calledDone: boolean = false;
+                    let calledDone = false;
 
                     function doneOnce() {
                         if(calledDone) return;

@@ -2,14 +2,10 @@ import {
     RpcCallTypeMap,
     IRpcMessage,
     IRpcMessageTypeFilter,
-    RpcProcedureTypeMap,
-    IRpcRequest,
-    IRpcRequestTypeFilter,
-    IRpcResponseTypeFilter
+    RpcProcedureTypeMap
 } from './message';
 import { ICodec } from './codec';
 import { IEndpoint } from '../../net/endpoint';
-import { IRpcReceiverRegistry } from './receiver-registry';
 import { ITransport } from '../../transport';
 
 export interface IRpcServiceOptions {

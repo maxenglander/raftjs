@@ -1,7 +1,6 @@
-import { createAppendEntriesRpcRequest } from '../rpc/message';
-import { IServer, ServerId } from '../';
 import { BaseState } from './base';
-import { IState, StateType } from './';
+import { IServer} from '../@types';
+import { createAppendEntriesRpcRequest } from '../rpc/message';
 
 // Leaders:
 // > *§5.2 "...send periodic heartbeats...to all followers...to maintain their authority"*  
@@ -10,10 +9,9 @@ import { IState, StateType } from './';
 // and replicating log entries to followers. At the present time, this
 // implementation does not implement those requirements.
 export class LeaderState extends BaseState {
-    private appendEntriesIntervalId: any;
     private matchIndex: { [id: string]: number };
     private nextIndex: { [id: string]: number };
-    private sendHeartbeatsIntervalId: any;
+    private sendHeartbeatsIntervalId: any // eslint-disable-line @typescript-eslint/no-explicit-any
 
     constructor(server: IServer) {
         super(server, 'leader');
@@ -22,7 +20,7 @@ export class LeaderState extends BaseState {
     }
 
     // Upon election:
-    public enter() {
+    public enter(): void {
         super.enter();
         // > *§5 "...for each server, index of highest log entry known to be replicated on server..."
         // > *§5 "...(Reinitialized after election)..."
@@ -30,7 +28,7 @@ export class LeaderState extends BaseState {
         // > *§5 "...for each server, index of the next log entry to send to that server..."
         // > *§5 "...(Reinitialized after election)..."
         this.nextIndex = {};
-        for(let serverId in this.server.getCluster().servers) {
+        for(const serverId in this.server.getCluster().servers) {
             if(serverId === this.server.id) {
                 continue;
             }
@@ -45,7 +43,7 @@ export class LeaderState extends BaseState {
         this.sendHeartbeatsIntervalId = setInterval(this.sendHeartbeats, 50);
     }
 
-    public exit() {
+    public exit(): void {
         clearInterval(this.sendHeartbeatsIntervalId);
         super.exit();
     }

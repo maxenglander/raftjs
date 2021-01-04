@@ -50,7 +50,7 @@ describe('timer', function() {
             it('eventually times out', function(done) {
                 this.timeout(timeout + 1000);
 
-                var invokedDone = false;
+                let invokedDone = false;
 
                 function wrappedDone(message) {
                     if(!invokedDone) {
@@ -85,11 +85,8 @@ describe('timer', function() {
     });
 
     context('when it is started', function() {
-        let willTimeoutAt;
-
         beforeEach(function() {
             timer.start();
-            willTimeoutAt = Date.now() + timeout;
         });
 
         it('is running', function() {

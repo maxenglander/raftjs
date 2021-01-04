@@ -1,6 +1,6 @@
 import { Callback, NoArgsCallback } from '../../util/callback';
 import { IConnectionRegistry } from './@types';
-import { IEndpoint, createEndpoint, parseEndpoint } from '../../net/endpoint';
+import { IEndpoint, parseEndpoint } from '../../net/endpoint';
 
 // A map of endpoint to connections, with methods
 // to iterate over or remove all endpoints at once.
@@ -25,7 +25,7 @@ export class ConnectionRegistry<T> implements IConnectionRegistry<T> {
     // Iterate over each connection, invoking an optional
     // callback when all connectinos have been processed.
     public forEach(onEach: (endpoint: IEndpoint, connection: T) => void, onDone: NoArgsCallback = null): void {
-        for(let connectionId in this.connections) {
+        for(const connectionId in this.connections) {
             const endpoint = parseEndpoint(connectionId),
                 connection = this.connections[connectionId];
             onEach(endpoint, connection);
@@ -37,7 +37,7 @@ export class ConnectionRegistry<T> implements IConnectionRegistry<T> {
     // Get all registered connections.
     public getAll(): T[] {
         const values = [];
-        for(var key in this.connections) {
+        for(const key in this.connections) {
             values.push(this.connections[key]);
         }
         return values;
@@ -48,7 +48,7 @@ export class ConnectionRegistry<T> implements IConnectionRegistry<T> {
         return connectionId in this.connections;
     }
 
-    public remove(endpoint: IEndpoint) {
+    public remove(endpoint: IEndpoint): void {
         const connectionId = endpoint.toString();
         delete this.connections[connectionId];
     }
@@ -64,7 +64,7 @@ export class ConnectionRegistry<T> implements IConnectionRegistry<T> {
         });
     }
 
-    public save(endpoint: IEndpoint, connection: T) {
+    public save(endpoint: IEndpoint, connection: T): boolean {
         if(this.has(endpoint)) return false;
         const connectionId = endpoint.toString();
         this.connections[connectionId] = connection;

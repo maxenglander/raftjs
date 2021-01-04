@@ -1,4 +1,3 @@
-import { ICluster } from '../../cluster';
 import { IEndpoint } from '../../net/endpoint';
 import { IRpcMessage, IAppendEntriesRpcRequest, createAppendEntriesRpcResponse } from '../rpc/message';
 import { IRpcEventListener } from '../rpc';
@@ -27,11 +26,11 @@ export class BaseState implements IState {
         this.type = stateType;
     }
 
-    protected addRpcEventListener(rpcEventListener: IRpcEventListener) {
+    protected addRpcEventListener(rpcEventListener: IRpcEventListener): void {
         this.rpcEventListeners.add(rpcEventListener);
     }
 
-    public enter() {
+    public enter(): void {
         this.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
             callType: 'request',
@@ -59,8 +58,8 @@ export class BaseState implements IState {
         }));
     }
 
-    public exit() {
-        for(let rpcEventListener of this.rpcEventListeners) {
+    public exit(): void {
+        for(const rpcEventListener of this.rpcEventListeners) {
             this.rpcEventListeners.delete(rpcEventListener);
             rpcEventListener.detach();
         }
@@ -86,8 +85,7 @@ export class BaseState implements IState {
 
     private onRequestOrResponse(endpoint: IEndpoint, message: IRpcMessage): void {
         this.server.logger.trace(`Received ${message.procedureType} ${message.callType} from ${endpoint.toString()}`);
-        const callType: IRpcMessage['callType'] = message.callType,
-            procedureType: IRpcMessage['procedureType'] = message.procedureType;
+        const callType: IRpcMessage['callType'] = message.callType;
 
         let term: number;
 
@@ -121,7 +119,7 @@ export class BaseState implements IState {
         }
     }
 
-    protected transitionTo(stateType: StateType) {
+    protected transitionTo(stateType: StateType): void {
         if(stateType != this.type) {
             this.server.transitionTo(stateType);
         }

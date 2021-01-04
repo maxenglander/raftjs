@@ -1,10 +1,10 @@
 import { CandidateState } from './candidate';
-import { BaseState } from './base';
 import { FollowerState } from './follower';
 import { LeaderState } from './leader';
 import { IServer } from '../@types';
 import { IState, StateType } from './@types';
 import { compilerError } from '../../util/compiler-error';
+import { noop } from '../../util';
 
 // The "no-op" state is not part of the Raft
 // protocol. It is used by `Server` as a
@@ -12,8 +12,8 @@ import { compilerError } from '../../util/compiler-error';
 // to simplify guarding against null references.
 function createNoopState(): IState {
     return {
-        enter() {},
-        exit() {},
+        enter: noop,
+        exit: noop,
         type: null
     };
 }

@@ -12,11 +12,11 @@ export class Endpoint implements IEndpoint {
         this.port = port;
     }
 
-    equals(endpoint: IEndpoint) {
+    equals(endpoint: IEndpoint): boolean {
         return endpoint.port === this.port && endpoint.host === this.host;
     }
 
-    toString() {
+    toString(): string {
         return `${this.host}:${this.port}`;
     }
 }

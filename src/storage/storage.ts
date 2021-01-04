@@ -2,7 +2,6 @@ import * as fs from 'fs';
 
 import {
     DurableType,
-    DurableTypeMap,
     IDurableValue,
     IDurableValueOptions
 } from './@types';
@@ -29,7 +28,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
     // Returns a resolved Promise containing `true` if the
     // path exists on disk,  otherwise, resolved with `false`.
     public exists(): Promise<boolean> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             fs.access(this.path, fs.constants.F_OK, (err) => {
                 if(err) {
                     resolve(false);
@@ -48,8 +47,11 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
     // to insufficient permissions, a rejected `Promise`
     // is returned.
     public read(): Promise<T> {
-        return new Promise((resolve: any, reject: any) => {
-            fs.readFile(this.path, (err: any, data: Buffer) => {
+        return new Promise((resolve, reject) => {
+            fs.readFile(this.path, (
+                err: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                data: Buffer
+            ) => {
                 if(err != null)
                     reject('Failed to read durable value: ' + err);
                 this.value = this.deserializer(data);
@@ -85,8 +87,14 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
             return Promise.resolve();
         }
 
-        return new Promise((resolve: any, reject: any) => {
-            fs.writeFile(this.path, this.serializer(this.value), { flag: 'w' }, (err: any) => {
+        return new Promise((resolve, reject) => {
+            fs.writeFile(
+                this.path,
+                this.serializer(this.value),
+                { flag: 'w' },
+                (
+                    err: any // eslint-disable-line @typescript-eslint/no-explicit-any
+                ) => {
                 if(err) {
                     reject('Failed to write durable value: ' + err);
                 } else {

@@ -2,20 +2,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-import { expect } from 'chai';
-import sinon from 'sinon';
+import 'chai';
 
-import { IAppendEntriesRpcRequest, createAppendEntriesRpcResponse } from '../rpc/message';
+import { createAppendEntriesRpcResponse } from '../rpc/message';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
-import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
-import { IServer, ServerId, createServer } from '../';
-import { IState, StateTransition, StateType } from './';
+import { IRpcService, createRpcService } from '../rpc';
+import { IServer, createServer } from '../';
+import { IState } from './';
 import { LeaderState } from './leader';
 
 describe('server leader state', function() {
-    const MIN_TIMEOUT: number = 100,
-        MAX_TIMEOUT: number = 500,
+    const MIN_TIMEOUT = 100, MAX_TIMEOUT = 500,
         peerEndpoint: IEndpoint = createEndpoint({
             host: '0.0.0.0',
             port: 31391
@@ -79,21 +77,11 @@ describe('server leader state', function() {
         it('periodically sends heartbeats to peers', function(done) {
             this.timeout(1000);
 
-            let heartbeatListener: IRpcEventListener,
-                heartbeatCount = 0;
-
-            function wrappedDone() {
-                heartbeatCount++;
-                if(heartbeatCount == 10) {
-                    heartbeatListener.detach();
-                    done();
-                }
-            }
-
-            heartbeatListener = peerApi.onReceive({
+            let heartbeatCount = 0;
+            const heartbeatListener = peerApi.onReceive({
                 callType: 'request',
                 procedureType: 'append-entries',
-                notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
+                notify(endpoint: IEndpoint) {
                     peerApi.send([endpoint], createAppendEntriesRpcResponse({
                         success: true,
                         term: server.getCurrentTerm()
@@ -101,6 +89,13 @@ describe('server leader state', function() {
                     wrappedDone();
                 }
             });
+            function wrappedDone() {
+                heartbeatCount++;
+                if(heartbeatCount == 10) {
+                    heartbeatListener.detach();
+                    done();
+                }
+            }
         });
     });
 });

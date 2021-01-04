@@ -3,14 +3,12 @@ import { IDurableValue  } from '../storage';
 import { ILog } from '../log';
 import { ILogger } from '../logger';
 import {
-    IRpcMessage,
-    IRpcRequest,
-    IRpcResponse
+    IRpcMessage
 } from './rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IState, StateType, StateTransition } from './state';
+import { IState, StateType } from './state';
 
 interface IBaseCreateServerOptions {
     readonly cluster: ICluster;

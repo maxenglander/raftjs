@@ -59,7 +59,9 @@ export function parseConfigFile(configFile: string): ICreateServerOptions {
 }
 
 // Parses the cluster configuration.
-function parseCluster(config: any): ICluster {
+function parseCluster(
+    config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+): ICluster {
     if(!config['servers'])
         throw new Error(`Config is missing required key 'cluster.servers'.`);
 
@@ -71,7 +73,9 @@ function parseCluster(config: any): ICluster {
 }
 
 // Parses the cluster members.
-function parseClusterServers(config: any): { [id: string]: IEndpoint } {
+function parseClusterServers(
+    config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+): { [id: string]: IEndpoint } {
     const result: { [id: string]: IEndpoint } = {};
 
     return Object.keys(config).reduce(function(result, key) {
@@ -95,7 +99,9 @@ function parseDataDir(configFile: string, dataDir: string): string {
 }
 
 // Parses the logger level.
-function parseLogLevel(level: any): logger.Level {
+function parseLogLevel(
+    level: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+): logger.Level {
     if(!(typeof level == 'string'))
         throw new Error("Config 'logger.level' must be a string: " + level);
     if(!['fatal', 'error', 'warn', 'info', 'debug', 'trace'].includes(level))
@@ -104,14 +110,18 @@ function parseLogLevel(level: any): logger.Level {
 }
 
 // Parses the logger machine-readable flag.
-function parseLogMachineReadable(machineReadable: any): boolean {
+function parseLogMachineReadable(
+    machineReadable: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+): boolean {
     if(!(typeof machineReadable == 'boolean'))
         throw new Error("Config 'logger.machineReadable' must be a boolean: " + machineReadable);
     return machineReadable as boolean;
 }
 
 // Parses the logger configuration.
-function parseLogger(config: any): logger.ILogger {
+function parseLogger(
+    config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+): logger.ILogger {
     if(config && !(typeof config == 'object'))
         throw new Error("Config 'logger' must be an objct: " + config);
 

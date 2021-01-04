@@ -3,19 +3,17 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import { FollowerState } from './follower';
 import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } from '../election-timer';
-import { IEndpoint, createEndpoint } from '../../net/endpoint';
+import { createEndpoint } from '../../net/endpoint';
 import { IServer, createServer } from '../';
-import { IState, StateTransition, StateType } from './';
+import { IState } from './';
 import { createAppendEntriesRpcRequest } from '../rpc/message';
 import { createRpcService } from '../rpc';
 
 describe('server follower state', function() {
-    const MIN_TIMEOUT: number = 100,
-        MAX_TIMEOUT: number = 500,
+    const MIN_TIMEOUT = 100, MAX_TIMEOUT = 500,
         peerEndpoint = createEndpoint({
             host: '0.0.0.0',
             port: 13231
@@ -23,7 +21,6 @@ describe('server follower state', function() {
 
     let electionTimer: IElectionTimer,
         follower: IState,
-        initialState: StateType,
         server: IServer;
 
     afterEach(function() {

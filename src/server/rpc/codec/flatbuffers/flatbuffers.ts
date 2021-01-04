@@ -19,8 +19,6 @@ import {
 } from '../../message';
 import { compilerError } from '../../../../util/compiler-error';
 
-import { ICodec } from '../';
-
 // `flatbuffers_generated.ts` is generated from
 // `flatbuffers.fbs` during the build process.
 // Neither file is included in the annotated source.

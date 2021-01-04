@@ -1,8 +1,6 @@
-import { IAppendEntriesRpcRequest, IRequestVoteRpcRequest, createRequestVoteRpcResponse  } from '../rpc/message';
+import { IRequestVoteRpcRequest, createRequestVoteRpcResponse  } from '../rpc/message';
 import { IEndpoint } from '../../net/endpoint';
-import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
-import { IState, StateType } from './';
 import { BaseState } from './base';
 
 // Followers:
@@ -20,7 +18,7 @@ export class FollowerState extends BaseState {
         this.onTimeout = this.onTimeout.bind(this);
     }
 
-    public enter() {
+    public enter(): void {
         super.enter();
         super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
@@ -37,7 +35,7 @@ export class FollowerState extends BaseState {
         this.server.electionTimer.start();
     }
 
-    public exit() {
+    public exit(): void {
         this.server.electionTimer.stop();
         this.server.electionTimer.off('timeout', this.onTimeout);
         super.exit();
@@ -46,7 +44,7 @@ export class FollowerState extends BaseState {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*  
-    private onAppendEntriesRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): void {
+    private onAppendEntriesRequest(): void {
         this.server.electionTimer.reset();
     }
 

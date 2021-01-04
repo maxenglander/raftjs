@@ -4,23 +4,24 @@ var fs           = require('fs'),
     path         = require('path'),
 
     // Vendor dependencies
-    babel          = require('gulp-babel'),
-    concat         = require('gulp-concat'),
     del            = require('del'),
     dependencyTree = require('dependency-tree'),
-    eslint         = require('gulp-eslint'),
     docco          = require('docco'),
     flatc          = require('flatc'),
+    minimist       = require('minimist'),
+    through        = require('through2'),
 
+    // Gulp and gulp plugins
     gulp           = require('gulp'),
+    gulpBabel      = require('gulp-babel'),
+    gulpConcat     = require('gulp-concat'),
+    gulpEslint     = require('gulp-eslint7'),
     gulpFilter     = require('gulp-filter')
     gulpIf         = require('gulp-if'),
-    minimist       = require('minimist'),
     mocha          = require('gulp-mocha'),
     read           = require('gulp-read'),
     replace        = require('gulp-replace'),
     sourcemaps     = require('gulp-sourcemaps'),
-    through        = require('through2'),
     ts             = require('gulp-typescript'),
 
     // Local config
@@ -37,16 +38,15 @@ var fs           = require('fs'),
         TEST_JS: 'test.js',
         TS:      'ts'
     },
-    Dirs           = {
+    Dirs          = {
         Build: {
-            BASE: path.join(__dirname, pkgJson.directories.build),
-            DIST:  path.join(__dirname, pkgJson.directories.build, pkgJson.directories.dist),
-            GEN:  path.join(__dirname, pkgJson.directories.build, pkgJson.directories.gen),
-            TEST: path.join(__dirname, pkgJson.directories.build, pkgJson.directories.test),
+            BASE: path.join(__dirname, pkgJson.directories.build.base),
+            DIST:  path.join(__dirname, pkgJson.directories.build.dist),
+            GEN:  path.join(__dirname, pkgJson.directories.build.gen),
+            TEST: path.join(__dirname, pkgJson.directories.build.test),
         },
         DIST:  path.join(__dirname, pkgJson.directories.dist),
         DOCS: path.join(__dirname, pkgJson.directories.docs),
-        GEN:  path.join(__dirname, pkgJson.directories.gen),
         SRC:  path.join(__dirname, pkgJson.directories.src),
         TEST: path.join(__dirname, pkgJson.directories.test)
     };
@@ -81,7 +81,7 @@ const gulpStreams = {
         return tsProject();
     },
     lint() {
-        return eslint({
+        return gulpEslint({
             fix: true,
             parserOptions: {
                 ecmaVersion: 6,
@@ -108,7 +108,7 @@ const gulpStreams = {
                 ],
                 'one-var-declaration-per-line': ['error', 'initializations']
             }
-        }).pipe(eslint.format());
+        }).pipe(gulpEslint.format());
     },
     removeEmptyFiles() {
         return through.obj(function(input, encoding, callback) {
@@ -172,7 +172,7 @@ gulp.task('compile:typescript', function() {
     return gulp.src(helpers.dirsToGlobs([ Dirs.Build.GEN, Dirs.SRC ], [ Exts.JS, Exts.TS ]))
         .pipe(sourcemaps.init())
         .pipe(gulpStreams.compileTypeScript({ tsConfig }))
-        .pipe(babel(babelRc))
+        .pipe(gulpBabel(babelRc))
         .pipe(sourcemaps.write({
             sourceRoot: Dirs.SRC
         }))
@@ -210,7 +210,7 @@ gulp.task('docs:annotate-source', gulp.series('compile:flatbuffers', function() 
             ]);
             callback(null, clone);
         }))
-        .pipe(concat('annotated-source.js'))
+        .pipe(gulpConcat('annotated-source.js'))
         .pipe(gulp.dest(__dirname))
         .pipe(gulpStreams.annotateSource({
             output: Dirs.DOCS
@@ -218,6 +218,13 @@ gulp.task('docs:annotate-source', gulp.series('compile:flatbuffers', function() 
 }));
 
 gulp.task('docs', gulp.series('docs:annotate-source'));
+
+gulp.task('lint', function() {
+    return gulp.src(helpers.dirsToGlobs([Dirs.SRC, Dirs.TEST], [Exts.TS]))
+        .pipe(gulpEslint())
+        .pipe(gulpEslint.format())
+        .pipe(gulpEslint.failAfterError());
+});
 
 gulp.task('test:compile:typescript', function() {
     const options = minimist(process.argv.slice(2), {}),
@@ -228,7 +235,7 @@ gulp.task('test:compile:typescript', function() {
     return gulp.src(pattern, { base: Dirs.TEST })
         .pipe(sourcemaps.init())
         .pipe(gulpStreams.compileTypeScript({ tsConfig: tsConfigTest }))
-        .pipe(babel(babelRc))
+        .pipe(gulpBabel(babelRc))
         .pipe(sourcemaps.write({
             sourceRoot: Dirs.TEST
         }))

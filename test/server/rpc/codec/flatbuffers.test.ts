@@ -1,4 +1,3 @@
-import { TextDecoder, TextEncoder } from 'util';
 import { expect } from 'chai';
 
 import {
@@ -6,18 +5,11 @@ import {
     IRpcMessage,
     createRequestVoteRpcRequest
 } from '../message';
-import { IEndpoint, createEndpoint } from '../../../net/endpoint';
 
 import { ICodec, createFlatbuffersCodec } from './';
 
 describe('The Flatbuffers codec', function() {
-    const codec: ICodec = createFlatbuffersCodec(),
-        endpoint: IEndpoint = createEndpoint({
-            host: 'sender-1',
-            port: 8080
-        }),
-        textDecoder = new TextDecoder,
-        textEncoder = new TextEncoder();
+    const codec: ICodec = createFlatbuffersCodec();
 
     let data: Uint8Array = null, originalMessage: IRpcMessage = null;
 

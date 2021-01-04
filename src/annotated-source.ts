@@ -1,5 +1,5 @@
 //
-import { execute } from './cli';
+import './cli';
 // # raftjs
 //
 // This annotated source is a single page containing

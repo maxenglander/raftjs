@@ -9,8 +9,6 @@ import { ILog } from '../log';
 import { ILogger } from '../logger';
 import {
     IRpcMessage,
-    IRpcRequest,
-    IRpcResponse,
     isRpcMessage,
     isRpcRequest,
     isRpcResponse
@@ -19,7 +17,7 @@ import { IEndpoint, isEndpoint } from '../net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IServer, IServerOptions, ServerId } from './@types';
-import { IState, StateType, StateTransition, createState } from './state';
+import { IState, StateType, createState } from './state';
 
 export class Server implements IServer {
     private readonly cluster: ICluster;
@@ -161,7 +159,7 @@ export class Server implements IServer {
     // term is part of persistent state that is:
     // > *§5. "...(Updated on stable storage before responding)..."*  
     // to RPC requests.
-    public setCurrentTerm(newTerm: number) {
+    public setCurrentTerm(newTerm: number): void {
         this.currentTerm.setValue(newTerm);
         // The `Server` vote is the candidate the `Server`
         // voted for in the current term...

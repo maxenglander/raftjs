@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { createEndpoint } from '../net/endpoint';
 import { IConnectionRegistry, createConnectionRegistry } from './connection-registry';
 import { createTcpTransport } from './tcp';
+import { noop } from '../util';
 
 const encoder = new TextEncoder(),
     data = {
@@ -16,7 +17,6 @@ const encoder = new TextEncoder(),
     host = '0.0.0.0',
     endpoint0 = createEndpoint({ host, port: 4849 }),
     endpoint1 = createEndpoint({ host, port: 4949 }),
-    endpoint2 = createEndpoint({ host, port: 5049 }),
     text = {
         hello: 'hello',
         goodbye: 'goodbye'
@@ -69,7 +69,7 @@ describe('tcp transport', function() {
 
                     connections.removeEach(function(socket) {
                         socket.end();
-                    }, function() {});
+                    }, noop);
 
                     server.close();
                     transport.close().then(done);
@@ -86,7 +86,7 @@ describe('tcp transport', function() {
                             done();
                         });
 
-                        transport.send(endpoint0, data.hello).then(function() {}, done);
+                        transport.send(endpoint0, data.hello).then(noop, done);
                     });
                 });
             });
@@ -126,14 +126,14 @@ describe('tcp transport', function() {
                 after(function(done) {
                     this.timeout(10000);
 
-                    for(let connections of [ connections0, connections1 ]) {
+                    for(const connections of [ connections0, connections1 ]) {
                         connections.removeEach(function(socket) {
                             socket.end();
-                        }, function() {});
+                        }, noop);
                     }
 
-                    for(let server of [ server0, server1 ]) {
-                        server.close(function() {});
+                    for(const server of [ server0, server1 ]) {
+                        server.close(noop);
                     }
 
                     transport.close().then(done);
@@ -163,7 +163,7 @@ describe('tcp transport', function() {
                                 done();
                             });
 
-                            transport.send(endpoint0, data.hello).then(function() {}, done);
+                            transport.send(endpoint0, data.hello).then(noop, done);
                         });
                     });
                 });
@@ -176,7 +176,7 @@ describe('tcp transport', function() {
                                 done();
                             });
 
-                            transport.send(endpoint1, data.goodbye).then(function() {}, done);
+                            transport.send(endpoint1, data.goodbye).then(noop, done);
                         });
                     });
                 });
@@ -197,7 +197,7 @@ describe('tcp transport', function() {
             it('binds the server instance to the provided host and port', function(done) {
                 const anotherServer = net.createServer();
 
-                anotherServer.on('error', function(err) {
+                anotherServer.on('error', function() {
                     done();
                 });
 
@@ -226,7 +226,7 @@ describe('tcp transport', function() {
                             done();
                     }
 
-                    for(let socket of sockets)
+                    for(const socket of sockets)
                         socket.end(wrappedDone);
                 });
 
@@ -241,7 +241,7 @@ describe('tcp transport', function() {
                             done();
                     }
 
-                    for(let socket of sockets)
+                    for(const socket of sockets)
                         socket.connect(endpoint0.port, endpoint0.host, wrappedDone);
                 });
 

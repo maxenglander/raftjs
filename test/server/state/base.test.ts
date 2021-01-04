@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as os from 'os';
 
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import { IAppendEntriesRpcResponse, createAppendEntriesRpcRequest } from '../rpc/message';
 import { BaseState } from './base';
@@ -11,11 +10,10 @@ import { IElectionTimer, createElectionTimer, createElectionTimeoutChooser } fro
 import { IEndpoint, createEndpoint } from '../../net/endpoint';
 import { IRpcEventListener, createRpcService } from '../rpc';
 import { IServer, createServer } from '../';
-import { IState, StateTransition } from './';
+import { IState } from './';
 
 describe('server base state', function() {
-    const MIN_TIMEOUT: number = 100,
-        MAX_TIMEOUT: number = 500;
+    const MIN_TIMEOUT = 100, MAX_TIMEOUT = 500;
 
     let electionTimer: IElectionTimer,
         base: IState,

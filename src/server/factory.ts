@@ -5,13 +5,12 @@
 
 import * as path from 'path';
 
-import { ICluster } from '../cluster';
-import { ICreateServerOptions, IServer, ServerId } from './@types';
+import { ICreateServerOptions, IServer } from './@types';
 import { IDurableValue, createDurableInteger, createDurableString } from '../storage';
-import { IElectionTimer, createElectionTimer } from './election-timer';
-import { ILog, createLog } from '../log';
-import { ILogger, createLogger } from '../logger';
-import { IRpcService, createRpcService } from './rpc';
+import { createElectionTimer } from './election-timer';
+import { createLog } from '../log';
+import { createLogger } from '../logger';
+import { createRpcService } from './rpc';
 import { Server } from './server';
 
 // The `createServer` method produces a `Server` configured

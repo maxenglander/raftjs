@@ -1,8 +1,6 @@
 import { IAppendEntriesRpcRequest, IRequestVoteRpcResponse, createRequestVoteRpcRequest } from '../rpc/message';
 import { IEndpoint } from '../../net/endpoint';
-import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
-import { IState, StateType } from './';
 import { BaseState } from './base';
 
 // A candidate:
@@ -23,7 +21,7 @@ export class CandidateState extends BaseState {
     // Upon transitioning from a follower to a candidate,
     // a candidate immediately starts an election.
     // > *§5. "...On conversion to candidate, start election..."*  
-    public enter() {
+    public enter(): void {
         super.enter();
         super.addRpcEventListener(this.server.onReceivePeerRpc({
             procedureType: 'append-entries',
@@ -39,7 +37,7 @@ export class CandidateState extends BaseState {
         this.startElection();
     }
 
-    public exit() {
+    public exit(): void {
         this.server.electionTimer.stop();
         this.server.electionTimer.off('timeout', this.onTimeout);
         super.exit();
