@@ -4,8 +4,8 @@ import { handler } from './handler';
 import { builder } from './builder';
 
 export default {
-    builder,
-    command: 'start',
-    description: 'Start RaftJS server.',
-    handler
-}
+  builder,
+  command: 'start',
+  description: 'Start RaftJS server.',
+  handler
+};

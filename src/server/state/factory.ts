@@ -11,28 +11,31 @@ import { noop } from '../../util';
 // [null object](https://en.wikipedia.org/wiki/Null_object_pattern)
 // to simplify guarding against null references.
 function createNoopState(): IState {
-    return {
-        enter: noop,
-        exit: noop,
-        type: null
-    };
+  return {
+    enter: noop,
+    exit: noop,
+    type: null
+  };
 }
 
 // `createState` is a convenience function for creating `State`
 // implementations by name.
-export function createState(stateType: StateType | 'noop', server: IServer): IState {
-    switch(stateType) {
-        case 'candidate':
-            return new CandidateState(server);
-        case 'follower':
-            return new FollowerState(server);
-        case 'leader':
-            return new LeaderState(server);
-        case 'noop':
-            return createNoopState();
-        default:
-            // Used by TypeScript for [exhaustiveness
-            // checks](https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking).
-            return compilerError(stateType);
-    }
+export function createState(
+  stateType: StateType | 'noop',
+  server: IServer
+): IState {
+  switch (stateType) {
+    case 'candidate':
+      return new CandidateState(server);
+    case 'follower':
+      return new FollowerState(server);
+    case 'leader':
+      return new LeaderState(server);
+    case 'noop':
+      return createNoopState();
+    default:
+      // Used by TypeScript for [exhaustiveness
+      // checks](https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking).
+      return compilerError(stateType);
+  }
 }

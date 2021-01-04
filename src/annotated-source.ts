@@ -18,7 +18,7 @@ import './cli';
 // References to the [Raft paper](https://raft.github.io/raft.pdf)
 // are indicated with a quote containing a section sign (§)
 // and number (e.g. "5.2"), and are *italicized*.
-//  
+//
 // Generally speaking, most of the annotations highlight
 // areas of the code that closely correspond to writing
 // in the Raft paper. Other parts of the code, such as the

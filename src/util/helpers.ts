@@ -1,1 +1,3 @@
-export function noop(): void {/*do nothing*/}
+export function noop(): void {
+  /*do nothing*/
+}

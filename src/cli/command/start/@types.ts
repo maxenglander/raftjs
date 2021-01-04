@@ -1,3 +1,3 @@
 export interface IStartCommandCliOptions {
-    'config-file': string;
+  'config-file': string;
 }

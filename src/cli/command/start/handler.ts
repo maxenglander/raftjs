@@ -7,15 +7,15 @@ import { IStartCommandCliOptions } from './@types';
 import { parseConfigFile } from './config-file-parser';
 
 export function handler(argv: IStartCommandCliOptions): void {
-    const serverOptions = parseConfigFile(argv['config-file']),
-        server = createServer(serverOptions);
+  const serverOptions = parseConfigFile(argv['config-file']),
+    server = createServer(serverOptions);
 
-    server.start();
+  server.start();
 
-    function exit() {
-        server.stop();
-    }
+  function exit() {
+    server.stop();
+  }
 
-    process.on('SIGINT', exit);
-    process.on('SIGTERM', exit);
+  process.on('SIGINT', exit);
+  process.on('SIGTERM', exit);
 }

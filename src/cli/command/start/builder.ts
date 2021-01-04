@@ -7,15 +7,16 @@ import * as yargs from 'yargs';
 
 import { IStartCommandCliOptions } from './@types';
 
-export function builder(yargs: yargs.Argv): yargs.Argv<IStartCommandCliOptions> {
-    return yargs.strict()
-        .option('config-file', {
-            coerce: function(path: string) {
-                if(!fs.existsSync(path))
-                    throw new Error(`Config file ${path} does not exist`);
-                return path;
-            },
-            required: true,
-            type: 'string'
-        });
+export function builder(
+  yargs: yargs.Argv
+): yargs.Argv<IStartCommandCliOptions> {
+  return yargs.strict().option('config-file', {
+    coerce: function (path: string) {
+      if (!fs.existsSync(path))
+        throw new Error(`Config file ${path} does not exist`);
+      return path;
+    },
+    required: true,
+    type: 'string'
+  });
 }

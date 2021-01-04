@@ -1,9 +1,9 @@
 import { IServer } from '../@types';
 
 export interface IState {
-    enter: () => void;
-    exit: () => void;
-    readonly type: StateType;
+  enter: () => void;
+  exit: () => void;
+  readonly type: StateType;
 }
 
 export type StateFactory = (server: IServer) => IState;

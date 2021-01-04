@@ -5,6 +5,6 @@ export type ILogger = Pino.Logger;
 export type Level = Pino.Level;
 
 export interface ILoggerOptions {
-    level?: Level;
-    machineReadable?: boolean;
+  level?: Level;
+  machineReadable?: boolean;
 }
