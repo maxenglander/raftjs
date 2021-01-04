@@ -36,17 +36,16 @@ export class RpcReceiverRegistry implements IRpcReceiverRegistry {
         type _CallType = RpcCallTypeMap[C];
 
         const _procedureType: _ProcedureType = procedureType,
-            _callType: _CallType = callType,
-            _receiverSet: Set<IRpcReceiver<_ProcedureType, _CallType>> = this.internalGetAll(_procedureType, _callType);
+            _callType: _CallType = callType;
 
-        return _receiverSet;
+        return this.internalGetAll(_procedureType, _callType);
     }
 
     // Get a set of registered receivers based on the provided
     // procedure and call type.
     private internalGetAll<P extends IRpcMessage['procedureType'], C extends IRpcMessage['callType']>(
-        procedureType: P,
-        callType: C
+        procedureType: RpcProcedureTypeMap[P],
+        callType: RpcCallTypeMap[C]
     ): Set<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>> {
         type _ReturnType = Set<IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>>;
 
