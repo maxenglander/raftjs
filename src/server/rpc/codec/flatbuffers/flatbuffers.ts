@@ -68,7 +68,7 @@ function decodeAppendEntriesRequest(
     new Schema.AppendEntriesArguments()
   );
   const entries = Array.from({ length: args.entriesLength() }, (_, i) => i).map(
-    (i) => {
+    i => {
       const entry = args.entries(i);
       return {
         command: entry.commandArray(),
@@ -245,7 +245,7 @@ function encodeAppendEntriesArguments(
   const leaderId = builder.createString(args.leaderId);
   const entries = Schema.AppendEntriesArguments.createEntriesVector(
     builder,
-    args.entries.map((entry) => {
+    args.entries.map(entry => {
       const command = Schema.LogEntry.createCommandVector(
         builder,
         entry.command

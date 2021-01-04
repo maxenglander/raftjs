@@ -83,7 +83,7 @@ export class RpcService implements IRpcService {
   ): Promise<void>[] {
     const encoded = this.codec.encode(message);
     return endpoints.map((endpoint: IEndpoint) => {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         this.transport.send(endpoint, encoded).then(
           () => resolve(),
           () => resolve()

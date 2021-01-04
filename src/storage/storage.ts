@@ -24,8 +24,8 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
   // Returns a resolved Promise containing `true` if the
   // path exists on disk,  otherwise, resolved with `false`.
   public exists(): Promise<boolean> {
-    return new Promise((resolve) => {
-      fs.access(this.path, fs.constants.F_OK, (err) => {
+    return new Promise(resolve => {
+      fs.access(this.path, fs.constants.F_OK, err => {
         if (err) {
           resolve(false);
         } else {
@@ -65,7 +65,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
   // Otherwise, set the provided value and write to disk,
   // returning a Promise resolved with the provided value.
   public readIfExistsElseSetAndWrite(value: T): Promise<T> {
-    return this.exists().then((exists) => {
+    return this.exists().then(exists => {
       if (exists) {
         return this.read();
       } else {

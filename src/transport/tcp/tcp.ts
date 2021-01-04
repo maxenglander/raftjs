@@ -59,7 +59,7 @@ export class TcpTransport implements ITransport {
   // When closing a transport, close all client connections
   // and stop listening for connections on the transport endpoint.
   public close(): Promise<void> {
-    const promise: Promise<void> = new Promise((resolve) => {
+    const promise: Promise<void> = new Promise(resolve => {
       const wrappedResolve = () => {
         if (_clientsClosed && _serverClosed) {
           this.endpoint = null;
@@ -70,16 +70,16 @@ export class TcpTransport implements ITransport {
       let _clientsClosed = false,
         _serverClosed = false;
 
-      this.server.close(function () {
+      this.server.close(function() {
         _serverClosed = true;
         wrappedResolve();
       });
 
       this.sockets.removeEach(
-        function (socket: net.Socket) {
+        function(socket: net.Socket) {
           socket.destroy();
         },
-        function () {
+        function() {
           _clientsClosed = true;
           wrappedResolve();
         }
@@ -110,7 +110,7 @@ export class TcpTransport implements ITransport {
 
         // Set up a socket error handler to capture
         // errors such as 'connection refused'.
-        socket.on('error', function (err) {
+        socket.on('error', function(err) {
           reject(err);
         });
       }

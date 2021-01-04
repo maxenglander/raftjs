@@ -89,7 +89,7 @@ export class FollowerState extends BaseState {
           voteGranted
         })
       )
-      .then(function () {
+      .then(function() {
         // One of the conditions for a follower resetting
         // its election timer is:
         // > *§5. "...granting vote to candidate..."*

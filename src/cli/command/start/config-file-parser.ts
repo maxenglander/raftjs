@@ -81,7 +81,7 @@ function parseClusterServers(
 ): { [id: string]: IEndpoint } {
   const result: { [id: string]: IEndpoint } = {};
 
-  return Object.keys(config).reduce(function (result, key) {
+  return Object.keys(config).reduce(function(result, key) {
     result[key] = createEndpoint({
       host: config[key]['host'],
       port: config[key]['port']

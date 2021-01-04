@@ -137,8 +137,8 @@ export class Server implements IServer {
 
     if (isRpcMessage(arg0)) {
       endpoints = Object.keys(this.cluster.servers)
-        .filter((serverId) => serverId != this.id)
-        .map((serverId) => this.cluster.servers[serverId]);
+        .filter(serverId => serverId != this.id)
+        .map(serverId => this.cluster.servers[serverId]);
       message = arg0;
     } else {
       if (arg0 instanceof Array) {
