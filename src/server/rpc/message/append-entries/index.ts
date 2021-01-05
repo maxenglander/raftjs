@@ -1,2 +1,9 @@
-export * from './@types';
+export {
+  IAppendEntriesRpcArguments,
+  IAppendEntriesRpcExchange,
+  IAppendEntriesRpcRequest,
+  IAppendEntriesRpcResponse,
+  IAppendEntriesRpcResults,
+  ILogEntry
+} from './@types';
 export * from './factory';

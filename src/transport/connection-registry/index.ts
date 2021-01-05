@@ -1,2 +1,2 @@
-export * from './@types';
+export { IConnectionRegistry } from './@types';
 export * from './factory';

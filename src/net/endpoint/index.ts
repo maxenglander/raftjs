@@ -1,3 +1,3 @@
-export * from './@types';
+export { IEndpoint } from './@types';
 export * from './factory';
 export * from './helpers';

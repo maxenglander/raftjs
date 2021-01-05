@@ -115,15 +115,15 @@ function parseLogLevel(
   return level as logger.Level;
 }
 
-// Parses the logger machine-readable flag.
-function parseLogMachineReadable(
-  machineReadable: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+// Parses the logger pretty-print flag.
+function parseLogPrettyPrint(
+  prettyPrint: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 ): boolean {
-  if (!(typeof machineReadable == 'boolean'))
+  if (!(typeof prettyPrint == 'boolean'))
     throw new Error(
-      "Config 'logger.machineReadable' must be a boolean: " + machineReadable
+      "Config 'logger.prettyPrint' must be a boolean: " + prettyPrint
     );
-  return machineReadable as boolean;
+  return prettyPrint as boolean;
 }
 
 // Parses the logger configuration.
@@ -136,13 +136,13 @@ function parseLogger(
   const level: logger.Level =
     config && config['level'] ? parseLogLevel(config['level']) : 'error';
 
-  const machineReadable: boolean =
-    config && config['machineReadable']
-      ? parseLogMachineReadable(config['machineReadable'])
+  const prettyPrint: boolean =
+    config && config['prettyPrint']
+      ? parseLogPrettyPrint(config['prettyPrint'])
       : false;
 
   return logger.createLogger({
     level,
-    machineReadable
+    prettyPrint
   });
 }

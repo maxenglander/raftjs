@@ -114,7 +114,7 @@ const gulpStreams = {
   },
   removeEmptyFiles() {
     return through.obj(function(input, encoding, callback) {
-      if(input.contents.length > 0) {
+      if(input.contents.toString(encoding).trim().length > 0) {
         this.push(input);
       }
       callback();
@@ -196,12 +196,17 @@ gulp.task('docs:annotate-source', gulp.series('compile:flatbuffers', function() 
     filename: path.join(Dirs.SRC, 'annotated-source.ts'),
     filter: path => path.indexOf('node_modules') === -1,
     tsConfig
-  }).reverse();
+  }).reverse().filter(function(file) {
+    return file.match('@types.ts') === null;
+  });
 
   return gulp.src(files, { base: Dirs.SRC })
+    .pipe(gulpReplace(/ +\/\/ eslint-disable-line.*$/gm, ''))
     .pipe(gulpStreams.compileTypeScript({ tsConfig }))
-    .pipe(gulpStreams.removeEmptyFiles())
     .pipe(gulpStreams.lint())
+    .pipe(gulpPrettier(prettierRc))
+    .pipe(gulpReplace('export {};', ''))
+    .pipe(gulpStreams.removeEmptyFiles())
     .pipe(through.obj(function addFilenameAsComment(input, encoding, callback) {
       const clone = input.clone();
       clone.contents = Buffer.concat([

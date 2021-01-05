@@ -6,6 +6,6 @@ import { ILogger, ILoggerOptions } from './@types';
 export function createLogger(options: ILoggerOptions = {}): ILogger {
   return Pino({
     level: options.level ? options.level : 'error',
-    prettyPrint: 'machineReadable' in options ? !options.machineReadable : true
+    prettyPrint: 'prettyPrint' in options ? !options.prettyPrint : true
   });
 }

@@ -1,2 +1,2 @@
-export * from './@types';
+export { IState, StateFactory, StateTransition, StateType } from './@types';
 export * from './factory';

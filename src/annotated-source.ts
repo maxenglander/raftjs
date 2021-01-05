@@ -1,6 +1,6 @@
-//
-import './cli';
 // # raftjs
+//
+import { execute } from './cli'; // eslint-disable-line
 //
 // This annotated source is a single page containing
 // almost all of the source code in the `raftjs` project.
@@ -21,7 +21,13 @@ import './cli';
 //
 // Generally speaking, most of the annotations highlight
 // areas of the code that closely correspond to writing
-// in the Raft paper. Other parts of the code, such as the
+// in the Raft paper.
+//
+// Other parts of the code, such as the
 // TCP transport, which are useful within the `raftjs` project
 // but are not essential to the Raft protocol, are less
 // heavily annotated.
+//
+// The project source code is written in TypeScript, but
+// the annotated source is compiled to JavaScript for
+// readability.

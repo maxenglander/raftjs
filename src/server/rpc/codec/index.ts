@@ -1,2 +1,2 @@
-export * from './@types';
+export { ICodec } from './@types';
 export * from './flatbuffers';
