@@ -1,0 +1,58 @@
+enum CallType: byte {
+  Request  = 0,
+  Response = 1
+}
+
+enum ProcedureType: byte {
+  AppendEntries = 0,
+  RequestVote   = 1
+}
+
+table AppendEntriesArguments {
+  entries: [LogEntry];
+  leader_commit: uint32;
+  leader_id: string;
+  prev_log_index: uint32;
+  prev_log_term: uint32;
+  term: uint32;
+}
+
+table AppendEntriesResults {
+  success: bool;
+  term: uint32;
+}
+
+table LogEntry {
+  command: [ubyte];
+  index: uint32;
+  term: uint32;
+}
+
+table RequestVoteArguments {
+  candidate_id: string;
+  last_log_index: uint32;
+  last_log_term: uint32;
+  term: uint32;
+}
+
+table RequestVoteResults {
+  term: uint32;
+  vote_granted: bool;
+}
+
+union Arguments {
+  AppendEntriesArguments,
+  RequestVoteArguments
+}
+
+union Results {
+  AppendEntriesResults,
+  RequestVoteResults
+}
+
+table Message {
+  call_type: CallType;
+  procedure_type: ProcedureType;
+  arguments: Arguments;
+  results: Results;
+}

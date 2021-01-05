@@ -16,13 +16,21 @@
   "homepage": "https://github.com/maxenglander/raftjs",
   "scripts": {
     "build": "./node_modules/gulp-cli/bin/gulp.js compile",
+    "docs": "./node_modules/gulp-cli/bin/gulp.js docs",
+    "lint:fix": "./node_modules/gulp-cli/bin/gulp.js lint:fix",
+    "lint:check": "./node_modules/gulp-cli/bin/gulp.js lint:check",
     "test": "./node_modules/gulp-cli/bin/gulp.js test"
   },
   "directories": {
-    "build": "build",
+    "build": {
+      "base": "build",
+      "docs": "build/docs",
+      "gen": "build/gen",
+      "dist": "build/dist",
+      "test": "build/test"
+    },
     "docs": "docs",
     "dist": "dist",
-    "gen": "gen",
     "src": "src",
     "test": "test"
   },
@@ -45,21 +53,24 @@
     "@types/pino": "^5.8.6",
     "@types/uuid": "^3.4.4",
     "@types/yargs": "^12.0.9",
+    "@typescript-eslint/eslint-plugin": "^4.11.1",
+    "@typescript-eslint/parser": "^4.11.1",
     "chai": "^4.2.0",
     "del": "^3.0.0",
     "dependency-tree": "^7.0.2",
     "docco": "^0.8.0",
+    "eslint": "^7.17.0",
     "flatc": "^1.1.0",
     "glob": "^7.1.3",
     "gulp": "^4.0.0",
     "gulp-babel": "^8.0.0",
     "gulp-cli": "^2.0.1",
     "gulp-concat": "^2.6.1",
-    "gulp-eslint": "^5.0.0",
+    "gulp-eslint7": "^0.3.0",
     "gulp-filter": "^5.1.0",
     "gulp-if": "^2.0.2",
     "gulp-mocha": "^6.0.0",
-    "gulp-prettier": "^2.1.0",
+    "gulp-prettier": "^2.3.0",
     "gulp-read": "^1.0.1",
     "gulp-replace": "^1.0.0",
     "gulp-sourcemaps": "^2.6.4",
@@ -69,8 +80,7 @@
     "mocha-logger": "^1.0.6",
     "sinon": "^7.2.3",
     "through2": "^3.0.0",
-    "tsconfig-root-dirs": "file:../../tsconfig-root-dirs",
-    "typescript": "^3.4.0"
+    "typescript": "^4.1.0"
   },
   "engines": {
     "node": ">=10.12.0"
