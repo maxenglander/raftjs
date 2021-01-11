@@ -3,8 +3,8 @@ import { FollowerState } from './follower';
 import { LeaderState } from './leader';
 import { IServer } from '../@types';
 import { IState, StateType } from './@types';
-import { compilerError } from '../../util/compiler-error';
-import { noop } from '../../util';
+import { compilerError } from '../util/compiler-error';
+import { noop } from '../util';
 
 // The "no-op" state is not part of the Raft
 // protocol. It is used by `Server` as a

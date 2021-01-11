@@ -5,7 +5,7 @@ import {
   IAppendEntriesRpcRequest,
   createAppendEntriesRpcRequest
 } from '../rpc/message';
-import { IEndpoint, createEndpoint } from '../../net/endpoint';
+import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { createRpcService } from '../rpc';
 
 describe('rpc service', function() {

@@ -5,7 +5,7 @@ import {
   RpcProcedureTypeMap
 } from './message';
 import { ICodec } from './codec';
-import { IEndpoint } from '../../net/endpoint';
+import { IEndpoint } from '../net/endpoint';
 import {
   IRpcReceiverRegistry,
   createRpcReceiverRegistry
@@ -16,7 +16,7 @@ import {
   IRpcService,
   IRpcServiceOptions
 } from './@types';
-import { ITransport } from '../../transport';
+import { ITransport } from '../transport';
 
 // Encodes, sends, decodes and receives RPC messages.
 export class RpcService implements IRpcService {

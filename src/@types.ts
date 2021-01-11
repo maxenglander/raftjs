@@ -1,35 +1,21 @@
-import { ICluster } from '../cluster';
-import { IDurableValue } from '../storage';
-import { ILog } from '../log';
-import { ILogger } from '../logger';
-import { IRpcMessage } from './rpc/message';
-import { IEndpoint } from '../net/endpoint';
-import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
+import { ICluster } from './cluster';
+import { IDurableValue } from './storage';
+import { ILog } from './log';
+import { ILogger } from './logger';
+import { IEndpoint } from './net/endpoint';
+import { IRpcEventListener, IRpcMessage, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IState, StateType } from './state';
 
-interface IBaseCreateServerOptions {
+export type ICreateServerOptions = {
   readonly cluster: ICluster;
   readonly electionTimer?: IElectionTimer;
   readonly id: ServerId;
   readonly log?: ILog;
   readonly logger?: ILogger;
   readonly peerApi?: IRpcService;
-}
-
-export type ICreateServerOptions = IBaseCreateServerOptions &
-  ICurrentTermOrDataDir &
-  IVotedForOrDataDir;
-
-interface IDataDir {
-  dataDir: string;
-}
-
-interface ICurrentTerm {
-  currentTerm: IDurableValue<number>;
-}
-
-type ICurrentTermOrDataDir = ICurrentTerm | IDataDir;
+} & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
+  & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
 
 export interface IServer {
   readonly electionTimer: IElectionTimer;
@@ -78,9 +64,3 @@ export interface IServerOptions {
 }
 
 export type ServerId = string;
-
-interface IVotedFor {
-  votedFor: IDurableValue<string>;
-}
-
-type IVotedForOrDataDir = IVotedFor | IDataDir;

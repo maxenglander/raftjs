@@ -5,8 +5,8 @@ import {
   RpcProcedureTypeMap
 } from './message';
 import { ICodec } from './codec';
-import { IEndpoint } from '../../net/endpoint';
-import { ITransport } from '../../transport';
+import { IEndpoint } from '../net/endpoint';
+import { ITransport } from '../transport';
 
 export interface IRpcServiceOptions {
   readonly codec?: ICodec;

@@ -1,7 +1,7 @@
 import { IRpcMessage, RpcCallTypeMap, RpcProcedureTypeMap } from '../message';
 import { IRpcReceiver } from '../@types';
 import { IRpcReceiverRegistry } from './@types';
-import { compilerError } from '../../../util/compiler-error';
+import { compilerError } from '../../util/compiler-error';
 
 // A data structure that maintains an `RpcReceiver` set for each
 // kind of RPC message.

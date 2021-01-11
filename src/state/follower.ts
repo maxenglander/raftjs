@@ -2,7 +2,7 @@ import {
   IRequestVoteRpcRequest,
   createRequestVoteRpcResponse
 } from '../rpc/message';
-import { IEndpoint } from '../../net/endpoint';
+import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
 import { BaseState } from './base';
 

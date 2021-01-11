@@ -1,4 +1,4 @@
-import { IEndpoint } from '../../net/endpoint';
+import { IEndpoint } from '../net/endpoint';
 import {
   IRpcMessage,
   IAppendEntriesRpcRequest,
@@ -7,7 +7,7 @@ import {
 import { IRpcEventListener } from '../rpc';
 import { IServer } from '../';
 import { IState, StateType } from './';
-import { compilerError } from '../../util/compiler-error';
+import { compilerError } from '../util/compiler-error';
 
 // The base server state is not named as such in
 // the Raft paper, but is used in the `raftjs`

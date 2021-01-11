@@ -1,7 +1,7 @@
 // A `yargs` command handler for the `raftjs` server start
 // command that parses a `--config-file` and starts a `raftjs`
 // server.
-import { createServer } from '../../../server';
+import { createServer } from '../../../factory';
 
 import { IStartCommandCliOptions } from './@types';
 import { parseConfigFile } from './config-file-parser';

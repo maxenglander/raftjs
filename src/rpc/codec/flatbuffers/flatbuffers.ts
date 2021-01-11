@@ -17,7 +17,7 @@ import {
   IRequestVoteRpcResults,
   IRpcMessage
 } from '../../message';
-import { compilerError } from '../../../../util/compiler-error';
+import { compilerError } from '../../../util/compiler-error';
 
 // `flatbuffers_generated.ts` is generated from
 // `flatbuffers.fbs` during the build process.

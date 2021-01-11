@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import { ICluster } from '../../../cluster';
 import * as logger from '../../../logger';
-import { ICreateServerOptions } from '../../../server';
+import { ICreateServerOptions } from '../../../@types';
 import { IEndpoint, createEndpoint } from '../../../net/endpoint';
 
 // A config file parser that accepts a file path,

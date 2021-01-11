@@ -15,7 +15,7 @@ import {
   createElectionTimer,
   createElectionTimeoutChooser
 } from '../election-timer';
-import { IEndpoint, createEndpoint } from '../../net/endpoint';
+import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
 import { IState } from './';

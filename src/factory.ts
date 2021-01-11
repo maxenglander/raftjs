@@ -10,10 +10,10 @@ import {
   IDurableValue,
   createDurableInteger,
   createDurableString
-} from '../storage';
+} from './storage';
 import { createElectionTimer } from './election-timer';
-import { createLog } from '../log';
-import { createLogger } from '../logger';
+import { createLog } from './log';
+import { createLogger } from './logger';
 import { createRpcService } from './rpc';
 import { Server } from './server';
 

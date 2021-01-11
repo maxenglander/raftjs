@@ -3,17 +3,17 @@
 // from other `Server` instances and transitions
 // between follower, candidate and leader states.
 
-import { ICluster } from '../cluster';
-import { IDurableValue } from '../storage';
-import { ILog } from '../log';
-import { ILogger } from '../logger';
+import { ICluster } from './cluster';
+import { IDurableValue } from './storage';
+import { ILog } from './log';
+import { ILogger } from './logger';
 import {
   IRpcMessage,
   isRpcMessage,
   isRpcRequest,
   isRpcResponse
 } from './rpc/message';
-import { IEndpoint, isEndpoint } from '../net/endpoint';
+import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IServer, IServerOptions, ServerId } from './@types';

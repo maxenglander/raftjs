@@ -1,4 +1,4 @@
-import { Callback } from '../../util/callback';
+import { Callback } from '../util/callback';
 
 export interface IElectionTimer {
   getTimeout: () => number;
