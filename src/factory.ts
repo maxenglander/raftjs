@@ -48,6 +48,9 @@ export function createServer(options: ICreateServerOptions): IServer {
     log: options.log || createLog(),
     logger: options.logger || createLogger(),
     peerApi: options.peerApi || createRpcService(),
+    stateMachine: options.stateMachine || {
+      execute: (command: Buffer) => Promise.resolve(Buffer.alloc(0))
+    },
     votedFor
   });
 }

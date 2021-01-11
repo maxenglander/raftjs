@@ -14,8 +14,22 @@ export type ICreateServerOptions = {
   readonly log?: ILog;
   readonly logger?: ILogger;
   readonly peerApi?: IRpcService;
+  readonly stateMachine?: IStateMachine;
 } & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
+
+export interface IRequest {
+  command: Buffer;
+}
+
+export type IResponse = {
+  result: Buffer;
+} | {
+  error: 'not-leader';
+  leader: {
+    endpoint: IEndpoint;
+  }
+}
 
 export interface IServer {
   readonly electionTimer: IElectionTimer;
@@ -24,6 +38,7 @@ export interface IServer {
   readonly log: ILog;
   readonly logger: ILogger;
   readonly peerApi: IRpcService;
+  readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
   getCurrentTerm(): number;
@@ -60,7 +75,12 @@ export interface IServerOptions {
   readonly log: ILog;
   readonly logger: ILogger;
   readonly peerApi: IRpcService;
+  readonly stateMachine: IStateMachine;
   readonly votedFor: IDurableValue<string>;
 }
 
 export type ServerId = string;
+
+export interface IStateMachine {
+  execute(command: Buffer): Promise<Buffer>;
+}

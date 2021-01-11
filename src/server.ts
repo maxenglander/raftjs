@@ -16,7 +16,7 @@ import {
 import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IServer, IServerOptions, ServerId } from './@types';
+import { IServer, IServerOptions, IStateMachine, ServerId } from './@types';
 import { IState, StateType, createState } from './state';
 
 export class Server implements IServer {
@@ -32,6 +32,7 @@ export class Server implements IServer {
   public readonly logger: ILogger;
   public readonly peerApi: IRpcService;
   private state: IState;
+  public readonly stateMachine: IStateMachine;
   private votedFor: IDurableValue<string>;
 
   constructor(options: IServerOptions) {
@@ -49,6 +50,7 @@ export class Server implements IServer {
     // ensure that `Server` can always call `enter`
     // and `exit` on `this.state`.
     this.state = createState('noop', null);
+    this.stateMachine = options.stateMachine;
     this.votedFor = options.votedFor;
   }
 
