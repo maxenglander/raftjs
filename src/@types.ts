@@ -51,6 +51,7 @@ export interface IServer {
   >(
     receiver: IRpcReceiver<P, C>
   ): IRpcEventListener;
+  request(request: IRequest): Promise<IResponse>;
   sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
   sendPeerRpc(
     endpoint: IEndpoint,

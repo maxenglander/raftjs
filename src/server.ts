@@ -16,7 +16,7 @@ import {
 import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IServer, IServerOptions, IStateMachine, ServerId } from './@types';
+import { IRequest, IResponse, IServer, IServerOptions, IStateMachine, ServerId } from './@types';
 import { IState, StateType, createState } from './state';
 
 export class Server implements IServer {
@@ -93,6 +93,10 @@ export class Server implements IServer {
     C extends IRpcMessage['callType']
   >(receiver: IRpcReceiver<P, C>): IRpcEventListener {
     return this.peerApi.onReceive(receiver);
+  }
+
+  public request(request: IRequest): Promise<IResponse> {
+    throw new Error('TODO');
   }
 
   public sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
