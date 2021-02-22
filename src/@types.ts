@@ -37,7 +37,6 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerApi: IRpcService;
   readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
@@ -45,12 +44,6 @@ export interface IServer {
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
-  onReceivePeerRpc<
-    P extends IRpcMessage['procedureType'],
-    C extends IRpcMessage['callType']
-  >(
-    receiver: IRpcReceiver<P, C>
-  ): IRpcEventListener;
   request(request: IRequest): Promise<IResponse>;
   sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
   sendPeerRpc(

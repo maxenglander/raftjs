@@ -2,6 +2,9 @@ import { IEndpoint } from '../net/endpoint';
 import {
   IRpcMessage,
   IAppendEntriesRpcRequest,
+  IAppendEntriesRpcResponse,
+  IRequestVoteRpcRequest,
+  IRequestVoteRpcResponse,
   createAppendEntriesRpcResponse
 } from '../rpc/message';
 import { IRpcEventListener } from '../rpc';
@@ -18,68 +21,17 @@ export class BaseState implements IState {
   protected readonly server: IServer;
 
   private leaderEndpoint: IEndpoint;
-  private rpcEventListeners: Set<IRpcEventListener>;
 
   constructor(server: IServer, lastState?: IState) {
     if(lastState) {
       this.leaderEndpoint = lastState.getLeaderEndpoint();
     }
-    this.rpcEventListeners = new Set<IRpcEventListener>();
     this.server = server;
-    this.onAppendEntriesRequestBase = this.onAppendEntriesRequestBase.bind(
-      this
-    );
-    this.onRequestOrResponse = this.onRequestOrResponse.bind(this);
   }
 
-  protected addRpcEventListener(rpcEventListener: IRpcEventListener): void {
-    this.rpcEventListeners.add(rpcEventListener);
-  }
+  public enter(): void {}
 
-  public enter(): void {
-    this.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'append-entries',
-        callType: 'request',
-        notify: this.onAppendEntriesRequestBase
-      })
-    );
-    this.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'append-entries',
-        callType: 'request',
-        notify: this.onRequestOrResponse
-      })
-    );
-    this.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'append-entries',
-        callType: 'response',
-        notify: this.onRequestOrResponse
-      })
-    );
-    this.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'request-vote',
-        callType: 'request',
-        notify: this.onRequestOrResponse
-      })
-    );
-    this.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'request-vote',
-        callType: 'response',
-        notify: this.onRequestOrResponse
-      })
-    );
-  }
-
-  public exit(): void {
-    for (const rpcEventListener of this.rpcEventListeners) {
-      this.rpcEventListeners.delete(rpcEventListener);
-      rpcEventListener.detach();
-    }
-  }
+  public exit(): void {}
 
   public getLeaderEndpoint(): IEndpoint {
     return this.leaderEndpoint;
@@ -97,7 +49,7 @@ export class BaseState implements IState {
   // AppendEntries RPC request. At the present time,
   // it only handles responding to heartbeats.
   // > *§5. "...Receiver implementation:..."*
-  private onAppendEntriesRequestBase(
+  public onAppendEntriesRpcRequest(
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
   ): void {
@@ -115,7 +67,30 @@ export class BaseState implements IState {
         success,
         term: this.server.getCurrentTerm()
       })
-    );
+    ).then(() => {
+      this.onRequestOrResponse(endpoint, message);
+    });
+  }
+
+  public onAppendEntriesRpcResponse(
+    endpoint: IEndpoint,
+    message: IAppendEntriesRpcResponse
+  ): void {
+    this.onRequestOrResponse(endpoint, message);
+  }
+
+  public onRequestVoteRpcRequest(
+    endpoint: IEndpoint,
+    message: IRequestVoteRpcRequest
+  ): void {
+    this.onRequestOrResponse(endpoint, message);
+  }
+
+  public onRequestVoteRpcResponse(
+    endpoint: IEndpoint,
+    message: IRequestVoteRpcResponse
+  ): void {
+    this.onRequestOrResponse(endpoint, message);
   }
 
   private onRequestOrResponse(endpoint: IEndpoint, message: IRpcMessage): void {
@@ -142,10 +117,10 @@ export class BaseState implements IState {
         break;
     }
 
-    // Whenever Raft server's communicate to each other, they
-    // exchange their current term, and, if one server's term
+    // Whenever Raft servers communicate to each other, they
+    // exchange their current term. If one server's term
     // is less than anothers, it updates it's own term to the
-    // other's, and converts to a follower.
+    // other's, and transitions to a follower.
     // > *§5. "...If RPC request or response contains..."*
     // > *§5.1. "...If one server's current term is smaller..."*
     if (term > this.server.getCurrentTerm()) {

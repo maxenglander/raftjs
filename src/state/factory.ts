@@ -17,6 +17,10 @@ function createNoopState(): IState {
     getLeaderEndpoint: () => null,
     getType: () => null,
     isLeader: () => false,
+    onAppendEntriesRpcRequest: noop,
+    onAppendEntriesRpcResponse: noop,
+    onRequestVoteRpcRequest: noop,
+    onRequestVoteRpcResponse: noop
   };
 }
 

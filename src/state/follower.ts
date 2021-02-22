@@ -1,5 +1,7 @@
 import {
+  IAppendEntriesRpcRequest,
   IRequestVoteRpcRequest,
+  IRequestVoteRpcResponse,
   createRequestVoteRpcResponse
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
@@ -16,29 +18,11 @@ import { BaseState } from './base';
 export class FollowerState extends BaseState {
   constructor(server: IServer, lastState: IState) {
     super(server, lastState);
-
-    this.onAppendEntriesRequest = this.onAppendEntriesRequest.bind(this);
-    this.onRequestVoteRequest = this.onRequestVoteRequest.bind(this);
-    this.onTimeout = this.onTimeout.bind(this);
   }
 
   public enter(): void {
     super.enter();
-    super.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'append-entries',
-        callType: 'request',
-        notify: this.onAppendEntriesRequest
-      })
-    );
-    super.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'request-vote',
-        callType: 'request',
-        notify: this.onRequestVoteRequest
-      })
-    );
-    this.server.electionTimer.on('timeout', this.onTimeout);
+    this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
     this.server.logger.debug(
       `Starting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`
     );
@@ -47,7 +31,7 @@ export class FollowerState extends BaseState {
 
   public exit(): void {
     this.server.electionTimer.stop();
-    this.server.electionTimer.off('timeout', this.onTimeout);
+    this.server.electionTimer.off('timeout', this.onTimeout.bind(this));
     super.exit();
   }
 
@@ -58,15 +42,18 @@ export class FollowerState extends BaseState {
   // One of the conditions for a follower resetting
   // its election timer is:
   // > *§5. "...receiving AppendEntries RPC from current leader..."*
-  private onAppendEntriesRequest(): void {
+  public onAppendEntriesRpcRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): void {
+    super.onAppendEntriesRpcRequest(endpoint, message);
     this.server.electionTimer.reset();
   }
 
   //
-  private onRequestVoteRequest(
+  public onRequestVoteRpcRequest(
     endpoint: IEndpoint,
     message: IRequestVoteRpcRequest
   ): void {
+    super.onRequestVoteRpcRequest(endpoint, message);
+
     const currentTerm = this.server.getCurrentTerm(),
       vote = this.server.getVotedFor(),
       { electionTimer } = this.server,

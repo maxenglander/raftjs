@@ -8,7 +8,11 @@ import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
 import {
+  IAppendEntriesRpcRequest,
+  IAppendEntriesRpcResponse,
   IRpcMessage,
+  IRequestVoteRpcRequest,
+  IRequestVoteRpcResponse,
   isRpcMessage,
   isRpcRequest,
   isRpcResponse
@@ -30,7 +34,8 @@ export class Server implements IServer {
   private lastApplied: number;
   public readonly log: ILog;
   public readonly logger: ILogger;
-  public readonly peerApi: IRpcService;
+  private readonly peerApi: IRpcService;
+  private rpcEventListeners: Set<IRpcEventListener>;
   private state: IState;
   public readonly stateMachine: IStateMachine;
   private votedFor: IDurableValue<string>;
@@ -44,6 +49,7 @@ export class Server implements IServer {
     this.log = options.log;
     this.logger = options.logger;
     this.peerApi = options.peerApi;
+    this.rpcEventListeners = new Set<IRpcEventListener>();
     // `noop` is not a state specified by the Raft protocol.
     // It is used here as a ["null
     // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
@@ -52,6 +58,44 @@ export class Server implements IServer {
     this.state = createState('noop', null, null);
     this.stateMachine = options.stateMachine;
     this.votedFor = options.votedFor;
+  }
+
+  private attachPeerRpcListeners(): void {
+    this.rpcEventListeners.add(this.peerApi.onReceive({
+      procedureType: 'append-entries',
+      callType: 'request',
+      notify: (endpoint: IEndpoint, message: IAppendEntriesRpcRequest) => {
+        this.state.onAppendEntriesRpcRequest(endpoint, message);
+      }
+    }));
+    this.rpcEventListeners.add(this.peerApi.onReceive({
+      procedureType: 'append-entries',
+      callType: 'response',
+      notify: (endpoint: IEndpoint, message: IAppendEntriesRpcResponse) => {
+        this.state.onAppendEntriesRpcResponse(endpoint, message);
+      }
+    }));
+    this.rpcEventListeners.add(this.peerApi.onReceive({
+      procedureType: 'request-vote',
+      callType: 'request',
+      notify: (endpoint: IEndpoint, message: IRequestVoteRpcRequest) => {
+        this.state.onRequestVoteRpcRequest(endpoint, message);
+      }
+    }));
+    this.rpcEventListeners.add(this.peerApi.onReceive({
+      procedureType: 'request-vote',
+      callType: 'response',
+      notify: (endpoint: IEndpoint, message: IRequestVoteRpcResponse) => {
+        this.state.onRequestVoteRpcResponse(endpoint, message);
+      }
+    }));
+  }
+
+  private detachPeerRpcListeners(): void {
+    for (const rpcEventListener of this.rpcEventListeners) {
+      this.rpcEventListeners.delete(rpcEventListener);
+      rpcEventListener.detach();
+    }
   }
 
   public getCluster(): ICluster {
@@ -83,16 +127,6 @@ export class Server implements IServer {
   // *§5. "...candidateId that received vote in current term..."*
   public getVotedFor(): ServerId {
     return this.votedFor.getValue();
-  }
-
-  // The `onReceivePeerRpc` method can be used to register a
-  // receiver of RPC requests from other Raft `Server`
-  // instances.
-  public onReceivePeerRpc<
-    P extends IRpcMessage['procedureType'],
-    C extends IRpcMessage['callType']
-  >(receiver: IRpcReceiver<P, C>): IRpcEventListener {
-    return this.peerApi.onReceive(receiver);
   }
 
   public request(request: IRequest): Promise<IResponse> {
@@ -193,6 +227,9 @@ export class Server implements IServer {
         this.logger.debug('Transitioning to follower');
         this.transitionTo('follower');
       })
+      .then(() => {
+        this.attachPeerRpcListeners();
+      })
       .then(() => this.logger.info(`Started Raftjs server ${this.id}`));
   }
 
@@ -201,6 +238,7 @@ export class Server implements IServer {
     this.logger.debug('Exiting current state');
     this.state.exit();
     this.logger.debug('Stopping RPC service');
+    this.detachPeerRpcListeners();
     return this.peerApi
       .close()
       .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));

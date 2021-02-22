@@ -1,5 +1,6 @@
 import {
   IAppendEntriesRpcRequest,
+  IAppendEntriesRpcResponse,
   IRequestVoteRpcResponse,
   createRequestVoteRpcRequest
 } from '../rpc/message';
@@ -20,7 +21,6 @@ export class CandidateState extends BaseState {
 
   constructor(server: IServer, lastState: IState) {
     super(server, lastState);
-    this.onTimeout = this.onTimeout.bind(this);
   }
 
   // Upon transitioning from a follower to a candidate,
@@ -28,21 +28,7 @@ export class CandidateState extends BaseState {
   // > *§5. "...On conversion to candidate, start election..."*
   public enter(): void {
     super.enter();
-    super.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'append-entries',
-        callType: 'request',
-        notify: this.onAppendEntriesRequest.bind(this)
-      })
-    );
-    super.addRpcEventListener(
-      this.server.onReceivePeerRpc({
-        procedureType: 'request-vote',
-        callType: 'response',
-        notify: this.onRequestVoteResponse.bind(this)
-      })
-    );
-    this.server.electionTimer.on('timeout', this.onTimeout);
+    this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
     this.startElection();
   }
 
@@ -75,11 +61,12 @@ export class CandidateState extends BaseState {
   // to its own, it converts to a follower.
   // > *§5. "...If AppendEntries RPC received..."*
   // > *§5.2. "...While waiting for votes..."*
-  private onAppendEntriesRequest(
+  public onAppendEntriesRpcRequest(
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
   ): void {
-    if (message.arguments.term >= this.server.getCurrentTerm()) {
+    super.onAppendEntriesRpcRequest(endpoint, message);
+    if(message.arguments.term >= this.server.getCurrentTerm()) {
       this.server.logger.trace(
         `Received append-entries request from ${endpoint.toString}; transitioning to follower`
       );
@@ -88,7 +75,7 @@ export class CandidateState extends BaseState {
   }
 
   //
-  private onRequestVoteResponse(
+  public onRequestVoteRpcResponse(
     endpoint: IEndpoint,
     message: IRequestVoteRpcResponse
   ): void {

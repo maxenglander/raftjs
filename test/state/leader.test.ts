@@ -34,7 +34,7 @@ describe('server leader state', function() {
     server: IServer;
 
   afterEach(function() {
-    return Promise.all([peerApi.close(), server.peerApi.close()]);
+    return Promise.all([peerApi.close(), server.stop()]);
   });
 
   beforeEach(function() {
@@ -61,7 +61,7 @@ describe('server leader state', function() {
     peerApi = createRpcService();
 
     return Promise.all([
-      server.peerApi.listen(server.endpoint),
+      server.start(),
       peerApi.listen(peerEndpoint)
     ]);
   });
