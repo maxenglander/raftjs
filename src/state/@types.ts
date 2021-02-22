@@ -1,13 +1,16 @@
+import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../@types';
 
 export interface IState {
   enter: () => void;
   exit: () => void;
-  readonly type: StateType;
+  getLeaderEndpoint: () => IEndpoint;
+  getType: () => StateType
+  isLeader: () => boolean;
 }
 
-export type StateFactory = (server: IServer) => IState;
+export type StateFactory = (server: IServer, lastState: IState) => IState;
 
-export type StateTransition = (state: StateType | IState) => void;
+export type StateTransition = (nextState: StateType | IState) => void;
 
 export type StateType = 'candidate' | 'follower' | 'leader';

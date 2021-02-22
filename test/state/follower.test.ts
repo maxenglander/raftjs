@@ -52,7 +52,7 @@ describe('server follower state', function() {
       id: 'server0'
     });
 
-    follower = new FollowerState(server);
+    follower = new FollowerState(server, null);
 
     return server.start();
   });
@@ -73,7 +73,7 @@ describe('server follower state', function() {
           this.timeout(electionTimer.getTimeout() + /*buffer*/ 100);
 
           electionTimer.on('timeout', function() {
-            expect(server.getState().type).to.equal('candidate');
+            expect(server.getState().getType()).to.equal('candidate');
             done();
           });
         });
@@ -125,7 +125,7 @@ describe('server follower state', function() {
             this.timeout(electionTimer.getTimeout() + /*buffer*/ 10);
 
             setTimeout(function() {
-              expect(server.getState().type).to.equal('follower');
+              expect(server.getState().getType()).to.equal('follower');
               done();
             }, timeRemaining);
           });
@@ -164,7 +164,7 @@ describe('server follower state', function() {
               this.timeout(electionTimer.getTimeout() + /*buffer*/ 100);
 
               electionTimer.on('timeout', function() {
-                expect(server.getState().type).to.equal('candidate');
+                expect(server.getState().getType()).to.equal('candidate');
                 done();
               });
             });

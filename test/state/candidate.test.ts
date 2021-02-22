@@ -60,7 +60,7 @@ describe('server candidate state', function() {
       id: 'server0'
     });
 
-    candidate = new CandidateState(server);
+    candidate = new CandidateState(server, null);
 
     rpcService = createRpcService();
 
@@ -162,7 +162,7 @@ describe('server candidate state', function() {
 
       it('transitions to a follower', function(done) {
         setTimeout(function() {
-          expect(server.getState().type).to.equal('follower');
+          expect(server.getState().getType()).to.equal('follower');
           done();
         }, /*allow time for candidate to process request*/ 10);
       });
@@ -208,7 +208,7 @@ describe('server candidate state', function() {
 
             it('transitions to a leader', function(done) {
               setTimeout(function() {
-                expect(server.getState().type).to.equal('leader');
+                expect(server.getState().getType()).to.equal('leader');
                 done();
               }, /*allow candidate processing time*/ 20);
             });
@@ -245,7 +245,7 @@ describe('server candidate state', function() {
 
             it('restarts the election timer and does not transition state', function(done) {
               electionTimer.on('reset', function() {
-                expect(server.getState().type).to.equal('candidate');
+                expect(server.getState().getType()).to.equal('candidate');
                 done();
               });
             });

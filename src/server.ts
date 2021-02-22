@@ -49,7 +49,7 @@ export class Server implements IServer {
     // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
     // ensure that `Server` can always call `enter`
     // and `exit` on `this.state`.
-    this.state = createState('noop', null);
+    this.state = createState('noop', null, null);
     this.stateMachine = options.stateMachine;
     this.votedFor = options.votedFor;
   }
@@ -214,8 +214,8 @@ export class Server implements IServer {
   // those components access to `Server` data and methods.
   public transitionTo(state: StateType | IState): void {
     const newState =
-      typeof state == 'string' ? createState(state, this) : state;
-    if (this.state.type == newState.type) return;
+      typeof state == 'string' ? createState(state, this, this.state) : state;
+    if (this.state.getType() == newState.getType()) return;
     this.state.exit();
     this.state = newState;
     this.state.enter();

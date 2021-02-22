@@ -1,5 +1,7 @@
 import { BaseState } from './base';
+import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../@types';
+import { IState, StateType } from './@types';
 import { createAppendEntriesRpcRequest } from '../rpc/message';
 
 // Leaders:
@@ -13,9 +15,8 @@ export class LeaderState extends BaseState {
   private nextIndex: { [id: string]: number };
   private sendHeartbeatsIntervalId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  constructor(server: IServer) {
-    super(server, 'leader');
-
+  constructor(server: IServer, lastState: IState) {
+    super(server, lastState);
     this.sendHeartbeats = this.sendHeartbeats.bind(this);
   }
 
@@ -46,6 +47,18 @@ export class LeaderState extends BaseState {
   public exit(): void {
     clearInterval(this.sendHeartbeatsIntervalId);
     super.exit();
+  }
+
+  public getLeaderEndpoint(): IEndpoint {
+    return this.server.getCluster().servers[this.server.id]
+  }
+
+  public getType(): StateType {
+    return 'leader';
+  }
+
+  public isLeader(): boolean {
+      return true;
   }
 
   private sendHeartbeats() {

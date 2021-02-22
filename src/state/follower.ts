@@ -4,6 +4,7 @@ import {
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
+import { IState, StateType } from './@types';
 import { BaseState } from './base';
 
 // Followers:
@@ -11,10 +12,10 @@ import { BaseState } from './base';
 //
 // Followers remain in that state until either:
 // > *§5. "...an election timeout elapses without receiving AppendEntries RPC from
-// curren leader or granting vote to candidate..."*
+// current leader or granting vote to candidate..."*
 export class FollowerState extends BaseState {
-  constructor(server: IServer) {
-    super(server, 'follower');
+  constructor(server: IServer, lastState: IState) {
+    super(server, lastState);
 
     this.onAppendEntriesRequest = this.onAppendEntriesRequest.bind(this);
     this.onRequestVoteRequest = this.onRequestVoteRequest.bind(this);
@@ -48,6 +49,10 @@ export class FollowerState extends BaseState {
     this.server.electionTimer.stop();
     this.server.electionTimer.off('timeout', this.onTimeout);
     super.exit();
+  }
+
+  public getType(): StateType {
+    return 'follower';
   }
 
   // One of the conditions for a follower resetting
@@ -106,6 +111,6 @@ export class FollowerState extends BaseState {
   // > *§5.1 * "If a follower receives no communication, it becomes a candidate and initiates an election."*
   private onTimeout() {
     this.server.logger.debug('Timer elapsed; transitioning to candidate');
-    this.transitionTo('candidate');
+    this.server.transitionTo('candidate');
   }
 }

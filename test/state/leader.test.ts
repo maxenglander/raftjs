@@ -56,7 +56,7 @@ describe('server leader state', function() {
       id: 'server0'
     });
 
-    leader = new LeaderState(server);
+    leader = new LeaderState(server, null);
 
     peerApi = createRpcService();
 

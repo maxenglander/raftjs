@@ -15,21 +15,21 @@ import { compilerError } from '../util/compiler-error';
 // with the named states (follower, candidate,
 // leader).
 export class BaseState implements IState {
-  public readonly type: StateType;
-
   protected readonly server: IServer;
 
+  private leaderEndpoint: IEndpoint;
   private rpcEventListeners: Set<IRpcEventListener>;
 
-  constructor(server: IServer, stateType: StateType) {
+  constructor(server: IServer, lastState?: IState) {
+    if(lastState) {
+      this.leaderEndpoint = lastState.getLeaderEndpoint();
+    }
     this.rpcEventListeners = new Set<IRpcEventListener>();
     this.server = server;
     this.onAppendEntriesRequestBase = this.onAppendEntriesRequestBase.bind(
       this
     );
     this.onRequestOrResponse = this.onRequestOrResponse.bind(this);
-    this.transitionTo = this.transitionTo.bind(this);
-    this.type = stateType;
   }
 
   protected addRpcEventListener(rpcEventListener: IRpcEventListener): void {
@@ -81,6 +81,18 @@ export class BaseState implements IState {
     }
   }
 
+  public getLeaderEndpoint(): IEndpoint {
+    return this.leaderEndpoint;
+  }
+
+  public getType(): StateType {
+    return null;
+  }
+
+  public isLeader(): boolean {
+    return false;
+  }
+
   // This method is a stub for a Raft response to an
   // AppendEntries RPC request. At the present time,
   // it only handles responding to heartbeats.
@@ -89,6 +101,10 @@ export class BaseState implements IState {
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
   ): void {
+    const success = message.arguments.term >= this.server.getCurrentTerm();
+    if(success) {
+      this.leaderEndpoint = endpoint;
+    }
     this.server.sendPeerRpc(
       endpoint,
       createAppendEntriesRpcResponse({
@@ -96,7 +112,7 @@ export class BaseState implements IState {
         // request with a `term` less than the `term` on this
         // `Server`, the RPC request is rejected.
         // > *§5. "...false if term < currentTerm..."*
-        success: message.arguments.term >= this.server.getCurrentTerm(),
+        success,
         term: this.server.getCurrentTerm()
       })
     );
@@ -126,27 +142,18 @@ export class BaseState implements IState {
         break;
     }
 
-    const server = this.server;
-    const currentTerm = server.getCurrentTerm();
-
     // Whenever Raft server's communicate to each other, they
     // exchange their current term, and, if one server's term
     // is less than anothers, it updates it's own term to the
     // other's, and converts to a follower.
     // > *§5. "...If RPC request or response contains..."*
     // > *§5.1. "...If one server's current term is smaller..."*
-    if (term > currentTerm) {
+    if (term > this.server.getCurrentTerm()) {
       this.server.logger.trace(
-        `Received a message with a term (${term}) higher than the server term (${currentTerm}); transitioning to follower`
+        `Received a message with a term (${term}) higher than the server term (${this.server.getCurrentTerm()}); transitioning to follower`
       );
-      server.setCurrentTerm(term);
-      this.transitionTo('follower');
-    }
-  }
-
-  protected transitionTo(stateType: StateType): void {
-    if (stateType != this.type) {
-      this.server.transitionTo(stateType);
+      this.server.setCurrentTerm(term);
+      this.server.transitionTo('follower');
     }
   }
 }

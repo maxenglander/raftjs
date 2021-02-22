@@ -14,7 +14,9 @@ function createNoopState(): IState {
   return {
     enter: noop,
     exit: noop,
-    type: null
+    getLeaderEndpoint: () => null,
+    getType: () => null,
+    isLeader: () => false,
   };
 }
 
@@ -22,15 +24,16 @@ function createNoopState(): IState {
 // implementations by name.
 export function createState(
   stateType: StateType | 'noop',
-  server: IServer
+  server: IServer,
+  lastState: IState
 ): IState {
   switch (stateType) {
     case 'candidate':
-      return new CandidateState(server);
+      return new CandidateState(server, lastState);
     case 'follower':
-      return new FollowerState(server);
+      return new FollowerState(server, lastState);
     case 'leader':
-      return new LeaderState(server);
+      return new LeaderState(server, lastState);
     case 'noop':
       return createNoopState();
     default:

@@ -5,6 +5,7 @@ import {
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
+import { IState, StateType } from './@types';
 import { BaseState } from './base';
 
 // A candidate:
@@ -17,8 +18,8 @@ import { BaseState } from './base';
 export class CandidateState extends BaseState {
   private serverVotes: Set<string>;
 
-  constructor(server: IServer) {
-    super(server, 'candidate');
+  constructor(server: IServer, lastState: IState) {
+    super(server, lastState);
     this.onTimeout = this.onTimeout.bind(this);
   }
 
@@ -51,6 +52,10 @@ export class CandidateState extends BaseState {
     super.exit();
   }
 
+  public getType(): StateType {
+    return 'candidate';
+  }
+
   private incrementTerm(): void {
     const nextTerm = this.server.getCurrentTerm() + 1;
     this.server.logger.trace(`Incrementing term to ${nextTerm}`);
@@ -78,7 +83,7 @@ export class CandidateState extends BaseState {
       this.server.logger.trace(
         `Received append-entries request from ${endpoint.toString}; transitioning to follower`
       );
-      this.transitionTo('follower');
+      this.server.transitionTo('follower');
     }
   }
 
@@ -157,7 +162,7 @@ export class CandidateState extends BaseState {
       this.server.logger.debug(
         'Votes obtained from cluster majority; transitioning to leader'
       );
-      this.transitionTo('leader');
+      this.server.transitionTo('leader');
     }
   }
 
