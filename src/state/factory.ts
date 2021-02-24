@@ -1,8 +1,9 @@
 import { CandidateState } from './candidate';
 import { FollowerState } from './follower';
-import { LeaderState } from './leader';
+import { IEndpoint} from '../net/endpoint';
 import { IServer } from '../@types';
 import { IState, StateType } from './@types';
+import { LeaderState } from './leader';
 import { compilerError } from '../util/compiler-error';
 import { noop } from '../util';
 
@@ -16,11 +17,8 @@ function createNoopState(): IState {
     exit: noop,
     getLeaderEndpoint: () => null,
     getType: () => null,
-    isLeader: () => false,
-    onAppendEntriesRpcRequest: noop,
-    onAppendEntriesRpcResponse: noop,
-    onRequestVoteRpcRequest: noop,
-    onRequestVoteRpcResponse: noop
+    handlePeerRpcMessage: noop,
+    isLeader: () => false
   };
 }
 
@@ -29,15 +27,15 @@ function createNoopState(): IState {
 export function createState(
   stateType: StateType | 'noop',
   server: IServer,
-  lastState: IState
+  leaderEndpoint?: IEndpoint
 ): IState {
   switch (stateType) {
     case 'candidate':
-      return new CandidateState(server, lastState);
+      return new CandidateState(server);
     case 'follower':
-      return new FollowerState(server, lastState);
+      return new FollowerState(server, leaderEndpoint);
     case 'leader':
-      return new LeaderState(server, lastState);
+      return new LeaderState(server);
     case 'noop':
       return createNoopState();
     default:

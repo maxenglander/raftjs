@@ -4,7 +4,7 @@ import * as os from 'os';
 
 import 'chai';
 
-import { createAppendEntriesRpcResponse } from '../rpc/message';
+import { createAppendEntriesRpcResponse, isAppendEntriesRpcRequest } from '../rpc/message';
 import {
   IElectionTimer,
   createElectionTimer,
@@ -56,7 +56,7 @@ describe('server leader state', function() {
       id: 'server0'
     });
 
-    leader = new LeaderState(server, null);
+    leader = new LeaderState(server);
 
     peerApi = createRpcService();
 
@@ -80,10 +80,8 @@ describe('server leader state', function() {
       this.timeout(1000);
 
       let heartbeatCount = 0;
-      const heartbeatListener = peerApi.onReceive({
-        callType: 'request',
-        procedureType: 'append-entries',
-        notify(endpoint: IEndpoint) {
+      const heartbeatListenerDetacher = peerApi.onReceive((endpoint, message) => { 
+        if(isAppendEntriesRpcRequest(message)) {
           peerApi.send(
             [endpoint],
             createAppendEntriesRpcResponse({
@@ -97,7 +95,7 @@ describe('server leader state', function() {
       function wrappedDone() {
         heartbeatCount++;
         if (heartbeatCount == 10) {
-          heartbeatListener.detach();
+          heartbeatListenerDetacher.detach();
           done();
         }
       }

@@ -1,4 +1,4 @@
-import { Callback, NoArgsCallback } from '../../util/callback';
+import { Callback, NoArgsCallback } from '../../util/@types';
 import { IConnectionRegistry } from './@types';
 import { IEndpoint, parseEndpoint } from '../../net/endpoint';
 

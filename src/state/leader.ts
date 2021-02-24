@@ -1,8 +1,7 @@
-import { BaseState } from './base';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../@types';
 import { IState, StateType } from './@types';
-import { createAppendEntriesRpcRequest } from '../rpc/message';
+import { IRpcMessage, createAppendEntriesRpcRequest } from '../rpc/message';
 
 // Leaders:
 // > *§5.2 "...send periodic heartbeats...to all followers...to maintain their authority"*
@@ -10,19 +9,19 @@ import { createAppendEntriesRpcRequest } from '../rpc/message';
 // Leaders are also responsible for accepting request from clients
 // and replicating log entries to followers. At the present time, this
 // implementation does not implement those requirements.
-export class LeaderState extends BaseState {
+export class LeaderState implements IState {
   private matchIndex: { [id: string]: number };
   private nextIndex: { [id: string]: number };
   private sendHeartbeatsIntervalId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  private readonly server: IServer;
 
-  constructor(server: IServer, lastState: IState) {
-    super(server, lastState);
+  constructor(server: IServer) {
+    this.server = server;
     this.sendHeartbeats = this.sendHeartbeats.bind(this);
   }
 
   // Upon election:
   public enter(): void {
-    super.enter();
     // > *§5 "...for each server, index of highest log entry known to be replicated on server..."
     // > *§5 "...(Reinitialized after election)..."
     this.matchIndex = {};
@@ -46,7 +45,6 @@ export class LeaderState extends BaseState {
 
   public exit(): void {
     clearInterval(this.sendHeartbeatsIntervalId);
-    super.exit();
   }
 
   public getLeaderEndpoint(): IEndpoint {
@@ -57,12 +55,15 @@ export class LeaderState extends BaseState {
     return 'leader';
   }
 
+  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {
+  }
+
   public isLeader(): boolean {
-      return true;
+    return true;
   }
 
   private sendHeartbeats() {
-    this.server.sendPeerRpc(
+    this.server.sendPeerRpcMessage(
       createAppendEntriesRpcRequest({
         entries: [],
         leaderCommit: this.server.getCommitIndex(),

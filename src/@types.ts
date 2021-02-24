@@ -3,7 +3,7 @@ import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
 import { IEndpoint } from './net/endpoint';
-import { IRpcEventListener, IRpcMessage, IRpcReceiver, IRpcService } from './rpc';
+import { IRpcEventListener, IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IState, StateType } from './state';
 
@@ -45,12 +45,12 @@ export interface IServer {
   getState(): IState;
   getVotedFor(): ServerId;
   request(request: IRequest): Promise<IResponse>;
-  sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
-  sendPeerRpc(
+  sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
+  sendPeerRpcMessage(
     endpoint: IEndpoint,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
-  sendPeerRpc(
+  sendPeerRpcMessage(
     endpoints: ReadonlyArray<IEndpoint>,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
@@ -58,7 +58,7 @@ export interface IServer {
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;
   stop(): Promise<void>;
-  transitionTo(state: StateType | IState): void;
+  transitionTo(state: StateType | IState, leaderEndpoint?: IEndpoint): void;
 }
 
 export interface IServerOptions {

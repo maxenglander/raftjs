@@ -1,13 +1,12 @@
 import {
-  IAppendEntriesRpcRequest,
-  IAppendEntriesRpcResponse,
-  IRequestVoteRpcResponse,
-  createRequestVoteRpcRequest
+  IRpcMessage,
+  createRequestVoteRpcRequest,
+  isAppendEntriesRpcRequest,
+  isRequestVoteRpcResponse
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
 import { IState, StateType } from './@types';
-import { BaseState } from './base';
 
 // A candidate:
 // > *§5.1 "...votes for itself and issues RequestVote RPCs in parallel..."*
@@ -16,18 +15,18 @@ import { BaseState } from './base';
 // > *§5.1 "...(a) it wins the election..."*
 // > *§5.1 "...(b) another server establishes itself as leader..."*
 // > *§5.1 "...(c) a period of time goes by with no winner..."*
-export class CandidateState extends BaseState {
+export class CandidateState implements IState {
+  private readonly server: IServer;
   private serverVotes: Set<string>;
 
-  constructor(server: IServer, lastState: IState) {
-    super(server, lastState);
+  constructor(server: IServer) {
+    this.server = server;
   }
 
   // Upon transitioning from a follower to a candidate,
   // a candidate immediately starts an election.
   // > *§5. "...On conversion to candidate, start election..."*
   public enter(): void {
-    super.enter();
     this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
     this.startElection();
   }
@@ -35,11 +34,35 @@ export class CandidateState extends BaseState {
   public exit(): void {
     this.server.electionTimer.stop();
     this.server.electionTimer.off('timeout', this.onTimeout);
-    super.exit();
+  }
+
+  public getLeaderEndpoint(): IEndpoint {
+    return null;
   }
 
   public getType(): StateType {
     return 'candidate';
+  }
+
+  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage) { 
+    // When a candidate receives an AppendEntries RPC
+    // request from a leader with a term greater or equal
+    // to its own, it converts to a follower.
+    // > *§5. "...If AppendEntries RPC received..."*
+    // > *§5.2. "...While waiting for votes..."*
+    if(isAppendEntriesRpcRequest(message)) {
+      if(message.arguments.term >= this.server.getCurrentTerm()) {
+        this.server.logger.trace(
+          `Received append-entries request from ${endpoint}; transitioning to follower`
+        );
+        this.server.transitionTo('follower', endpoint);
+      }
+    }
+    if(isRequestVoteRpcResponse(message)) {
+      if (message.results.voteGranted) {
+        this.tallyVote(endpoint);
+      }
+    }
   }
 
   private incrementTerm(): void {
@@ -48,39 +71,16 @@ export class CandidateState extends BaseState {
     this.server.setCurrentTerm(nextTerm);
   }
 
+  public isLeader(): boolean {
+    return false;
+  }
+
   // A candidate obtains a majority when it receives
   // `(# servers / 2) + 1` votes.
   private isMajorityObtained(): boolean {
     const numServers = Object.keys(this.server.getCluster().servers).length;
     const majority = Math.floor(numServers / 2) + 1;
     return this.serverVotes.size >= majority;
-  }
-
-  // When a candidate receives an AppendEntries RPC
-  // request from a leader with a term greater or equal
-  // to its own, it converts to a follower.
-  // > *§5. "...If AppendEntries RPC received..."*
-  // > *§5.2. "...While waiting for votes..."*
-  public onAppendEntriesRpcRequest(
-    endpoint: IEndpoint,
-    message: IAppendEntriesRpcRequest
-  ): void {
-    super.onAppendEntriesRpcRequest(endpoint, message);
-    if(message.arguments.term >= this.server.getCurrentTerm()) {
-      this.server.logger.trace(
-        `Received append-entries request from ${endpoint.toString}; transitioning to follower`
-      );
-      this.server.transitionTo('follower');
-    }
-  }
-
-  //
-  public onRequestVoteRpcResponse(
-    endpoint: IEndpoint,
-    message: IRequestVoteRpcResponse
-  ): void {
-    if (!message.results.voteGranted) return;
-    this.tallyVote(endpoint);
   }
 
   // When the election timeout elapses, a candidate
@@ -100,7 +100,7 @@ export class CandidateState extends BaseState {
 
     const lastLogIndex = this.server.log.getLastIndex();
 
-    this.server.sendPeerRpc(
+    this.server.sendPeerRpcMessage(
       createRequestVoteRpcRequest({
         candidateId: this.server.id,
         lastLogIndex,

@@ -5,6 +5,18 @@ import {
   IRpcResponseTypeFilter,
   RpcProcedureTypeMap
 } from './@types';
+import { compilerError } from '../../util/compiler-error';
+
+export function getRpcMessageTerm(message: IRpcMessage): number {
+  switch(message.callType) {
+    case 'request':
+      return message.arguments.term;
+    case 'response':
+      return message.results.term;
+    default:
+      compilerError(message);
+  }
+}
 
 // Verify that the value is an RPC message. This utility
 // is mainly used by TypeScript as a [user-defined type guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).

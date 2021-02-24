@@ -7,7 +7,8 @@ import { expect } from 'chai';
 import {
   IRequestVoteRpcRequest,
   createAppendEntriesRpcRequest,
-  createRequestVoteRpcResponse
+  createRequestVoteRpcResponse,
+  isRequestVoteRpcRequest
 } from '../rpc/message';
 import { CandidateState } from './candidate';
 import {
@@ -60,7 +61,7 @@ describe('server candidate state', function() {
       id: 'server0'
     });
 
-    candidate = new CandidateState(server, null);
+    candidate = new CandidateState(server);
 
     rpcService = createRpcService();
 
@@ -89,13 +90,13 @@ describe('server candidate state', function() {
     });
 
     beforeEach(function() {
-      rpcService.onReceive({
-        callType: 'request',
-        procedureType: 'request-vote',
-        notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
-          requestVoteRequest = request;
+      rpcService.onReceive((endpoint, message) => {
+        if(isRequestVoteRpcRequest(message)) {
+          requestVoteRequest = message;
           if (requestVoteRequestCallback)
             requestVoteRequestCallback(requestVoteRequest);
+        } else {
+          console.log('got', message.callType, message.procedureType);
         }
       });
 
@@ -171,10 +172,10 @@ describe('server candidate state', function() {
     context(
       'if it receives request-vote responses before the election timeout',
       function() {
-        let requestVoteListener: IRpcEventListener;
+        let requestVoteListenerDetacher: IRpcEventListener;
 
         afterEach(function() {
-          requestVoteListener.detach();
+          requestVoteListenerDetacher.detach();
         });
 
         context(
@@ -189,12 +190,10 @@ describe('server candidate state', function() {
                 done();
               }
 
-              requestVoteListener = rpcService.onReceive({
-                callType: 'request',
-                procedureType: 'request-vote',
-                notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
+              requestVoteListenerDetacher = rpcService.onReceive((endpoint, message) => {
+                if(isRequestVoteRpcRequest(message)) { 
                   const term =
-                    request.arguments.term +
+                    message.arguments.term +
                     Math.min(0, Math.round(Math.random() * -5));
                   Promise.all(
                     rpcService.send(
@@ -227,12 +226,10 @@ describe('server candidate state', function() {
                 done();
               }
 
-              requestVoteListener = rpcService.onReceive({
-                callType: 'request',
-                procedureType: 'request-vote',
-                notify(endpoint: IEndpoint, request: IRequestVoteRpcRequest) {
+              requestVoteListenerDetacher = rpcService.onReceive((endpoint, message) => {
+                if(isRequestVoteRpcRequest(message)) {
                   const term =
-                    request.arguments.term +
+                    message.arguments.term +
                     Math.min(0, Math.round(Math.random() * -5));
                   rpcService.send(
                     [endpoint],

@@ -3,7 +3,8 @@ import { expect } from 'chai';
 import { IRpcService } from '../rpc';
 import {
   IAppendEntriesRpcRequest,
-  createAppendEntriesRpcRequest
+  createAppendEntriesRpcRequest,
+  isAppendEntriesRpcRequest
 } from '../rpc/message';
 import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { createRpcService } from '../rpc';
@@ -59,19 +60,15 @@ describe('rpc service', function() {
           if (receiveCount >= 2) done();
         }
 
-        rpcServiceA.onReceive({
-          callType: 'request',
-          procedureType: 'append-entries',
-          notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
+        rpcServiceA.onReceive((endpoint, message) => {
+          if(isAppendEntriesRpcRequest(message)) { 
             expect(message.arguments.term).to.equal(1);
             wrappedDone();
           }
         });
 
-        rpcServiceB.onReceive({
-          callType: 'request',
-          procedureType: 'append-entries',
-          notify(endpoint: IEndpoint, message: IAppendEntriesRpcRequest) {
+        rpcServiceB.onReceive((endpoint, message) => {
+          if(isAppendEntriesRpcRequest(message)) { 
             expect(message.arguments.term).to.equal(1);
             wrappedDone();
           }

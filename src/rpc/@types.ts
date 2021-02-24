@@ -1,11 +1,7 @@
-import {
-  RpcCallTypeMap,
-  IRpcMessage,
-  IRpcMessageTypeFilter,
-  RpcProcedureTypeMap
-} from './message';
+import { IDetacher } from '../util/@types';
 import { ICodec } from './codec';
 import { IEndpoint } from '../net/endpoint';
+import { IRpcMessage } from './message';
 import { ITransport } from '../transport';
 
 export interface IRpcServiceOptions {
@@ -17,27 +13,12 @@ export interface IRpcEventListener {
   detach(): void;
 }
 
-export interface IRpcReceiver<
-  P extends IRpcMessage['procedureType'],
-  C extends IRpcMessage['callType']
-> {
-  procedureType: RpcProcedureTypeMap[P];
-  callType: RpcCallTypeMap[C];
-  notify(
-    endpoint: IEndpoint,
-    message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-  ): void;
-}
+export type RpcReceiver = (endpoint: IEndpoint, message: IRpcMessage) => void;
 
 export interface IRpcService {
   close(): Promise<void>;
   listen(endpoint: IEndpoint): Promise<void>;
-  onReceive<
-    P extends IRpcMessage['procedureType'],
-    C extends IRpcMessage['callType']
-  >(
-    receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-  ): IRpcEventListener;
+  onReceive(receiver: RpcReceiver): IDetacher;
   send(
     endpoints: ReadonlyArray<IEndpoint>,
     message: IRpcMessage

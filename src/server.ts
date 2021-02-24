@@ -4,6 +4,7 @@
 // between follower, candidate and leader states.
 
 import { ICluster } from './cluster';
+import { IDetacher } from './util/@types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
@@ -13,12 +14,13 @@ import {
   IRpcMessage,
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse,
+  getRpcMessageTerm,
   isRpcMessage,
   isRpcRequest,
   isRpcResponse
 } from './rpc/message';
 import { IEndpoint, isEndpoint } from './net/endpoint';
-import { IRpcEventListener, IRpcReceiver, IRpcService } from './rpc';
+import { IRpcEventListener, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IRequest, IResponse, IServer, IServerOptions, IStateMachine, ServerId } from './@types';
 import { IState, StateType, createState } from './state';
@@ -35,7 +37,7 @@ export class Server implements IServer {
   public readonly log: ILog;
   public readonly logger: ILogger;
   private readonly peerApi: IRpcService;
-  private rpcEventListeners: Set<IRpcEventListener>;
+  private peerRpcListenerDetacher: IDetacher;
   private state: IState;
   public readonly stateMachine: IStateMachine;
   private votedFor: IDurableValue<string>;
@@ -49,7 +51,6 @@ export class Server implements IServer {
     this.log = options.log;
     this.logger = options.logger;
     this.peerApi = options.peerApi;
-    this.rpcEventListeners = new Set<IRpcEventListener>();
     // `noop` is not a state specified by the Raft protocol.
     // It is used here as a ["null
     // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
@@ -60,42 +61,10 @@ export class Server implements IServer {
     this.votedFor = options.votedFor;
   }
 
-  private attachPeerRpcListeners(): void {
-    this.rpcEventListeners.add(this.peerApi.onReceive({
-      procedureType: 'append-entries',
-      callType: 'request',
-      notify: (endpoint: IEndpoint, message: IAppendEntriesRpcRequest) => {
-        this.state.onAppendEntriesRpcRequest(endpoint, message);
-      }
-    }));
-    this.rpcEventListeners.add(this.peerApi.onReceive({
-      procedureType: 'append-entries',
-      callType: 'response',
-      notify: (endpoint: IEndpoint, message: IAppendEntriesRpcResponse) => {
-        this.state.onAppendEntriesRpcResponse(endpoint, message);
-      }
-    }));
-    this.rpcEventListeners.add(this.peerApi.onReceive({
-      procedureType: 'request-vote',
-      callType: 'request',
-      notify: (endpoint: IEndpoint, message: IRequestVoteRpcRequest) => {
-        this.state.onRequestVoteRpcRequest(endpoint, message);
-      }
-    }));
-    this.rpcEventListeners.add(this.peerApi.onReceive({
-      procedureType: 'request-vote',
-      callType: 'response',
-      notify: (endpoint: IEndpoint, message: IRequestVoteRpcResponse) => {
-        this.state.onRequestVoteRpcResponse(endpoint, message);
-      }
-    }));
+  private attachPeerRpcListener(): void {
   }
 
-  private detachPeerRpcListeners(): void {
-    for (const rpcEventListener of this.rpcEventListeners) {
-      this.rpcEventListeners.delete(rpcEventListener);
-      rpcEventListener.detach();
-    }
+  private detachPeerRpcListener(): void {
   }
 
   public getCluster(): ICluster {
@@ -129,22 +98,34 @@ export class Server implements IServer {
     return this.votedFor.getValue();
   }
 
+  private handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage) {
+    const messageTerm = getRpcMessageTerm(message);
+    if(messageTerm > this.getCurrentTerm()) {
+      this.logger.trace(
+        `Received a message with a term (${messageTerm}) higher than the server term (${this.getCurrentTerm()}); transitioning to follower`
+      );
+      this.setCurrentTerm(messageTerm);
+      this.transitionTo('follower', endpoint);
+    }
+    this.state.handlePeerRpcMessage(endpoint, message);
+  }
+
   public request(request: IRequest): Promise<IResponse> {
     throw new Error('TODO');
   }
 
-  public sendPeerRpc(message: IRpcMessage): Promise<Promise<void>[]>;
-  public sendPeerRpc(
+  public sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
+  public sendPeerRpcMessage(
     endpoint: IEndpoint,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
-  public sendPeerRpc(
+  public sendPeerRpcMessage(
     endpoints: ReadonlyArray<IEndpoint>,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
   // RPC requests can be sent to other Raft `Server`
   // instances with the `sendPeerRpc` method.
-  public sendPeerRpc(
+  public sendPeerRpcMessage(
     arg0: IRpcMessage | IEndpoint | ReadonlyArray<IEndpoint>,
     arg1: IRpcMessage = null
   ): Promise<Promise<void>[]> {
@@ -228,7 +209,9 @@ export class Server implements IServer {
         this.transitionTo('follower');
       })
       .then(() => {
-        this.attachPeerRpcListeners();
+        this.peerRpcListenerDetacher = this.peerApi.onReceive((endpoint, message) => {
+          this.handlePeerRpcMessage(endpoint, message);
+        });
       })
       .then(() => this.logger.info(`Started Raftjs server ${this.id}`));
   }
@@ -238,7 +221,7 @@ export class Server implements IServer {
     this.logger.debug('Exiting current state');
     this.state.exit();
     this.logger.debug('Stopping RPC service');
-    this.detachPeerRpcListeners();
+    this.peerRpcListenerDetacher.detach();
     return this.peerApi
       .close()
       .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));
@@ -250,9 +233,9 @@ export class Server implements IServer {
   // is used here to facilitate separating the rules of
   // these states into separate components while allowing
   // those components access to `Server` data and methods.
-  public transitionTo(state: StateType | IState): void {
+  public transitionTo(state: StateType | IState, leaderEndpoint?: IEndpoint): void {
     const newState =
-      typeof state == 'string' ? createState(state, this, this.state) : state;
+      typeof state == 'string' ? createState(state, this, leaderEndpoint) : state;
     if (this.state.getType() == newState.getType()) return;
     this.state.exit();
     this.state = newState;

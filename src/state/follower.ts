@@ -2,12 +2,15 @@ import {
   IAppendEntriesRpcRequest,
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse,
-  createRequestVoteRpcResponse
+  IRpcMessage,
+  createAppendEntriesRpcResponse,
+  createRequestVoteRpcResponse,
+  isAppendEntriesRpcRequest,
+  isRequestVoteRpcRequest
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
 import { IState, StateType } from './@types';
-import { BaseState } from './base';
 
 // Followers:
 // > *§5. "...Respond to RPC requests from candidates and leaders..."*
@@ -15,13 +18,16 @@ import { BaseState } from './base';
 // Followers remain in that state until either:
 // > *§5. "...an election timeout elapses without receiving AppendEntries RPC from
 // current leader or granting vote to candidate..."*
-export class FollowerState extends BaseState {
-  constructor(server: IServer, lastState: IState) {
-    super(server, lastState);
+export class FollowerState implements IState {
+  private readonly server: IServer;
+  private leaderEndpoint: IEndpoint;
+
+  constructor(server: IServer, leaderEndpoint: IEndpoint) {
+    this.server = server;
+    this.leaderEndpoint = leaderEndpoint;
   }
 
   public enter(): void {
-    super.enter();
     this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
     this.server.logger.debug(
       `Starting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`
@@ -32,28 +38,59 @@ export class FollowerState extends BaseState {
   public exit(): void {
     this.server.electionTimer.stop();
     this.server.electionTimer.off('timeout', this.onTimeout.bind(this));
-    super.exit();
+  }
+
+  public getLeaderEndpoint(): IEndpoint {
+    return this.leaderEndpoint;
   }
 
   public getType(): StateType {
     return 'follower';
   }
 
-  // One of the conditions for a follower resetting
-  // its election timer is:
-  // > *§5. "...receiving AppendEntries RPC from current leader..."*
-  public onAppendEntriesRpcRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): void {
-    super.onAppendEntriesRpcRequest(endpoint, message);
+  // This method is a stub for a Raft response to an
+  // AppendEntries RPC request. At the present time,
+  // it only handles responding to heartbeats.
+  // > *§5. "...Receiver implementation:..."*
+  private handleAppendEntriesRpcRequest(
+    endpoint: IEndpoint,
+    message: IAppendEntriesRpcRequest
+  ): void {
+    // One of the conditions for a follower resetting
+    // its election timer is:
+    // > *§5. "...receiving AppendEntries RPC from current leader..."*
     this.server.electionTimer.reset();
+    const success = message.arguments.term >= this.server.getCurrentTerm();
+    if(success) {
+      this.leaderEndpoint = endpoint;
+    }
+    this.server.sendPeerRpcMessage(
+      endpoint,
+      createAppendEntriesRpcResponse({
+        // When another `Server` makes an `AppendEntries` RPC
+        // request with a `term` less than the `term` on this
+        // `Server`, the RPC request is rejected.
+        // > *§5. "...false if term < currentTerm..."*
+        success,
+        term: this.server.getCurrentTerm()
+      })
+    );
+  }
+
+  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {
+    if(isAppendEntriesRpcRequest(message)) {
+      this.handleAppendEntriesRpcRequest(endpoint, message);
+    }
+    if(isRequestVoteRpcRequest(message)) {
+      this.handleRequestVoteRpcRequest(endpoint, message);
+    }
   }
 
   //
-  public onRequestVoteRpcRequest(
+  private handleRequestVoteRpcRequest(
     endpoint: IEndpoint,
     message: IRequestVoteRpcRequest
   ): void {
-    super.onRequestVoteRpcRequest(endpoint, message);
-
     const currentTerm = this.server.getCurrentTerm(),
       vote = this.server.getVotedFor(),
       { electionTimer } = this.server,
@@ -74,7 +111,7 @@ export class FollowerState extends BaseState {
     }
 
     this.server
-      .sendPeerRpc(
+      .sendPeerRpcMessage(
         endpoint,
         createRequestVoteRpcResponse({
           term: currentTerm,
@@ -89,6 +126,10 @@ export class FollowerState extends BaseState {
           electionTimer.reset();
         }
       });
+  }
+
+  public isLeader(): boolean {
+    return false;
   }
 
   // When the election timeout elapses without the follower

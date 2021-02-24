@@ -6,3 +6,4 @@ export {
   IRequestVoteRpcResults
 } from './@types';
 export * from './factory';
+export * from './helpers';

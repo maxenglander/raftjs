@@ -1,32 +1,23 @@
-import {
-  RpcCallTypeMap,
-  IRpcMessage,
-  IRpcMessageTypeFilter,
-  RpcProcedureTypeMap
-} from './message';
 import { ICodec } from './codec';
+import { IDetacher } from '../util/@types';
 import { IEndpoint } from '../net/endpoint';
+import { IRpcMessage } from './message';
 import {
-  IRpcReceiverRegistry,
-  createRpcReceiverRegistry
-} from './receiver-registry';
-import {
-  IRpcEventListener,
-  IRpcReceiver,
   IRpcService,
-  IRpcServiceOptions
+  IRpcServiceOptions,
+  RpcReceiver
 } from './@types';
 import { ITransport } from '../transport';
 
 // Encodes, sends, decodes and receives RPC messages.
 export class RpcService implements IRpcService {
   private codec: ICodec;
-  private receivers: IRpcReceiverRegistry;
+  private receivers: Set<RpcReceiver>;
   private transport: ITransport;
 
   constructor(options: IRpcServiceOptions = {}) {
     this.codec = options.codec;
-    this.receivers = createRpcReceiverRegistry();
+    this.receivers = new Set<RpcReceiver>();
     this.transport = options.transport;
 
     // When data is received from the underlying transport,
@@ -45,33 +36,21 @@ export class RpcService implements IRpcService {
     return this.transport.listen(endpoint);
   }
 
-  private notifyReceivers<
-    P extends IRpcMessage['procedureType'],
-    C extends IRpcMessage['callType']
-  >(
+  private notifyReceivers(
     endpoint: IEndpoint,
-    message: IRpcMessageTypeFilter<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
+    message: IRpcMessage
   ): void {
-    for (const receiver of this.receivers.getAll(
-      message.procedureType,
-      message.callType
-    )) {
-      receiver.notify(endpoint, message);
+    for (const receiver of this.receivers) {
+      receiver(endpoint, message);
     }
   }
 
-  // Register to receiver messages of a particular procedure and call type,
-  // e.g. `onReceive('append-entries', 'request', {...})`.
-  public onReceive<
-    P extends IRpcMessage['procedureType'],
-    C extends IRpcMessage['callType']
-  >(
-    receiver: IRpcReceiver<RpcProcedureTypeMap[P], RpcCallTypeMap[C]>
-  ): IRpcEventListener {
+  // Register to receiver messages of any procedure and call type.
+  public onReceive(receiver: RpcReceiver): IDetacher {
     this.receivers.add(receiver);
     return {
       detach: (): void => {
-        this.receivers.remove(receiver);
+        this.receivers.delete(receiver);
       }
     };
   }
