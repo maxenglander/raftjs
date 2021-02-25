@@ -30,10 +30,6 @@ export class ElectionTimer implements IElectionTimer {
     return this.timeout;
   }
 
-  public isRunning(): boolean {
-    return this.running;
-  }
-
   // Notify listeners about the event.
   private notifyListeners(event: ElectionTimerEvent) {
     if (this.listeners[event]) {

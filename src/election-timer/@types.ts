@@ -2,7 +2,6 @@ import { Callback } from '../util/@types';
 
 export interface IElectionTimer {
   getTimeout: () => number;
-  isRunning: () => boolean;
   on: (
     events: ElectionTimerEvent | Array<ElectionTimerEvent>,
     listener: ElectionTimerListener

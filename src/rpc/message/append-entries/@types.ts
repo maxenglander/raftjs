@@ -17,7 +17,6 @@ export interface IAppendEntriesRpcArguments extends IBaseRpcArguments {
   readonly leaderId: string;
   readonly prevLogIndex: number;
   readonly prevLogTerm: number;
-  readonly term: number;
 }
 
 export type IAppendEntriesRpcExchange =

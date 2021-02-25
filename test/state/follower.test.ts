@@ -11,9 +11,14 @@ import {
   createElectionTimeoutChooser
 } from '../election-timer';
 import { createEndpoint } from '../net/endpoint';
+import { IDetacher } from '../util/@types';
 import { IServer, createServer } from '../';
 import { IState } from './';
-import { createAppendEntriesRpcRequest } from '../rpc/message';
+import {
+  IAppendEntriesRpcResponse,
+  createAppendEntriesRpcRequest,
+  isAppendEntriesRpcResponse
+} from '../rpc/message';
 import { createRpcService } from '../rpc';
 
 describe('server follower state', function() {
@@ -54,7 +59,9 @@ describe('server follower state', function() {
 
     follower = new FollowerState(server, null);
 
-    return server.start();
+    // Set server term to greater than 10 so request
+    // terms can be less than 10 but greater than zero.
+    return server.start().then(() => server.setCurrentTerm(10));
   });
 
   context('after it is entered', function() {
@@ -83,15 +90,36 @@ describe('server follower state', function() {
     context(
       'if it receives an append-entries request before the election timeout',
       function() {
+        function waitForAppendEntriesResponse(callback) {
+          appendEntriesResponseCallback = callback;
+          if (appendEntriesResponse != null)
+            appendEntriesResponseCallback(appendEntriesResponse);
+        }
+
         const rpcService = createRpcService();
 
-        let term: number, timeRemaining: number;
+        let appendEntriesResponse: IAppendEntriesRpcResponse,
+          appendEntriesResponseCallback,
+          appendEntriesListenerDetacher: IDetacher,
+          term: number,
+          timeRemaining: number;
 
         afterEach(function() {
+          appendEntriesResponse = null;
+          appendEntriesResponseCallback = null;
+          appendEntriesListenerDetacher.detach();
           return rpcService.close();
         });
 
         beforeEach(function() {
+          appendEntriesListenerDetacher = rpcService.onReceive((endpoint, message) => {
+            if(isAppendEntriesRpcResponse(message)) { 
+              appendEntriesResponse = message;
+              if (appendEntriesResponseCallback != null)
+                appendEntriesResponseCallback(appendEntriesResponse);
+            }
+          });
+  
           return rpcService.listen(peerEndpoint);
         });
 
@@ -129,6 +157,13 @@ describe('server follower state', function() {
               done();
             }, timeRemaining);
           });
+
+          it('replies positively', function(done) {
+            waitForAppendEntriesResponse(function() {
+              expect(appendEntriesResponse.results.success).to.be.true;
+              done();
+            });
+          });
         });
 
         context(
@@ -160,7 +195,14 @@ describe('server follower state', function() {
               }, waitABit);
             });
 
-            it('transitions to a candidate', function(done) {
+            it('replies negatively', function(done) {
+              waitForAppendEntriesResponse(function() {
+                expect(appendEntriesResponse.results.success).to.be.false;
+                done();
+              });
+            });
+
+            it('transitions to a candidate after the election timer elapses', function(done) {
               this.timeout(electionTimer.getTimeout() + /*buffer*/ 100);
 
               electionTimer.on('timeout', function() {

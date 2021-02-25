@@ -95,8 +95,6 @@ describe('server candidate state', function() {
           requestVoteRequest = message;
           if (requestVoteRequestCallback)
             requestVoteRequestCallback(requestVoteRequest);
-        } else {
-          console.log('got', message.callType, message.procedureType);
         }
       });
 

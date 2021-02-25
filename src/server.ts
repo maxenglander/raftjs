@@ -32,7 +32,6 @@ export class Server implements IServer {
   public readonly electionTimer: IElectionTimer;
   public readonly endpoint: IEndpoint;
   public readonly id: ServerId;
-  private readonly initialTerm: number;
   private lastApplied: number;
   public readonly log: ILog;
   public readonly logger: ILogger;
