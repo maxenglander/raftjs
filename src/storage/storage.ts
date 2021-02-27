@@ -64,17 +64,15 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
   //
   // Otherwise, set the provided value and write to disk,
   // returning a Promise resolved with the provided value.
-  public readIfExistsElseSetAndWrite(value: T): Promise<T> {
-    return this.exists().then(exists => {
-      if (exists) {
-        return this.read();
-      } else {
-        this.setValue(value);
-        return this.write().then(() => {
-          return value;
-        });
-      }
-    });
+  public async readIfExistsElseSetAndWrite(value: T): Promise<T> {
+    const exists = await this.exists();
+    if (exists) {
+      return this.read();
+    } else {
+      this.setValue(value);
+      await this.write();
+      return value;
+    };
   }
 
   // Returns a `Promise` that is resolved unless the value

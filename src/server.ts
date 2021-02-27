@@ -109,22 +109,22 @@ export class Server implements IServer {
     this.state.handlePeerRpcMessage(endpoint, message);
   }
 
-  public request(request: IRequest): Promise<IResponse> {
+  public async request(request: IRequest): Promise<IResponse> {
     throw new Error('TODO');
   }
 
-  public sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
-  public sendPeerRpcMessage(
+  public async sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
+  public async sendPeerRpcMessage(
     endpoint: IEndpoint,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
-  public sendPeerRpcMessage(
+  public async sendPeerRpcMessage(
     endpoints: ReadonlyArray<IEndpoint>,
     message: IRpcMessage
   ): Promise<Promise<void>[]>;
   // RPC requests can be sent to other Raft `Server`
   // instances with the `sendPeerRpc` method.
-  public sendPeerRpcMessage(
+  public async sendPeerRpcMessage(
     arg0: IRpcMessage | IEndpoint | ReadonlyArray<IEndpoint>,
     arg1: IRpcMessage = null
   ): Promise<Promise<void>[]> {
@@ -146,15 +146,14 @@ export class Server implements IServer {
     }
 
     if (isRpcRequest(message)) {
-      return Promise.resolve(this.peerApi.send(endpoints, message));
+      return await this.peerApi.send(endpoints, message);
     } else if (isRpcResponse(message)) {
       // Before responding to an RPC request, the recipient `Server`
       // updates persistent state on stable storage.
       // > *§5. "...(Updated on stable storage before responding)..."*
       // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
-      return this.updatePersistentState().then(() =>
-        this.peerApi.send(endpoints, message)
-      );
+      await this.updatePersistentState();
+      return await this.peerApi.send(endpoints, message);
     }
   }
 
@@ -187,43 +186,38 @@ export class Server implements IServer {
   // and binds to a socket for RPC calls, it transitions to the
   // follower state:
   // > *§5. "...When servers start up, they begin as followers..."*
-  public start(): Promise<void> {
+  public async start(): Promise<void> {
     this.logger.info(`Starting Raftjs server ${this.id}`);
 
     // > *§5. "...Volatile state on all servers...(initialized to 0, increases monotonically)..."
     this.commitIndex = this.lastApplied = 0;
 
     this.logger.debug('Loading persistent state');
-    return Promise.all([
-      // The current term is...
-      // > *§5. "...initialized to zero on first boot..."*
-      this.currentTerm.readIfExistsElseSetAndWrite(0)
-    ])
-      .then(() => {
-        this.logger.debug('Starting RPC service');
-        return this.peerApi.listen(this.endpoint);
-      })
-      .then(() => {
-        this.logger.debug('Transitioning to follower');
-        this.transitionTo('follower');
-      })
-      .then(() => {
-        this.peerRpcListenerDetacher = this.peerApi.onReceive((endpoint, message) => {
-          this.handlePeerRpcMessage(endpoint, message);
-        });
-      })
-      .then(() => this.logger.info(`Started Raftjs server ${this.id}`));
+    // The current term is...
+    // > *§5. "...initialized to zero on first boot..."*
+    await this.currentTerm.readIfExistsElseSetAndWrite(0)
+
+    this.logger.debug('Starting RPC service');
+    await this.peerApi.listen(this.endpoint);
+
+    this.logger.debug('Transitioning to follower');
+    this.transitionTo('follower');
+
+    this.peerRpcListenerDetacher = this.peerApi.onReceive((endpoint, message) => {
+      this.handlePeerRpcMessage(endpoint, message);
+    });
+
+    this.logger.info(`Started Raftjs server ${this.id}`);
   }
 
-  public stop(): Promise<void> {
+  public async stop(): Promise<void> {
     this.logger.info(`Stopping Raftjs server ${this.id}`);
     this.logger.debug('Exiting current state');
     this.state.exit();
     this.logger.debug('Stopping RPC service');
     this.peerRpcListenerDetacher.detach();
-    return this.peerApi
-      .close()
-      .then(() => this.logger.info(`Stopped Raftjs server ${this.id}`));
+    await this.peerApi.close()
+    this.logger.info(`Stopped Raftjs server ${this.id}`);
   }
 
   // A `Server` transitions between multiple states:
@@ -244,10 +238,9 @@ export class Server implements IServer {
   // Persistent state is data read from and written
   // to stable storage (i.e. a disk).
   // > *§5. "...Persistent state on all servers..."*
-  private updatePersistentState(): Promise<void> {
-    return this.log
-      .write()
-      .then(() => this.currentTerm.write())
-      .then(() => this.votedFor.write());
+  private async updatePersistentState(): Promise<void> {
+    await this.log.write()
+    await this.currentTerm.write()
+    await this.votedFor.write();
   }
 }

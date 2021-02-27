@@ -147,17 +147,12 @@ export class TcpTransport implements ITransport {
   }
 
   // Send data to the provided endpoint.
-  public send(endpoint: IEndpoint, data: Uint8Array): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.connect(endpoint).then((socket: net.Socket) => {
-        socket.write(data, null, (err: string) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      }, reject);
+  public async send(endpoint: IEndpoint, data: Uint8Array): Promise<void> {
+    const socket = await this.connect(endpoint);
+    socket.write(data, null, (err: string) => {
+      if (err) {
+        throw err;
+      }
     });
   }
 }

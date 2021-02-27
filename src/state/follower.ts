@@ -87,10 +87,10 @@ export class FollowerState implements IState {
   }
 
   //
-  private handleRequestVoteRpcRequest(
+  private async handleRequestVoteRpcRequest(
     endpoint: IEndpoint,
     message: IRequestVoteRpcRequest
-  ): void {
+  ): Promise<void> {
     const currentTerm = this.server.getCurrentTerm(),
       vote = this.server.getVotedFor(),
       { electionTimer } = this.server,
@@ -110,22 +110,20 @@ export class FollowerState implements IState {
       );
     }
 
-    this.server
-      .sendPeerRpcMessage(
-        endpoint,
-        createRequestVoteRpcResponse({
-          term: currentTerm,
-          voteGranted
-        })
-      )
-      .then(function() {
-        // One of the conditions for a follower resetting
-        // its election timer is:
-        // > *§5. "...granting vote to candidate..."*
-        if (voteGranted) {
-          electionTimer.reset();
-        }
-      });
+    await this.server.sendPeerRpcMessage(
+      endpoint,
+      createRequestVoteRpcResponse({
+        term: currentTerm,
+        voteGranted
+      })
+    );
+
+    // One of the conditions for a follower resetting
+    // its election timer is:
+    // > *§5. "...granting vote to candidate..."*
+    if (voteGranted) {
+      electionTimer.reset();
+    }
   }
 
   public isLeader(): boolean {
