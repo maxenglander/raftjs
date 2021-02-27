@@ -55,19 +55,12 @@ export class RpcService implements IRpcService {
     };
   }
 
-  // Send a message to all endpoints in parallel.
-  public send(
-    endpoints: ReadonlyArray<IEndpoint>,
+  // Send a message to an endpoint.
+  public async send(
+    endpoint: IEndpoint,
     message: IRpcMessage
-  ): Promise<void>[] {
+  ): Promise<void> {
     const encoded = this.codec.encode(message);
-    return endpoints.map((endpoint: IEndpoint) => {
-      return new Promise(resolve => {
-        this.transport.send(endpoint, encoded).then(
-          () => resolve(),
-          () => resolve()
-        );
-      });
-    });
+    return await this.transport.send(endpoint, encoded);
   }
 }

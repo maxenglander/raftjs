@@ -20,7 +20,7 @@ export interface IRpcService {
   listen(endpoint: IEndpoint): Promise<void>;
   onReceive(receiver: RpcReceiver): IDetacher;
   send(
-    endpoints: ReadonlyArray<IEndpoint>,
+    endpoint: IEndpoint,
     message: IRpcMessage
-  ): Promise<void>[];
+  ): Promise<void>;
 }

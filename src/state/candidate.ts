@@ -100,14 +100,17 @@ export class CandidateState implements IState {
 
     const lastLogIndex = this.server.log.getLastIndex();
 
-    this.server.sendPeerRpcMessage(
-      createRequestVoteRpcRequest({
-        candidateId: this.server.id,
-        lastLogIndex,
-        lastLogTerm: this.server.log.getEntry(lastLogIndex).term,
-        term: this.server.getCurrentTerm()
-      })
-    );
+    for (const peerEndpoint of this.server.getPeerEndpoints()) {
+      this.server.sendPeerRpcMessage(
+        peerEndpoint,
+        createRequestVoteRpcRequest({
+          candidateId: this.server.id,
+          lastLogIndex,
+          lastLogTerm: this.server.log.getEntry(lastLogIndex).term,
+          term: this.server.getCurrentTerm()
+        })
+      );
+    }
   }
 
   // After transitioning to a candidate, the server increments

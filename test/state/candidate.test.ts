@@ -143,18 +143,16 @@ describe('server candidate state', function() {
         this.timeout(randomWait + /*buffer*/ 100);
 
         setTimeout(function() {
-          Promise.all(
-            rpcService.send(
-              [server.endpoint],
-              createAppendEntriesRpcRequest({
-                entries: [],
-                leaderCommit: 0,
-                leaderId: 'leader-id',
-                prevLogIndex: 0,
-                prevLogTerm: 0,
-                term: server.getCurrentTerm()
-              })
-            )
+          rpcService.send(
+            server.endpoint,
+            createAppendEntriesRpcRequest({
+              entries: [],
+              leaderCommit: 0,
+              leaderId: 'leader-id',
+              prevLogIndex: 0,
+              prevLogTerm: 0,
+              term: server.getCurrentTerm()
+            })
           ).then(() => done());
         }, randomWait);
       });
@@ -193,11 +191,9 @@ describe('server candidate state', function() {
                   const term =
                     message.arguments.term +
                     Math.min(0, Math.round(Math.random() * -5));
-                  Promise.all(
-                    rpcService.send(
-                      [endpoint],
-                      createRequestVoteRpcResponse({ voteGranted: true, term })
-                    )
+                  rpcService.send(
+                    endpoint,
+                    createRequestVoteRpcResponse({ voteGranted: true, term })
                   ).then(() => doneOnce());
                 }
               });
@@ -230,7 +226,7 @@ describe('server candidate state', function() {
                     message.arguments.term +
                     Math.min(0, Math.round(Math.random() * -5));
                   rpcService.send(
-                    [endpoint],
+                    endpoint,
                     createRequestVoteRpcResponse({ voteGranted: false, term })
                   );
                   doneOnce();

@@ -74,17 +74,19 @@ describe('rpc service', function() {
           }
         });
 
-        rpcServiceC.send(
-          [endpointA, endpointB],
-          createAppendEntriesRpcRequest({
-            entries: [],
-            leaderCommit: 0,
-            leaderId: 'leader-id',
-            prevLogIndex: 0,
-            prevLogTerm: 0,
-            term: 1
-          })
-        );
+        [endpointA, endpointB].forEach(endpoint => {
+          rpcServiceC.send(
+            endpoint,
+            createAppendEntriesRpcRequest({
+              entries: [],
+              leaderCommit: 0,
+              leaderId: 'leader-id',
+              prevLogIndex: 0,
+              prevLogTerm: 0,
+              term: 1
+            })
+          );
+        });
       });
     });
   });

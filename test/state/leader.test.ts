@@ -83,7 +83,7 @@ describe('server leader state', function() {
       const heartbeatListenerDetacher = peerApi.onReceive((endpoint, message) => { 
         if(isAppendEntriesRpcRequest(message)) {
           peerApi.send(
-            [endpoint],
+            endpoint,
             createAppendEntriesRpcResponse({
               success: true,
               term: server.getCurrentTerm()

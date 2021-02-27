@@ -15,8 +15,6 @@ import {
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse,
   getRpcMessageTerm,
-  isRpcMessage,
-  isRpcRequest,
   isRpcResponse
 } from './rpc/message';
 import { IEndpoint, isEndpoint } from './net/endpoint';
@@ -87,6 +85,16 @@ export class Server implements IServer {
     return this.lastApplied;
   }
 
+  public getPeerEndpoints(): ReadonlyArray<IEndpoint> {
+    return this.getPeerIds().map(serverId => this.getCluster().servers[serverId]);
+  }
+
+  public getPeerIds(): ReadonlyArray<ServerId> {
+    return Object.keys(this.getCluster().servers).filter(serverId => {
+      return serverId !== this.id;
+    });
+  }
+
   public getState(): IState {
     return this.state;
   }
@@ -113,48 +121,17 @@ export class Server implements IServer {
     throw new Error('TODO');
   }
 
-  public async sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
-  public async sendPeerRpcMessage(
-    endpoint: IEndpoint,
-    message: IRpcMessage
-  ): Promise<Promise<void>[]>;
-  public async sendPeerRpcMessage(
-    endpoints: ReadonlyArray<IEndpoint>,
-    message: IRpcMessage
-  ): Promise<Promise<void>[]>;
   // RPC requests can be sent to other Raft `Server`
   // instances with the `sendPeerRpc` method.
-  public async sendPeerRpcMessage(
-    arg0: IRpcMessage | IEndpoint | ReadonlyArray<IEndpoint>,
-    arg1: IRpcMessage = null
-  ): Promise<Promise<void>[]> {
-    let message: IRpcMessage;
-    let endpoints: ReadonlyArray<IEndpoint>;
-
-    if (isRpcMessage(arg0)) {
-      endpoints = Object.keys(this.cluster.servers)
-        .filter(serverId => serverId != this.id)
-        .map(serverId => this.cluster.servers[serverId]);
-      message = arg0;
-    } else {
-      if (arg0 instanceof Array) {
-        endpoints = arg0;
-      } else if (isEndpoint(arg0)) {
-        endpoints = [arg0];
-      }
-      message = arg1;
-    }
-
-    if (isRpcRequest(message)) {
-      return await this.peerApi.send(endpoints, message);
-    } else if (isRpcResponse(message)) {
+  public async sendPeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
+    if (isRpcResponse(message)) {
       // Before responding to an RPC request, the recipient `Server`
       // updates persistent state on stable storage.
       // > *§5. "...(Updated on stable storage before responding)..."*
       // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
       await this.updatePersistentState();
-      return await this.peerApi.send(endpoints, message);
     }
+    return await this.peerApi.send(endpoint, message);
   }
 
   // When the term is updated, it is not immediately

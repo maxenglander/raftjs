@@ -41,19 +41,16 @@ export interface IServer {
   getCommitIndex(): number;
   getCluster(): ICluster;
   getCurrentTerm(): number;
+  getPeerEndpoints(): ReadonlyArray<IEndpoint>;
+  getPeerIds(): ReadonlyArray<ServerId>;
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
   request(request: IRequest): Promise<IResponse>;
-  sendPeerRpcMessage(message: IRpcMessage): Promise<Promise<void>[]>;
   sendPeerRpcMessage(
     endpoint: IEndpoint,
     message: IRpcMessage
-  ): Promise<Promise<void>[]>;
-  sendPeerRpcMessage(
-    endpoints: ReadonlyArray<IEndpoint>,
-    message: IRpcMessage
-  ): Promise<Promise<void>[]>;
+  ): Promise<void>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;

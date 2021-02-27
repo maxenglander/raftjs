@@ -126,7 +126,7 @@ describe('server', function() {
           beforeEach(function() {
             return rpcService.listen(peerEndpoint).then(() => {
               return rpcService.send(
-                [server.endpoint],
+                server.endpoint,
                 copyMessageWithTerm(message, server.getCurrentTerm() + Math.max(1, Math.random() * 10))
               );
             });
@@ -150,7 +150,7 @@ describe('server', function() {
           beforeEach(function() {
             return rpcService.listen(peerEndpoint).then(() => {
               return rpcService.send(
-                [server.endpoint],
+                server.endpoint,
                 copyMessageWithTerm(message, server.getCurrentTerm() - (Math.random() * 10))
               );
             });

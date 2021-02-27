@@ -135,7 +135,7 @@ describe('server follower state', function() {
             // of the election timer.
             setTimeout(function() {
               rpcService.send(
-                [server.endpoint],
+                server.endpoint,
                 createAppendEntriesRpcRequest({
                   entries: [],
                   leaderCommit: 0,
@@ -181,7 +181,7 @@ describe('server follower state', function() {
               // Wait a little bit
               setTimeout(function() {
                 rpcService.send(
-                  [server.endpoint],
+                  server.endpoint,
                   createAppendEntriesRpcRequest({
                     entries: [],
                     leaderCommit: 0,

@@ -28,10 +28,7 @@ export class LeaderState implements IState {
     // > *§5 "...for each server, index of the next log entry to send to that server..."
     // > *§5 "...(Reinitialized after election)..."
     this.nextIndex = {};
-    for (const serverId in this.server.getCluster().servers) {
-      if (serverId === this.server.id) {
-        continue;
-      }
+    for (const serverId in this.server.getPeerIds()) {
       // *§5 "...(initialized to 0, increases monotonically)..."
       this.matchIndex[serverId] = 0;
       // *§5 "...(initialized to leader last log index + 1)..."
@@ -55,23 +52,25 @@ export class LeaderState implements IState {
     return 'leader';
   }
 
-  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {
-  }
+  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {}
 
   public isLeader(): boolean {
     return true;
   }
 
   private sendHeartbeats() {
-    this.server.sendPeerRpcMessage(
-      createAppendEntriesRpcRequest({
-        entries: [],
-        leaderCommit: this.server.getCommitIndex(),
-        leaderId: this.server.id,
-        prevLogIndex: this.server.log.getLastIndex(),
-        prevLogTerm: this.server.log.getLastTerm(),
-        term: this.server.getCurrentTerm()
-      })
-    );
+    for (const peerEndpoint of this.server.getPeerEndpoints()) {
+      this.server.sendPeerRpcMessage(
+        peerEndpoint,
+        createAppendEntriesRpcRequest({
+          entries: [],
+          leaderCommit: this.server.getCommitIndex(),
+          leaderId: this.server.id,
+          prevLogIndex: this.server.log.getLastIndex(),
+          prevLogTerm: this.server.log.getLastTerm(),
+          term: this.server.getCurrentTerm()
+        })
+      );
+    }
   }
 }
