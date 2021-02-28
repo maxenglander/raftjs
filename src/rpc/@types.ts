@@ -13,7 +13,7 @@ export interface IRpcEventListener {
   detach(): void;
 }
 
-export type RpcReceiver = (endpoint: IEndpoint, message: IRpcMessage) => void;
+export type RpcReceiver = (endpoint: IEndpoint, message: IRpcMessage) => any;
 
 export interface IRpcService {
   close(): Promise<void>;

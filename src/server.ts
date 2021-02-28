@@ -105,7 +105,7 @@ export class Server implements IServer {
     return this.votedFor.getValue();
   }
 
-  private handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage) {
+  private async handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     const messageTerm = getRpcMessageTerm(message);
     if(messageTerm > this.getCurrentTerm()) {
       this.logger.trace(
@@ -114,7 +114,7 @@ export class Server implements IServer {
       this.setCurrentTerm(messageTerm);
       this.transitionTo('follower', endpoint);
     }
-    this.state.handlePeerRpcMessage(endpoint, message);
+    await this.state.handlePeerRpcMessage(endpoint, message);
   }
 
   public async request(request: IRequest): Promise<IResponse> {
@@ -180,8 +180,8 @@ export class Server implements IServer {
     this.logger.debug('Transitioning to follower');
     this.transitionTo('follower');
 
-    this.peerRpcListenerDetacher = this.peerApi.onReceive((endpoint, message) => {
-      this.handlePeerRpcMessage(endpoint, message);
+    this.peerRpcListenerDetacher = this.peerApi.onReceive(async (endpoint, message) => {
+      await this.handlePeerRpcMessage(endpoint, message);
     });
 
     this.logger.info(`Started Raftjs server ${this.id}`);

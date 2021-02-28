@@ -52,10 +52,10 @@ export class FollowerState implements IState {
   // AppendEntries RPC request. At the present time,
   // it only handles responding to heartbeats.
   // > *§5. "...Receiver implementation:..."*
-  private handleAppendEntriesRpcRequest(
+  private async handleAppendEntriesRpcRequest(
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
-  ): void {
+  ): Promise<void> {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*
@@ -64,7 +64,7 @@ export class FollowerState implements IState {
     if(success) {
       this.leaderEndpoint = endpoint;
     }
-    this.server.sendPeerRpcMessage(
+    await this.server.sendPeerRpcMessage(
       endpoint,
       createAppendEntriesRpcResponse({
         // When another `Server` makes an `AppendEntries` RPC
@@ -77,12 +77,12 @@ export class FollowerState implements IState {
     );
   }
 
-  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {
+  public async handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     if(isAppendEntriesRpcRequest(message)) {
-      this.handleAppendEntriesRpcRequest(endpoint, message);
+      await this.handleAppendEntriesRpcRequest(endpoint, message);
     }
     if(isRequestVoteRpcRequest(message)) {
-      this.handleRequestVoteRpcRequest(endpoint, message);
+      await this.handleRequestVoteRpcRequest(endpoint, message);
     }
   }
 

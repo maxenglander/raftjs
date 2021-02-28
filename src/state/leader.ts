@@ -70,7 +70,9 @@ export class LeaderState implements IState {
           prevLogTerm: this.server.log.getLastTerm(),
           term: this.server.getCurrentTerm()
         })
-      );
+      ).then(() => {}, (err) => {
+        this.server.logger.warn(`Failed to send append-entries request to ${peerEndpoint}: ${err}`);
+      });
     }
   }
 }

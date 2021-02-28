@@ -109,7 +109,9 @@ export class CandidateState implements IState {
           lastLogTerm: this.server.log.getEntry(lastLogIndex).term,
           term: this.server.getCurrentTerm()
         })
-      );
+      ).then(() => {}, (err) => {
+        this.server.logger.warn(`Failed to send request-vote request to ${peerEndpoint}: ${err}`);
+      });
     }
   }
 
