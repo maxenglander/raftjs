@@ -11,7 +11,7 @@ import {
   createElectionTimeoutChooser
 } from '../election-timer';
 import { createEndpoint } from '../net/endpoint';
-import { IDetacher } from '../util/@types';
+import { IDetacher } from '../util/types';
 import { IServer, createServer } from '../';
 import { IState } from './';
 import {

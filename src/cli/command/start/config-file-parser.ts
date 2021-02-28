@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import { ICluster } from '../../../cluster';
 import * as logger from '../../../logger';
-import { ICreateServerOptions } from '../../../@types';
+import { ICreateServerOptions } from '../../../types';
 import { IEndpoint, createEndpoint } from '../../../net/endpoint';
 
 // A config file parser that accepts a file path,
@@ -61,7 +61,7 @@ export function parseConfigFile(configFile: string): ICreateServerOptions {
 
 // Parses the cluster configuration.
 function parseCluster(
-  config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  config: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): ICluster {
   if (!config['servers'])
     throw new Error(`Config is missing required key 'cluster.servers'.`);
@@ -77,7 +77,7 @@ function parseCluster(
 
 // Parses the cluster members.
 function parseClusterServers(
-  config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  config: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): { [id: string]: IEndpoint } {
   const result: { [id: string]: IEndpoint } = {};
 
@@ -103,7 +103,7 @@ function parseDataDir(configFile: string, dataDir: string): string {
 
 // Parses the logger level.
 function parseLogLevel(
-  level: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  level: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): logger.Level {
   if (!(typeof level == 'string'))
     throw new Error("Config 'logger.level' must be a string: " + level);
@@ -117,7 +117,7 @@ function parseLogLevel(
 
 // Parses the logger pretty-print flag.
 function parseLogPrettyPrint(
-  prettyPrint: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  prettyPrint: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): boolean {
   if (!(typeof prettyPrint == 'boolean'))
     throw new Error(
@@ -128,7 +128,7 @@ function parseLogPrettyPrint(
 
 // Parses the logger configuration.
 function parseLogger(
-  config: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  config: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): logger.ILogger {
   if (config && !(typeof config == 'object'))
     throw new Error("Config 'logger' must be an objct: " + config);

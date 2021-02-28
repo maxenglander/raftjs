@@ -3,7 +3,7 @@ import {
   IAppendEntriesRpcRequest,
   IAppendEntriesRpcResponse,
   IAppendEntriesRpcResults
-} from './@types';
+} from './types';
 
 // Create an AppendEntries RPC request with the provided arguments.
 export function createAppendEntriesRpcRequest(

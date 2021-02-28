@@ -2,7 +2,7 @@ import { IEndpoint } from '../net/endpoint';
 import {
   IRpcMessage
 } from '../rpc/message';
-import { IServer } from '../@types';
+import { IServer } from '../types';
 
 export interface IState {
   enter: () => void;

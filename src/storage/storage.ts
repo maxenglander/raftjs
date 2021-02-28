@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import { DurableType, IDurableValue, IDurableValueOptions } from './@types';
+import { DurableType, IDurableValue, IDurableValueOptions } from './types';
 
 // Wraps a value that can be read and written to a path
 // on disk. Can be configured with a `serializer` and a
@@ -47,7 +47,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
       fs.readFile(
         this.path,
         (
-          err: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          err: any, // eslint-disable-line typescript-eslint/no-explicit-any
           data: Buffer
         ) => {
           if (err != null) reject('Failed to read durable value: ' + err);
@@ -88,7 +88,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
         this.serializer(this.value),
         { flag: 'w' },
         (
-          err: any // eslint-disable-line @typescript-eslint/no-explicit-any
+          err: any // eslint-disable-line typescript-eslint/no-explicit-any
         ) => {
           if (err) {
             reject('Failed to write durable value: ' + err);

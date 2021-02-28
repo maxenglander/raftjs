@@ -6,7 +6,7 @@ import {
   IConnectionRegistry,
   createConnectionRegistry
 } from '../connection-registry';
-import { ITcpTransportOptions } from './@types';
+import { ITcpTransportOptions } from './types';
 
 // A TCP transport that can accept and create
 // TCP sockets, and tries to re-use sockets

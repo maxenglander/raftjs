@@ -4,7 +4,7 @@ import {
   IRpcRequestTypeFilter,
   IRpcResponseTypeFilter,
   RpcProcedureTypeMap
-} from './@types';
+} from './types';
 import { compilerError } from '../../util/compiler-error';
 
 export function getRpcMessageTerm(message: IRpcMessage): number {
@@ -21,7 +21,7 @@ export function getRpcMessageTerm(message: IRpcMessage): number {
 // Verify that the value is an RPC message. This utility
 // is mainly used by TypeScript as a [user-defined type guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).
 export function isRpcMessage(
-  message: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  message: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): message is IRpcMessage {
   return (
     !!message &&

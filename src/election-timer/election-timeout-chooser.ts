@@ -3,7 +3,7 @@ import {
   ElectionTimeoutInterval,
   IElectionTimeoutChooser,
   IElectionTimeoutChooserOptions
-} from './@types';
+} from './types';
 
 // Raft uses:
 // > *§5.2 "...randomized election timeouts to ensure that split votes are rare..."

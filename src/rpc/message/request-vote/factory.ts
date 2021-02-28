@@ -3,7 +3,7 @@ import {
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse,
   IRequestVoteRpcResults
-} from './@types';
+} from './types';
 
 // Create a RequestVote RPC request with the provided arguments.
 export function createRequestVoteRpcRequest(

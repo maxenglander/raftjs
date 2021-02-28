@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 
-import { ICreateServerOptions, IServer } from './@types';
+import { ICreateServerOptions, IServer } from './types';
 import {
   IDurableValue,
   createDurableInteger,
@@ -47,7 +47,7 @@ export function createServer(options: ICreateServerOptions): IServer {
     id: options.id,
     log: options.log || createLog(),
     logger: options.logger || createLogger(),
-    peerApi: options.peerApi || createRpcService(),
+    peerRpcService: options.peerRpcService || createRpcService(),
     stateMachine: options.stateMachine || {
       execute: (command: Buffer) => Promise.resolve(Buffer.alloc(0))
     },

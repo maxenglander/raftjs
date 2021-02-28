@@ -1,8 +1,8 @@
 import { CandidateState } from './candidate';
 import { FollowerState } from './follower';
 import { IEndpoint} from '../net/endpoint';
-import { IServer } from '../@types';
-import { IState, StateType } from './@types';
+import { IServer } from '../types';
+import { IState, StateType } from './types';
 import { LeaderState } from './leader';
 import { compilerError } from '../util/compiler-error';
 import { noop } from '../util';

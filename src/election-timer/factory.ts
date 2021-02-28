@@ -3,7 +3,7 @@ import {
   IElectionTimerOptions,
   IElectionTimeoutChooser,
   IElectionTimeoutChooserOptions
-} from './@types';
+} from './types';
 import { DEFAULT_ELECTION_TIMEOUT_INTERVAL } from './constants';
 import { ElectionTimer } from './election-timer';
 import { ElectionTimeoutChooser } from './election-timeout-chooser';

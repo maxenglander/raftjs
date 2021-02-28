@@ -4,7 +4,7 @@
 // between follower, candidate and leader states.
 
 import { ICluster } from './cluster';
-import { IDetacher } from './util/@types';
+import { IDetacher } from './util/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
@@ -18,9 +18,9 @@ import {
   isRpcResponse
 } from './rpc/message';
 import { IEndpoint, isEndpoint } from './net/endpoint';
-import { IRpcEventListener, IRpcService, RpcReceiver } from './rpc';
+import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IRequest, IResponse, IServer, IServerOptions, IStateMachine, ServerId } from './@types';
+import { IRequest, IResponse, IServer, IServerOptions, IStateMachine, ServerId } from './types';
 import { IState, StateType, createState } from './state';
 
 export class Server implements IServer {
@@ -33,8 +33,8 @@ export class Server implements IServer {
   private lastApplied: number;
   public readonly log: ILog;
   public readonly logger: ILogger;
-  private readonly peerApi: IRpcService;
-  private peerRpcListenerDetacher: IDetacher;
+  public readonly peerRpcService: IRpcService;
+  private peerRpcServiceDetachers: Set<IDetacher>;
   private state: IState;
   public readonly stateMachine: IStateMachine;
   private votedFor: IDurableValue<string>;
@@ -47,7 +47,8 @@ export class Server implements IServer {
     this.id = options.id;
     this.log = options.log;
     this.logger = options.logger;
-    this.peerApi = options.peerApi;
+    this.peerRpcService = options.peerRpcService;
+    this.peerRpcServiceDetachers = new Set<IDetacher>();
     // `noop` is not a state specified by the Raft protocol.
     // It is used here as a ["null
     // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
@@ -56,12 +57,6 @@ export class Server implements IServer {
     this.state = createState('noop', null, null);
     this.stateMachine = options.stateMachine;
     this.votedFor = options.votedFor;
-  }
-
-  private attachPeerRpcListener(): void {
-  }
-
-  private detachPeerRpcListener(): void {
   }
 
   public getCluster(): ICluster {
@@ -121,19 +116,6 @@ export class Server implements IServer {
     throw new Error('TODO');
   }
 
-  // RPC requests can be sent to other Raft `Server`
-  // instances with the `sendPeerRpc` method.
-  public async sendPeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
-    if (isRpcResponse(message)) {
-      // Before responding to an RPC request, the recipient `Server`
-      // updates persistent state on stable storage.
-      // > *§5. "...(Updated on stable storage before responding)..."*
-      // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
-      await this.updatePersistentState();
-    }
-    return await this.peerApi.send(endpoint, message);
-  }
-
   // When the term is updated, it is not immediately
   // persisted because, as the Raft paper says, the
   // term is part of persistent state that is:
@@ -175,14 +157,25 @@ export class Server implements IServer {
     await this.currentTerm.readIfExistsElseSetAndWrite(0)
 
     this.logger.debug('Starting RPC service');
-    await this.peerApi.listen(this.endpoint);
+
+    this.peerRpcServiceDetachers.add(this.peerRpcService.onBeforeSend(async (endpoint, message) => {
+      // Before responding to an RPC request, the recipient `Server`
+      // updates persistent state on stable storage.
+      // > *§5. "...(Updated on stable storage before responding)..."*
+      // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
+      if (isRpcResponse(message)) {
+        await this.updatePersistentState();
+      }
+    }));
+
+    this.peerRpcServiceDetachers.add(this.peerRpcService.onReceive(async (endpoint, message) => {
+      await this.handlePeerRpcMessage(endpoint, message);
+    }));
+
+    await this.peerRpcService.listen(this.endpoint);
 
     this.logger.debug('Transitioning to follower');
     this.transitionTo('follower');
-
-    this.peerRpcListenerDetacher = this.peerApi.onReceive(async (endpoint, message) => {
-      await this.handlePeerRpcMessage(endpoint, message);
-    });
 
     this.logger.info(`Started Raftjs server ${this.id}`);
   }
@@ -192,8 +185,10 @@ export class Server implements IServer {
     this.logger.debug('Exiting current state');
     this.state.exit();
     this.logger.debug('Stopping RPC service');
-    this.peerRpcListenerDetacher.detach();
-    await this.peerApi.close()
+    for (const detacher of this.peerRpcServiceDetachers) {
+      detacher.detach();
+    }
+    await this.peerRpcService.close()
     this.logger.info(`Stopped Raftjs server ${this.id}`);
   }
 

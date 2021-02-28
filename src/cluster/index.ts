@@ -1,1 +1,1 @@
-export { ICluster } from './@types';
+export { ICluster } from './types';

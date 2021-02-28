@@ -4,4 +4,4 @@ export {
   IBaseRpcRequest,
   IBaseRpcResponse,
   IBaseRpcResults
-} from './@types';
+} from './types';

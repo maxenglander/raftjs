@@ -6,7 +6,7 @@ import {
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
-import { IState, StateType } from './@types';
+import { IState, StateType } from './types';
 
 // A candidate:
 // > *§5.1 "...votes for itself and issues RequestVote RPCs in parallel..."*
@@ -101,7 +101,7 @@ export class CandidateState implements IState {
     const lastLogIndex = this.server.log.getLastIndex();
 
     for (const peerEndpoint of this.server.getPeerEndpoints()) {
-      this.server.sendPeerRpcMessage(
+      this.server.peerRpcService.send(
         peerEndpoint,
         createRequestVoteRpcRequest({
           candidateId: this.server.id,

@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as yargs from 'yargs';
 
-import { IStartCommandCliOptions } from './@types';
+import { IStartCommandCliOptions } from './types';
 
 export function builder(
   yargs: yargs.Argv

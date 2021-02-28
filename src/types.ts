@@ -3,7 +3,7 @@ import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
 import { IEndpoint } from './net/endpoint';
-import { IRpcEventListener, IRpcMessage, IRpcService, RpcReceiver } from './rpc';
+import { IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IState, StateType } from './state';
 
@@ -13,7 +13,7 @@ export type ICreateServerOptions = {
   readonly id: ServerId;
   readonly log?: ILog;
   readonly logger?: ILogger;
-  readonly peerApi?: IRpcService;
+  readonly peerRpcService?: IRpcService;
   readonly stateMachine?: IStateMachine;
 } & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
@@ -37,6 +37,7 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
+  readonly peerRpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
@@ -47,10 +48,6 @@ export interface IServer {
   getState(): IState;
   getVotedFor(): ServerId;
   request(request: IRequest): Promise<IResponse>;
-  sendPeerRpcMessage(
-    endpoint: IEndpoint,
-    message: IRpcMessage
-  ): Promise<void>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;
@@ -65,7 +62,7 @@ export interface IServerOptions {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerApi: IRpcService;
+  readonly peerRpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   readonly votedFor: IDurableValue<string>;
 }

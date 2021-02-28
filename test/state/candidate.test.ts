@@ -16,8 +16,9 @@ import {
   createElectionTimer,
   createElectionTimeoutChooser
 } from '../election-timer';
+import { IDetacher } from '../util/types';
 import { IEndpoint, createEndpoint } from '../net/endpoint';
-import { IRpcEventListener, IRpcService, createRpcService } from '../rpc';
+import { IRpcService, createRpcService } from '../rpc';
 import { IServer, ServerId, createServer } from '../';
 import { IState } from './';
 
@@ -168,7 +169,7 @@ describe('server candidate state', function() {
     context(
       'if it receives request-vote responses before the election timeout',
       function() {
-        let requestVoteListenerDetacher: IRpcEventListener;
+        let requestVoteListenerDetacher: IDetacher;
 
         afterEach(function() {
           requestVoteListenerDetacher.detach();

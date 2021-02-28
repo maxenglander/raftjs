@@ -1,8 +1,8 @@
-import { IRpcMessage } from '../@types';
+import { IRpcMessage } from '../types';
 import {
   IAppendEntriesRpcRequest,
   IAppendEntriesRpcResponse
-} from './@types';
+} from './types';
 
 export function isAppendEntriesRpcRequest(message: IRpcMessage): message is IAppendEntriesRpcRequest {
   return message.callType == 'request' && message.procedureType == 'append-entries';

@@ -1,8 +1,8 @@
-import { IRpcMessage } from '../@types';
+import { IRpcMessage } from '../types';
 import {
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse
-} from './@types';
+} from './types';
 
 export function isRequestVoteRpcRequest(
   message: IRpcMessage

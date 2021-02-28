@@ -10,7 +10,7 @@ import {
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
-import { IState, StateType } from './@types';
+import { IState, StateType } from './types';
 
 // Followers:
 // > *§5. "...Respond to RPC requests from candidates and leaders..."*
@@ -64,7 +64,7 @@ export class FollowerState implements IState {
     if(success) {
       this.leaderEndpoint = endpoint;
     }
-    await this.server.sendPeerRpcMessage(
+    await this.server.peerRpcService.send(
       endpoint,
       createAppendEntriesRpcResponse({
         // When another `Server` makes an `AppendEntries` RPC
@@ -110,7 +110,7 @@ export class FollowerState implements IState {
       );
     }
 
-    await this.server.sendPeerRpcMessage(
+    await this.server.peerRpcService.send(
       endpoint,
       createRequestVoteRpcResponse({
         term: currentTerm,

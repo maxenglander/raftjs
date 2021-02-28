@@ -1,6 +1,6 @@
 import { IEndpoint } from '../net/endpoint';
-import { IServer } from '../@types';
-import { IState, StateType } from './@types';
+import { IServer } from '../types';
+import { IState, StateType } from './types';
 import { IRpcMessage, createAppendEntriesRpcRequest } from '../rpc/message';
 
 // Leaders:
@@ -12,7 +12,7 @@ import { IRpcMessage, createAppendEntriesRpcRequest } from '../rpc/message';
 export class LeaderState implements IState {
   private matchIndex: { [id: string]: number };
   private nextIndex: { [id: string]: number };
-  private sendHeartbeatsIntervalId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  private sendHeartbeatsIntervalId: any; // eslint-disable-line typescript-eslint/no-explicit-any
   private readonly server: IServer;
 
   constructor(server: IServer) {
@@ -60,7 +60,7 @@ export class LeaderState implements IState {
 
   private sendHeartbeats() {
     for (const peerEndpoint of this.server.getPeerEndpoints()) {
-      this.server.sendPeerRpcMessage(
+      this.server.peerRpcService.send(
         peerEndpoint,
         createAppendEntriesRpcRequest({
           entries: [],

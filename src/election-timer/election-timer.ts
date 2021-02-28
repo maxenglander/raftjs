@@ -1,4 +1,4 @@
-import { Callback } from '../util/@types';
+import { Callback } from '../util/types';
 
 import {
   ElectionTimerEvent,
@@ -6,7 +6,7 @@ import {
   IElectionTimer,
   IElectionTimerOptions,
   IElectionTimeoutChooser
-} from './@types';
+} from './types';
 
 // Raft uses timers to trigger the conversion of followers
 // to candidates, and candidates to restart elections.
@@ -17,7 +17,7 @@ export class ElectionTimer implements IElectionTimer {
   private running = false;
   private timeout: number;
   private timeoutChooser: IElectionTimeoutChooser;
-  private timeoutId: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  private timeoutId: any; // eslint-disable-line typescript-eslint/no-explicit-any
 
   constructor(options: IElectionTimerOptions = {}) {
     this.listeners = {};

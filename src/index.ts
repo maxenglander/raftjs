@@ -3,5 +3,5 @@ export {
   IServer,
   IServerOptions,
   ServerId
-} from './@types';
+} from './types';
 export * from './factory';

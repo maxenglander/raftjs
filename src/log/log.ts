@@ -1,4 +1,4 @@
-import { ILog, ILogEntry, ILogOptions } from './@types';
+import { ILog, ILogEntry, ILogOptions } from './types';
 
 // This is stub for for a persistent log of entries.
 // Currently, `raftjs` does not implement handling of

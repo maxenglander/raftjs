@@ -1,4 +1,4 @@
-import { IRpcService, IRpcServiceOptions } from './@types';
+import { IRpcService, IRpcServiceOptions } from './types';
 import { RpcService } from './service';
 import { createFlatbuffersCodec } from './codec';
 import { createTcpTransport } from '../transport';

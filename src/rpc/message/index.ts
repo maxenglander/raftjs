@@ -7,7 +7,7 @@ export {
   IRpcResponseTypeFilter,
   RpcCallTypeMap,
   RpcProcedureTypeMap
-} from './@types';
+} from './types';
 export * from './append-entries';
 export * from './helpers';
 export * from './request-vote';

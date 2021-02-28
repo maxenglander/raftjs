@@ -3,7 +3,7 @@
 // server.
 import { createServer } from '../../../factory';
 
-import { IStartCommandCliOptions } from './@types';
+import { IStartCommandCliOptions } from './types';
 import { parseConfigFile } from './config-file-parser';
 
 export function handler(argv: IStartCommandCliOptions): void {

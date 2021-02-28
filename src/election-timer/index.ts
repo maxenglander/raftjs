@@ -7,5 +7,5 @@ export {
   IElectionTimerOptions,
   IElectionTimeoutChooser,
   IElectionTimeoutChooserOptions
-} from './@types';
+} from './types';
 export * from './factory';

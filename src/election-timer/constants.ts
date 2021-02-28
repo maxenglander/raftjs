@@ -1,4 +1,4 @@
-import { ElectionTimeoutInterval } from './@types';
+import { ElectionTimeoutInterval } from './types';
 
 // The Raft paper recommends an election timeout
 // interval of 150–300 milliseconds:

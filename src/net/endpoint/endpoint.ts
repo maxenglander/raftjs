@@ -1,4 +1,4 @@
-import { IEndpoint } from './@types';
+import { IEndpoint } from './types';
 
 // A simple wrapper around a `{ host, port }` object,
 // with helpful methods for equality comparisons and
