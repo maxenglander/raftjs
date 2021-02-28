@@ -1,5 +1,5 @@
 import { ITransport } from '../';
-import { ITcpTransportOptions } from './@types';
+import { ITcpTransportOptions } from './types';
 import { TcpTransport } from './tcp';
 
 export function createTcpTransport(

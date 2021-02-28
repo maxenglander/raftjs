@@ -1,6 +1,6 @@
 import Pino from 'pino';
 
-import { ILogger, ILoggerOptions } from './@types';
+import { ILogger, ILoggerOptions } from './types';
 
 // Create a logger.
 export function createLogger(options: ILoggerOptions = {}): ILogger {

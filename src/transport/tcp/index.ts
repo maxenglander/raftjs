@@ -1,2 +1,2 @@
-export { ITcpTransportOptions } from './@types';
+export { ITcpTransportOptions } from './types';
 export * from './factory';

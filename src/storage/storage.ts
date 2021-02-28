@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import { DurableType, IDurableValue, IDurableValueOptions } from './@types';
+import { DurableType, IDurableValue, IDurableValueOptions } from './types';
 
 // Wraps a value that can be read and written to a path
 // on disk. Can be configured with a `serializer` and a
@@ -47,7 +47,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
       fs.readFile(
         this.path,
         (
-          err: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          err: any, // eslint-disable-line typescript-eslint/no-explicit-any
           data: Buffer
         ) => {
           if (err != null) reject('Failed to read durable value: ' + err);
@@ -64,17 +64,15 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
   //
   // Otherwise, set the provided value and write to disk,
   // returning a Promise resolved with the provided value.
-  public readIfExistsElseSetAndWrite(value: T): Promise<T> {
-    return this.exists().then(exists => {
-      if (exists) {
-        return this.read();
-      } else {
-        this.setValue(value);
-        return this.write().then(() => {
-          return value;
-        });
-      }
-    });
+  public async readIfExistsElseSetAndWrite(value: T): Promise<T> {
+    const exists = await this.exists();
+    if (exists) {
+      return this.read();
+    } else {
+      this.setValue(value);
+      await this.write();
+      return value;
+    };
   }
 
   // Returns a `Promise` that is resolved unless the value
@@ -90,7 +88,7 @@ class BaseDurableValue<T extends DurableType> implements IDurableValue<T> {
         this.serializer(this.value),
         { flag: 'w' },
         (
-          err: any // eslint-disable-line @typescript-eslint/no-explicit-any
+          err: any // eslint-disable-line typescript-eslint/no-explicit-any
         ) => {
           if (err) {
             reject('Failed to write durable value: ' + err);

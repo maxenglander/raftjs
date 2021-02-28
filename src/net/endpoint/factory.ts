@@ -1,4 +1,4 @@
-import { IEndpoint } from './@types';
+import { IEndpoint } from './types';
 import { Endpoint } from './endpoint';
 
 // Create an `Endpoint` from a `{ host, port }` object.

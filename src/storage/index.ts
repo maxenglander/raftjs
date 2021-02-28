@@ -3,5 +3,5 @@ export {
   DurableTypeMap,
   IDurableValue,
   IDurableValueOptions
-} from './@types';
+} from './types';
 export * from './factory';

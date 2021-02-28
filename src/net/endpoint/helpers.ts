@@ -1,10 +1,10 @@
-import { IEndpoint } from './@types';
+import { IEndpoint } from './types';
 import { createEndpoint } from './factory';
 
 // Verify that the provided object is an `Endpoint`. Used by
 // TypeScript as a [user-defined type guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).
 export function isEndpoint(
-  endpoint: any // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+  endpoint: any // eslint-disable-line typescript-eslint/no-explicit-any, typescript-eslint/explicit-module-boundary-types
 ): endpoint is IEndpoint {
   return (
     !!endpoint &&
