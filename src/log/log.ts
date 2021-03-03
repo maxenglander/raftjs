@@ -1,27 +1,15 @@
 import { ILog, ILogEntry, ILogOptions } from './types';
 
-// This is stub for for a persistent log of entries.
-// Currently, `raftjs` does not implement handling of
-// client requests or replication of log entries
-// from leaders to followers.
-//
-// Until those features are implemented, no
-// implementation of a persistent entry log is required.
 export class Log implements ILog {
   private entries: Array<ILogEntry>;
 
   constructor(options?: ILogOptions) {
-    this.entries = [
-      {
-        command: Buffer.alloc(0),
-        index: 0,
-        term: options ? options.term : 0
-      }
-    ];
+    this.entries = [];
   }
 
-  public append(entry: ILogEntry): void {
+  public async append(entry: ILogEntry): Promise<void> {
     this.entries.push(entry);
+    return this.write();
   }
 
   public getEntry(index: number): ILogEntry {
@@ -29,15 +17,15 @@ export class Log implements ILog {
   }
 
   public getLastEntry(): ILogEntry {
-    return this.getEntry(this.entries.length - 1);
+    return this.entries.length >= 0 ? this.getEntry(this.entries.length - 1) : null;
   }
 
   public getLastIndex(): number {
-    return this.getLastEntry().index;
+    return this.entries.length >= 0 ? this.getLastEntry().index : -1;
   }
 
   public getLastTerm(): number {
-    return this.getLastEntry().term;
+    return this.entries.length >= 0 ? this.getLastEntry().term : -1;
   }
 
   public getNextIndex(): number {

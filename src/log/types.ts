@@ -1,5 +1,5 @@
 export interface ILog {
-  append(entry: ILogEntry): void;
+  append(entry: ILogEntry): Promise<void>;
   getEntry(index: number): ILogEntry;
   getLastEntry(): ILogEntry;
   getLastIndex(): number;
@@ -14,6 +14,4 @@ export interface ILogEntry {
   readonly term: number;
 }
 
-export interface ILogOptions {
-  term: number;
-}
+export interface ILogOptions {}

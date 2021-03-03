@@ -45,7 +45,7 @@ describe('server', function() {
     MIN_TIMEOUT = 100,
     MAX_TIMEOUT = 500;
 
-  const peerEndpoint: IEndpoint = createEndpoint({
+  const serverEndpoint: IEndpoint = createEndpoint({
     host: '0.0.0.0',
     port: 13231
   });
@@ -64,7 +64,7 @@ describe('server', function() {
             host: '0.0.0.0',
             port: 18910
           }),
-          peer1: peerEndpoint
+          server1: serverEndpoint
         }
       },
       dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'data')),
@@ -124,7 +124,7 @@ describe('server', function() {
           });
   
           beforeEach(function() {
-            return rpcService.listen(peerEndpoint).then(() => {
+            return rpcService.listen(serverEndpoint).then(() => {
               return rpcService.send(
                 server.endpoint,
                 copyMessageWithTerm(message, server.getCurrentTerm() + Math.max(1, Math.random() * 10))
@@ -148,7 +148,7 @@ describe('server', function() {
           });
   
           beforeEach(function() {
-            return rpcService.listen(peerEndpoint).then(() => {
+            return rpcService.listen(serverEndpoint).then(() => {
               return rpcService.send(
                 server.endpoint,
                 copyMessageWithTerm(message, server.getCurrentTerm() - (Math.random() * 10))

@@ -24,7 +24,7 @@ import { createRpcService } from '../rpc';
 describe('server follower state', function() {
   const MIN_TIMEOUT = 100,
     MAX_TIMEOUT = 500,
-    peerEndpoint = createEndpoint({
+    serverEndpoint = createEndpoint({
       host: '0.0.0.0',
       port: 13231
     });
@@ -49,7 +49,7 @@ describe('server follower state', function() {
             host: '0.0.0.0',
             port: 18910
           }),
-          server1: peerEndpoint
+          server1: serverEndpoint
         }
       },
       dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'data')),
@@ -120,7 +120,7 @@ describe('server follower state', function() {
             }
           });
   
-          return rpcService.listen(peerEndpoint);
+          return rpcService.listen(serverEndpoint);
         });
 
         context('and the request is valid', function() {

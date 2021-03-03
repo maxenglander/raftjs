@@ -1,10 +1,11 @@
-import { ICluster } from './cluster';
+import { ICluster } from './cluster/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
 import { IEndpoint } from './net/endpoint';
 import { IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
+import { IRequest, IResponse } from './api/client';
 import { IState, StateType } from './state';
 
 export type ICreateServerOptions = {
@@ -13,23 +14,10 @@ export type ICreateServerOptions = {
   readonly id: ServerId;
   readonly log?: ILog;
   readonly logger?: ILogger;
-  readonly peerRpcService?: IRpcService;
+  readonly rpcService?: IRpcService;
   readonly stateMachine?: IStateMachine;
 } & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
-
-export interface IRequest {
-  command: Buffer;
-}
-
-export type IResponse = {
-  result: Buffer;
-} | {
-  error: 'not-leader';
-  leader: {
-    endpoint: IEndpoint;
-  }
-}
 
 export interface IServer {
   readonly electionTimer: IElectionTimer;
@@ -37,13 +25,13 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerRpcService: IRpcService;
+  readonly rpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
   getCurrentTerm(): number;
-  getPeerEndpoints(): ReadonlyArray<IEndpoint>;
-  getPeerIds(): ReadonlyArray<ServerId>;
+  getServerEndpoints(): ReadonlyArray<IEndpoint>;
+  getServerIds(): ReadonlyArray<ServerId>;
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
@@ -62,7 +50,7 @@ export interface IServerOptions {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerRpcService: IRpcService;
+  readonly rpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   readonly votedFor: IDurableValue<string>;
 }

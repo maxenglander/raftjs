@@ -9,6 +9,7 @@ import {
   isRequestVoteRpcRequest
 } from '../rpc/message';
 import { IEndpoint } from '../net/endpoint';
+import { IRequest, IResponse } from '../api/client';
 import { IServer } from '../';
 import { IState, StateType } from './types';
 
@@ -64,7 +65,7 @@ export class FollowerState implements IState {
     if(success) {
       this.leaderEndpoint = endpoint;
     }
-    await this.server.peerRpcService.send(
+    await this.server.rpcService.send(
       endpoint,
       createAppendEntriesRpcResponse({
         // When another `Server` makes an `AppendEntries` RPC
@@ -77,7 +78,16 @@ export class FollowerState implements IState {
     );
   }
 
-  public async handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
+  public async handleRequest(request: IRequest): Promise<IResponse> {
+    return Promise.resolve({
+      error: 'not-leader',
+      redirectTo: {
+        leaderEndpoint: this.leaderEndpoint
+      }
+    });
+  }
+
+  public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     if(isAppendEntriesRpcRequest(message)) {
       await this.handleAppendEntriesRpcRequest(endpoint, message);
     }
@@ -110,7 +120,7 @@ export class FollowerState implements IState {
       );
     }
 
-    await this.server.peerRpcService.send(
+    await this.server.rpcService.send(
       endpoint,
       createRequestVoteRpcResponse({
         term: currentTerm,

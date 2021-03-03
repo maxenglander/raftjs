@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { ICluster } from '../../../cluster';
+import { ICluster } from '../../../cluster/types';
 import * as logger from '../../../logger';
 import { ICreateServerOptions } from '../../../types';
 import { IEndpoint, createEndpoint } from '../../../net/endpoint';
