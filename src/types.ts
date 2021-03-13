@@ -1,3 +1,4 @@
+import { IClientRequest, IClientResponse } from './api/client';
 import { ICluster } from './cluster/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
@@ -5,7 +6,6 @@ import { ILogger } from './logger';
 import { IEndpoint } from './net/endpoint';
 import { IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IRequest, IResponse } from './api/client';
 import { IState, StateType } from './state';
 
 export type ICreateServerOptions = {
@@ -35,7 +35,7 @@ export interface IServer {
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
-  request(request: IRequest): Promise<IResponse>;
+  handleClientRequest(request: IClientRequest): Promise<IClientResponse>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;

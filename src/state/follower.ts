@@ -8,8 +8,8 @@ import {
   isAppendEntriesRpcRequest,
   isRequestVoteRpcRequest
 } from '../rpc/message';
+import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IRequest, IResponse } from '../api/client';
 import { IServer } from '../';
 import { IState, StateType } from './types';
 
@@ -78,13 +78,13 @@ export class FollowerState implements IState {
     );
   }
 
-  public async handleRequest(request: IRequest): Promise<IResponse> {
-    return Promise.resolve({
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
+    return {
       error: 'not-leader',
       redirectTo: {
         leaderEndpoint: this.leaderEndpoint
       }
-    });
+    };
   }
 
   public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {

@@ -4,8 +4,8 @@ import {
   isAppendEntriesRpcRequest,
   isRequestVoteRpcResponse
 } from '../rpc/message';
+import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IRequest, IResponse } from '../api/client';
 import { IServer } from '../';
 import { IState, StateType } from './types';
 
@@ -45,7 +45,7 @@ export class CandidateState implements IState {
     return 'candidate';
   }
 
-  public async handleRequest(request: IRequest): Promise<IResponse> {
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
     return {
       error: 'no-leader'
     };

@@ -1,5 +1,5 @@
+import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IRequest, IResponse } from '../api/client';
 import { IServer } from '../types';
 import { IState, StateType } from './types';
 import { IRpcMessage, createAppendEntriesRpcRequest } from '../rpc/message';
@@ -33,7 +33,7 @@ export class LeaderState implements IState {
       // *§5 "...(initialized to 0, increases monotonically)..."
       this.matchIndex[serverId] = 0;
       // *§5 "...(initialized to leader last log index + 1)..."
-      this.nextIndex[serverId] = this.server.log.getLastIndex() + 1;
+      this.nextIndex[serverId] = this.server.log.getNextIndex();
     }
     // > *§5 "...send initial empty AppendEntries RPCs (heartbeat) to each server..."*
     this.sendHeartbeats();
@@ -53,7 +53,7 @@ export class LeaderState implements IState {
     return 'leader';
   }
 
-  public async handleRequest(request: IRequest): Promise<IResponse> {
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
     // > *§5 "If command received from client: append entry to local log..."
     await this.server.log.append({
       command: request.command,

@@ -64,7 +64,7 @@ describe('server', function() {
             host: '0.0.0.0',
             port: 18910
           }),
-          server1: serverEndpoint
+          server2: serverEndpoint
         }
       },
       dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'data')),

@@ -1,28 +1,28 @@
 import { IEndpoint } from '../../net'
 
-export interface ICommandRequest {
+export interface ICommandClientRequest {
   command: Uint8Array;
 };
 
-export interface ICommandResponse {
+export interface ICommandClientResponse {
   result: Uint8Array;
 }
 
-export interface INoLeaderResponse {
+export interface INoLeaderClientResponse {
   error: 'no-leader';
 };
 
-export interface INotReadyResponse {
+export interface INotReadyClientResponse {
   error: 'not-ready';
 };
 
-export interface IRedirectResponse {
+export interface IRedirectClientResponse {
   error: 'not-leader';
   redirectTo: {
     leaderEndpoint: IEndpoint;
   }
 };
 
-export type IRequest = ICommandRequest;
+export type IClientRequest = ICommandClientRequest;
 
-export type IResponse = ICommandResponse | INoLeaderResponse | INotReadyResponse | IRedirectResponse;
+export type IClientResponse = ICommandClientResponse | INoLeaderClientResponse | INotReadyClientResponse | IRedirectClientResponse;

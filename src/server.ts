@@ -20,7 +20,7 @@ import {
 import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IRequest, IResponse } from './api/client';
+import { IClientRequest, IClientResponse } from './api/client';
 import { IServer, IServerOptions, IStateMachine, ServerId } from './types';
 import { IState, StateType, createState } from './state';
 
@@ -101,6 +101,12 @@ export class Server implements IServer {
     return this.votedFor.getValue();
   }
 
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
+    // Client requests are handled differently depending on which
+    // state the server is in. So we delegate to state object.
+    return this.state.handleClientRequest(request);
+  }
+
   private async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     const messageTerm = getRpcMessageTerm(message);
     if(messageTerm > this.getCurrentTerm()) {
@@ -111,12 +117,6 @@ export class Server implements IServer {
       this.transitionTo('follower', endpoint);
     }
     await this.state.handleRpcMessage(endpoint, message);
-  }
-
-  public async request(request: IRequest): Promise<IResponse> {
-    // Client requests are handled differently depending on which
-    // state the server is in.
-    return this.state.handleRequest(request);
   }
 
   // When the term is updated, it is not immediately
