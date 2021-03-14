@@ -1,10 +1,13 @@
 export interface ILog {
-  append(entry: ILogEntry): Promise<void>;
+  append(entry: ILogEntry): void;
   getEntry(index: number): ILogEntry;
   getLastEntry(): ILogEntry;
   getLastIndex(): number;
   getLastTerm(): number;
   getNextIndex(): number;
+  hasEntry(index: number): boolean;
+  slice(index: number): ReadonlyArray<ILogEntry>;
+  truncateAt(index: number): void;
   write(): Promise<void>;
 }
 

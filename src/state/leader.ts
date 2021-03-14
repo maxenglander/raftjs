@@ -2,7 +2,11 @@ import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../types';
 import { IState, StateType } from './types';
-import { IRpcMessage, createAppendEntriesRpcRequest } from '../rpc/message';
+import {
+  IRpcMessage,
+  createAppendEntriesRpcRequest,
+  isAppendEntriesRpcResponse
+} from '../rpc/message';
 
 // Leaders:
 // > *§5.2 "...send periodic heartbeats...to all followers...to maintain their authority"*
@@ -33,7 +37,7 @@ export class LeaderState implements IState {
       // *§5 "...(initialized to 0, increases monotonically)..."
       this.matchIndex[serverId] = 0;
       // *§5 "...(initialized to leader last log index + 1)..."
-      this.nextIndex[serverId] = this.server.log.getNextIndex();
+      this.nextIndex[serverId] = this.server.log.getLastIndex() + 1;
     }
     // > *§5 "...send initial empty AppendEntries RPCs (heartbeat) to each server..."*
     this.sendHeartbeats();
@@ -55,20 +59,46 @@ export class LeaderState implements IState {
 
   public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
     // > *§5 "If command received from client: append entry to local log..."
-    await this.server.log.append({
+    this.server.log.append({
       command: request.command,
       index: this.server.log.getNextIndex(),
       term: this.server.getCurrentTerm()
     });
+    // > *§5 "...then issues AppendEntries RPCs in parallel to each of the other servers..."
+    this.sendAppendEntries();
     return {
       result: Buffer.alloc(0)
     };
   }
 
-  public handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {}
+  public handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): void {
+    if (isAppendEntriesRpcResponse(message)) {
+    }
+  }
 
   public isLeader(): boolean {
     return true;
+  }
+
+  private sendAppendEntries() {
+    for (const serverId of this.server.getServerIds()) {
+      if (this.server.log.getLastIndex() >= this.nextIndex[serverId]) {
+        const serverEndpoint = this.server.getCluster().servers[serverId];
+        this.server.rpcService.send(
+          serverEndpoint,
+          createAppendEntriesRpcRequest({
+            entries: this.server.log.slice(this.nextIndex[serverId]),
+            leaderCommit: this.server.getCommitIndex(),
+            leaderId: this.server.id,
+            prevLogIndex: this.server.log.getLastIndex(),
+            prevLogTerm: this.server.log.getLastTerm(),
+            term: this.server.getCurrentTerm()
+          })
+        ).then(() => {}, (err) => {
+          this.server.logger.warn(`Failed to send append-entries request to ${serverEndpoint}: ${err}`);
+        });
+      }
+    }
   }
 
   private sendHeartbeats() {
@@ -84,7 +114,7 @@ export class LeaderState implements IState {
           term: this.server.getCurrentTerm()
         })
       ).then(() => {}, (err) => {
-        this.server.logger.warn(`Failed to send append-entries request to ${serverEndpoint}: ${err}`);
+        this.server.logger.warn(`Failed to send heartbeat to ${serverEndpoint}: ${err}`);
       });
     }
   }

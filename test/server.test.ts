@@ -92,6 +92,7 @@ describe('server', function() {
       term: INITIAL_TERM
     }),
     createAppendEntriesRpcResponse({
+      followerCommit: 0,
       success: true,
       term: INITIAL_TERM
     }),

@@ -57,17 +57,52 @@ export class FollowerState implements IState {
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
   ): Promise<void> {
+    this.leaderEndpoint = endpoint;
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*
     this.server.electionTimer.reset();
-    const success = message.arguments.term >= this.server.getCurrentTerm();
-    if(success) {
-      this.leaderEndpoint = endpoint;
+
+    const success = !(
+        // > *§5. "Reply false if term < currentTerm..."*
+        message.arguments.term < this.server.getCurrentTerm()
+        // > *§5. "Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm..."*
+     || !this.server.log.hasEntry(message.arguments.prevLogIndex)
+     || this.server.log.getEntry(message.arguments.prevLogIndex).term != message.arguments.prevLogTerm
+    );
+
+    for (const entry of message.arguments.entries) {
+      // > *§5. "If an existing entry conflicts with a new one..."*
+      if (this.server.log.hasEntry(entry.index)) {
+        // > *§5. "...same index but different terms..."*
+        if (entry.term !== this.server.log.getLastTerm()) {
+          // > *§5. "...delete the existing entry and all that follow it"*
+          this.server.log.truncateAt(entry.index);
+        }
+      }
+      // > *§5. "Append any new entries not already in the log"*
+      if (entry.index == this.server.log.getNextIndex()) {
+        this.server.log.append(entry);
+      }
+      // The Raft paper does not specify what to do when there is a "gap"
+      // between the next index of the local log and the index of an
+      // entry in an append-entries RPC request. This implementation
+      // assumes those entries should be ignored.
+      if (entry.index > this.server.log.getNextIndex()) {
+        this.server.logger.warn(`Entry received in append-entries request
+                                has an index (${entry.index}) greater than
+                                the next index in the local log
+                                ${this.server.log.getNextIndex()}.`);
+      }
     }
+
     await this.server.rpcService.send(
       endpoint,
       createAppendEntriesRpcResponse({
+        // The followerCommit field is not part of the Raft spec. It is a
+        // a detail of this implementation. It allows the leader to not have
+        // to keep track of the last log index sent the follower.
+        followerCommit: this.server.getCommitIndex(), 
         // When another `Server` makes an `AppendEntries` RPC
         // request with a `term` less than the `term` on this
         // `Server`, the RPC request is rejected.

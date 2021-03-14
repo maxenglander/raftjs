@@ -18,6 +18,7 @@ table AppendEntriesArguments {
 }
 
 table AppendEntriesResults {
+  follower_commit: uint32;
   success: bool;
   term: uint32;
 }
