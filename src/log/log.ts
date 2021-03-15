@@ -2,8 +2,9 @@ import { ILog, ILogEntry, ILogOptions } from './types';
 
 export class Log implements ILog {
   private entries: Array<ILogEntry>;
+  private path: string;
 
-  constructor(options?: ILogOptions) {
+  constructor(options: ILogOptions) {
     // > *§5. "...each entry contains command for state machine and term when entry was received..."
     this.entries = [
       // > *§5. "...first index is 1..."*
@@ -17,6 +18,7 @@ export class Log implements ILog {
         term: 0
       }
     ];
+    this.path = options.path;
   }
 
   public append(entry: ILogEntry): void {

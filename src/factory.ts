@@ -11,6 +11,7 @@ import {
   createDurableInteger,
   createDurableString
 } from './storage';
+import { ILog } from './log';
 import { createElectionTimer } from './election-timer';
 import { createLog } from './log';
 import { createLogger } from './logger';
@@ -31,6 +32,17 @@ export function createServer(options: ICreateServerOptions): IServer {
     throw new Error('Must supply either currentTerm or dataDir');
   }
 
+  let log: ILog;
+  if ('log' in options) {
+    log = options.log;
+  } else if ('dataDir' in options) {
+    log = createLog({
+      path: path.join(options.dataDir, 'log')
+    });
+  } else {
+    throw new Error('Must supply either log or dataDir');
+  }
+
   let votedFor: IDurableValue<string>;
   if ('votedFor' in options) {
     votedFor = options.votedFor;
@@ -45,7 +57,7 @@ export function createServer(options: ICreateServerOptions): IServer {
     currentTerm,
     electionTimer: options.electionTimer || createElectionTimer(),
     id: options.id,
-    log: options.log || createLog(),
+    log,
     logger: options.logger || createLogger(),
     rpcService: options.rpcService || createRpcService(),
     stateMachine: options.stateMachine || {

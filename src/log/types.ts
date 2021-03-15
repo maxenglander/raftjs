@@ -17,4 +17,6 @@ export interface ILogEntry {
   readonly term: number;
 }
 
-export interface ILogOptions {}
+export interface ILogOptions {
+  path: string;
+}

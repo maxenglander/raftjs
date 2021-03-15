@@ -12,11 +12,11 @@ export type ICreateServerOptions = {
   readonly cluster: ICluster;
   readonly electionTimer?: IElectionTimer;
   readonly id: ServerId;
-  readonly log?: ILog;
   readonly logger?: ILogger;
   readonly rpcService?: IRpcService;
   readonly stateMachine?: IStateMachine;
 } & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
+  & ({ dataDir: string; } | { log: ILog })
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
 
 export interface IServer {
