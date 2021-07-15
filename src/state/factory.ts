@@ -17,7 +17,10 @@ function createNoopState(): IState {
     exit: noop,
     getLeaderEndpoint: () => null,
     getType: () => null,
-    handlePeerRpcMessage: noop,
+    handleClientRequest: () => Promise.resolve({
+      error: 'not-ready'
+    }),
+    handleRpcMessage: noop,
     isLeader: () => false
   };
 }

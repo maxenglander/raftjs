@@ -19,7 +19,7 @@ import { LeaderState } from './leader';
 describe('server leader state', function() {
   const MIN_TIMEOUT = 100,
     MAX_TIMEOUT = 500,
-    peerEndpoint: IEndpoint = createEndpoint({
+    serverEndpoint: IEndpoint = createEndpoint({
       host: '0.0.0.0',
       port: 31391
     }),
@@ -30,11 +30,11 @@ describe('server leader state', function() {
 
   let leader: IState,
     electionTimer: IElectionTimer,
-    peerApi: IRpcService,
+    rpcService: IRpcService,
     server: IServer;
 
   afterEach(function() {
-    return Promise.all([peerApi.close(), server.stop()]);
+    return Promise.all([rpcService.close(), server.stop()]);
   });
 
   beforeEach(function() {
@@ -48,7 +48,7 @@ describe('server leader state', function() {
       cluster: {
         servers: {
           server0: selfEndpoint,
-          server1: peerEndpoint
+          server1: serverEndpoint
         }
       },
       dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'data')),
@@ -58,11 +58,11 @@ describe('server leader state', function() {
 
     leader = new LeaderState(server);
 
-    peerApi = createRpcService();
+    rpcService = createRpcService();
 
     return Promise.all([
       server.start(),
-      peerApi.listen(peerEndpoint)
+      rpcService.listen(serverEndpoint)
     ]);
   });
 
@@ -76,15 +76,16 @@ describe('server leader state', function() {
       leader.enter();
     });
 
-    it('periodically sends heartbeats to peers', function(done) {
+    it('periodically sends heartbeats to servers', function(done) {
       this.timeout(1000);
 
       let heartbeatCount = 0;
-      const heartbeatListenerDetacher = peerApi.onReceive((endpoint, message) => { 
+      const heartbeatListenerDetacher = rpcService.onReceive((endpoint, message) => { 
         if(isAppendEntriesRpcRequest(message)) {
-          peerApi.send(
+          rpcService.send(
             endpoint,
             createAppendEntriesRpcResponse({
+              followerCommit: 0,
               success: true,
               term: server.getCurrentTerm()
             })

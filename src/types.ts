@@ -1,4 +1,5 @@
-import { ICluster } from './cluster';
+import { IClientRequest, IClientResponse } from './api/client';
+import { ICluster } from './cluster/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
 import { ILogger } from './logger';
@@ -11,25 +12,12 @@ export type ICreateServerOptions = {
   readonly cluster: ICluster;
   readonly electionTimer?: IElectionTimer;
   readonly id: ServerId;
-  readonly log?: ILog;
   readonly logger?: ILogger;
-  readonly peerRpcService?: IRpcService;
+  readonly rpcService?: IRpcService;
   readonly stateMachine?: IStateMachine;
 } & ({ dataDir: string; } | { currentTerm: IDurableValue<number> })
+  & ({ dataDir: string; } | { log: ILog })
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
-
-export interface IRequest {
-  command: Buffer;
-}
-
-export type IResponse = {
-  result: Buffer;
-} | {
-  error: 'not-leader';
-  leader: {
-    endpoint: IEndpoint;
-  }
-}
 
 export interface IServer {
   readonly electionTimer: IElectionTimer;
@@ -37,17 +25,17 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerRpcService: IRpcService;
+  readonly rpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
   getCurrentTerm(): number;
-  getPeerEndpoints(): ReadonlyArray<IEndpoint>;
-  getPeerIds(): ReadonlyArray<ServerId>;
+  getServerEndpoints(): ReadonlyArray<IEndpoint>;
+  getServerIds(): ReadonlyArray<ServerId>;
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
-  request(request: IRequest): Promise<IResponse>;
+  handleClientRequest(request: IClientRequest): Promise<IClientResponse>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;
@@ -62,7 +50,7 @@ export interface IServerOptions {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly peerRpcService: IRpcService;
+  readonly rpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   readonly votedFor: IDurableValue<string>;
 }

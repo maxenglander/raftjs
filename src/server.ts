@@ -3,7 +3,7 @@
 // from other `Server` instances and transitions
 // between follower, candidate and leader states.
 
-import { ICluster } from './cluster';
+import { ICluster } from './cluster/types';
 import { IDetacher } from './util/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
@@ -20,7 +20,8 @@ import {
 import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IRequest, IResponse, IServer, IServerOptions, IStateMachine, ServerId } from './types';
+import { IClientRequest, IClientResponse } from './api/client';
+import { IServer, IServerOptions, IStateMachine, ServerId } from './types';
 import { IState, StateType, createState } from './state';
 
 export class Server implements IServer {
@@ -33,8 +34,8 @@ export class Server implements IServer {
   private lastApplied: number;
   public readonly log: ILog;
   public readonly logger: ILogger;
-  public readonly peerRpcService: IRpcService;
-  private peerRpcServiceDetachers: Set<IDetacher>;
+  public readonly rpcService: IRpcService;
+  private rpcServiceDetachers: Set<IDetacher>;
   private state: IState;
   public readonly stateMachine: IStateMachine;
   private votedFor: IDurableValue<string>;
@@ -47,8 +48,8 @@ export class Server implements IServer {
     this.id = options.id;
     this.log = options.log;
     this.logger = options.logger;
-    this.peerRpcService = options.peerRpcService;
-    this.peerRpcServiceDetachers = new Set<IDetacher>();
+    this.rpcService = options.rpcService;
+    this.rpcServiceDetachers = new Set<IDetacher>();
     // `noop` is not a state specified by the Raft protocol.
     // It is used here as a ["null
     // object"](https://en.wikipedia.org/wiki/Null_object_pattern) to
@@ -80,11 +81,11 @@ export class Server implements IServer {
     return this.lastApplied;
   }
 
-  public getPeerEndpoints(): ReadonlyArray<IEndpoint> {
-    return this.getPeerIds().map(serverId => this.getCluster().servers[serverId]);
+  public getServerEndpoints(): ReadonlyArray<IEndpoint> {
+    return this.getServerIds().map(serverId => this.getCluster().servers[serverId]);
   }
 
-  public getPeerIds(): ReadonlyArray<ServerId> {
+  public getServerIds(): ReadonlyArray<ServerId> {
     return Object.keys(this.getCluster().servers).filter(serverId => {
       return serverId !== this.id;
     });
@@ -100,7 +101,13 @@ export class Server implements IServer {
     return this.votedFor.getValue();
   }
 
-  private async handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
+    // Client requests are handled differently depending on which
+    // state the server is in. So we delegate to state object.
+    return this.state.handleClientRequest(request);
+  }
+
+  private async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     const messageTerm = getRpcMessageTerm(message);
     if(messageTerm > this.getCurrentTerm()) {
       this.logger.trace(
@@ -109,11 +116,7 @@ export class Server implements IServer {
       this.setCurrentTerm(messageTerm);
       this.transitionTo('follower', endpoint);
     }
-    await this.state.handlePeerRpcMessage(endpoint, message);
-  }
-
-  public async request(request: IRequest): Promise<IResponse> {
-    throw new Error('TODO');
+    await this.state.handleRpcMessage(endpoint, message);
   }
 
   // When the term is updated, it is not immediately
@@ -158,7 +161,7 @@ export class Server implements IServer {
 
     this.logger.debug('Starting RPC service');
 
-    this.peerRpcServiceDetachers.add(this.peerRpcService.onBeforeSend(async (endpoint, message) => {
+    this.rpcServiceDetachers.add(this.rpcService.onBeforeSend(async (endpoint, message) => {
       // Before responding to an RPC request, the recipient `Server`
       // updates persistent state on stable storage.
       // > *§5. "...(Updated on stable storage before responding)..."*
@@ -168,11 +171,11 @@ export class Server implements IServer {
       }
     }));
 
-    this.peerRpcServiceDetachers.add(this.peerRpcService.onReceive(async (endpoint, message) => {
-      await this.handlePeerRpcMessage(endpoint, message);
+    this.rpcServiceDetachers.add(this.rpcService.onReceive(async (endpoint, message) => {
+      await this.handleRpcMessage(endpoint, message);
     }));
 
-    await this.peerRpcService.listen(this.endpoint);
+    await this.rpcService.listen(this.endpoint);
 
     this.logger.debug('Transitioning to follower');
     this.transitionTo('follower');
@@ -185,10 +188,10 @@ export class Server implements IServer {
     this.logger.debug('Exiting current state');
     this.state.exit();
     this.logger.debug('Stopping RPC service');
-    for (const detacher of this.peerRpcServiceDetachers) {
+    for (const detacher of this.rpcServiceDetachers) {
       detacher.detach();
     }
-    await this.peerRpcService.close()
+    await this.rpcService.close()
     this.logger.info(`Stopped Raftjs server ${this.id}`);
   }
 

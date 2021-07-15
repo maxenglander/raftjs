@@ -5,6 +5,9 @@ export interface ILog {
   getLastIndex(): number;
   getLastTerm(): number;
   getNextIndex(): number;
+  hasEntry(index: number): boolean;
+  slice(index: number): ReadonlyArray<ILogEntry>;
+  truncateAt(index: number): void;
   write(): Promise<void>;
 }
 
@@ -15,5 +18,5 @@ export interface ILogEntry {
 }
 
 export interface ILogOptions {
-  term: number;
+  path: string;
 }

@@ -4,6 +4,7 @@ import {
   isAppendEntriesRpcRequest,
   isRequestVoteRpcResponse
 } from '../rpc/message';
+import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
 import { IServer } from '../';
 import { IState, StateType } from './types';
@@ -44,7 +45,13 @@ export class CandidateState implements IState {
     return 'candidate';
   }
 
-  public handlePeerRpcMessage(endpoint: IEndpoint, message: IRpcMessage) { 
+  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
+    return {
+      error: 'no-leader'
+    };
+  }
+
+  public handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage) { 
     // When a candidate receives an AppendEntries RPC
     // request from a leader with a term greater or equal
     // to its own, it converts to a follower.
@@ -100,9 +107,9 @@ export class CandidateState implements IState {
 
     const lastLogIndex = this.server.log.getLastIndex();
 
-    for (const peerEndpoint of this.server.getPeerEndpoints()) {
-      this.server.peerRpcService.send(
-        peerEndpoint,
+    for (const serverEndpoint of this.server.getServerEndpoints()) {
+      this.server.rpcService.send(
+        serverEndpoint,
         createRequestVoteRpcRequest({
           candidateId: this.server.id,
           lastLogIndex,
@@ -110,7 +117,7 @@ export class CandidateState implements IState {
           term: this.server.getCurrentTerm()
         })
       ).then(() => {}, (err) => {
-        this.server.logger.warn(`Failed to send request-vote request to ${peerEndpoint}: ${err}`);
+        this.server.logger.warn(`Failed to send request-vote request to ${serverEndpoint}: ${err}`);
       });
     }
   }

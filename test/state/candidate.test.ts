@@ -25,7 +25,7 @@ import { IState } from './';
 describe('server candidate state', function() {
   const MIN_TIMEOUT = 100,
     MAX_TIMEOUT = 500,
-    peerEndpoint: IEndpoint = createEndpoint({
+    serverEndpoint: IEndpoint = createEndpoint({
       host: '0.0.0.0',
       port: 31391
     }),
@@ -54,7 +54,7 @@ describe('server candidate state', function() {
       cluster: {
         servers: {
           server0: selfEndpoint,
-          server1: peerEndpoint
+          server1: serverEndpoint
         }
       },
       dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'data')),
@@ -70,7 +70,7 @@ describe('server candidate state', function() {
       // Set server term to greater than 10 so request
       // terms can be less than 10 but greater than zero.
       server.start().then(() => server.setCurrentTerm(10)),
-      rpcService.listen(peerEndpoint)
+      rpcService.listen(serverEndpoint)
     ]);
   });
 
@@ -112,7 +112,7 @@ describe('server candidate state', function() {
       }, 50);
     });
 
-    it('requests votes from its peers', function(done) {
+    it('requests votes from its servers', function(done) {
       let calledDone = false;
 
       function doneOnce() {
