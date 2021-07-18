@@ -108,7 +108,7 @@ export class CandidateState implements IState {
     const lastLogIndex = this.server.log.getLastIndex();
 
     for (const serverEndpoint of this.server.getServerEndpoints()) {
-      this.server.rpcService.send(
+      this.server.sendRpcMessage(
         serverEndpoint,
         createRequestVoteRpcRequest({
           candidateId: this.server.id,

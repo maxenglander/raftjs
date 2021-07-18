@@ -145,7 +145,7 @@ describe('server', function() {
         spyLogWrite = sinon.spy(log, "write");
         spyTransportSend = sinon.spy(transport, "send");
         spyVotedForWrite = sinon.spy(votedFor, "write");
-        return server.rpcService.send(peerEndpoint, message);
+        return server.sendRpcMessage(peerEndpoint, message);
       });
 
       if (isRpcRequest(message)) {

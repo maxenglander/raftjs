@@ -25,7 +25,6 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly rpcService: IRpcService;
   readonly stateMachine: IStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
@@ -36,6 +35,7 @@ export interface IServer {
   getState(): IState;
   getVotedFor(): ServerId;
   handleClientRequest(request: IClientRequest): Promise<IClientResponse>;
+  sendRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;

@@ -12,13 +12,11 @@ import { ITransport } from '../transport';
 
 // Encodes, sends, decodes and receives RPC messages.
 export class RpcService implements IRpcService {
-  private beforeSendHooks: Set<RpcBeforeSendHook>;
   private codec: ICodec;
   private receivers: Set<RpcReceiver>;
   private transport: ITransport;
 
   constructor(options: IRpcServiceOptions = {}) {
-    this.beforeSendHooks = new Set<RpcBeforeSendHook>();
     this.codec = options.codec;
     this.receivers = new Set<RpcReceiver>();
     this.transport = options.transport;
@@ -48,16 +46,6 @@ export class RpcService implements IRpcService {
     }
   }
 
-  // Register a hook to be invoked before a message is sent.
-  public onBeforeSend(hook: RpcBeforeSendHook): IDetacher {
-    this.beforeSendHooks.add(hook);
-    return {
-      detach: (): void => {
-        this.beforeSendHooks.delete(hook);
-      }
-    };
-  }
-
   // Register a receiver for messages of any procedure and call type.
   public onReceive(receiver: RpcReceiver): IDetacher {
     this.receivers.add(receiver);
@@ -73,9 +61,6 @@ export class RpcService implements IRpcService {
     endpoint: IEndpoint,
     message: IRpcMessage
   ): Promise<void> {
-    for (const hook of this.beforeSendHooks) {
-      await hook(endpoint, message);
-    }
     const encoded = this.codec.encode(message);
     return await this.transport.send(endpoint, encoded);
   }

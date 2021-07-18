@@ -84,7 +84,7 @@ export class LeaderState implements IState {
     for (const serverId of this.server.getServerIds()) {
       if (this.server.log.getLastIndex() >= this.nextIndex[serverId]) {
         const serverEndpoint = this.server.getCluster().servers[serverId];
-        this.server.rpcService.send(
+        this.server.sendRpcMessage(
           serverEndpoint,
           createAppendEntriesRpcRequest({
             entries: this.server.log.slice(this.nextIndex[serverId]),
@@ -103,7 +103,7 @@ export class LeaderState implements IState {
 
   private sendHeartbeats() {
     for (const serverEndpoint of this.server.getServerEndpoints()) {
-      this.server.rpcService.send(
+      this.server.sendRpcMessage(
         serverEndpoint,
         createAppendEntriesRpcRequest({
           entries: [],

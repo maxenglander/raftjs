@@ -16,7 +16,6 @@ export type RpcReceiver = (endpoint: IEndpoint, message: IRpcMessage) => any;
 export interface IRpcService {
   close(): Promise<void>;
   listen(endpoint: IEndpoint): Promise<void>;
-  onBeforeSend(hook: RpcBeforeSendHook): IDetacher;
   onReceive(receiver: RpcReceiver): IDetacher;
   send(
     endpoint: IEndpoint,

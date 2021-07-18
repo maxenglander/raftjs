@@ -1,6 +1,7 @@
 NOTES.txt
 .nvmrc
 *.swp
+*.txt
 build/
 dist/
 node_modules/

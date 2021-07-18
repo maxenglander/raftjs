@@ -34,7 +34,7 @@ export class Server implements IServer {
   private lastApplied: number;
   public readonly log: ILog;
   public readonly logger: ILogger;
-  public readonly rpcService: IRpcService;
+  private readonly rpcService: IRpcService;
   private rpcServiceDetachers: Set<IDetacher>;
   private state: IState;
   public readonly stateMachine: IStateMachine;
@@ -119,6 +119,17 @@ export class Server implements IServer {
     await this.state.handleRpcMessage(endpoint, message);
   }
 
+  public async sendRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
+    // Before responding to an RPC request, the recipient `Server`
+    // updates persistent state on stable storage.
+    // > *§5. "...(Updated on stable storage before responding)..."*
+    // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
+    if (isRpcResponse(message)) {
+      await this.updatePersistentState();
+    }
+    await this.rpcService.send(endpoint, message);
+  }
+
   // When the term is updated, it is not immediately
   // persisted because, as the Raft paper says, the
   // term is part of persistent state that is:
@@ -155,21 +166,12 @@ export class Server implements IServer {
     this.commitIndex = this.lastApplied = 0;
 
     this.logger.debug('Loading persistent state');
+
     // The current term is...
     // > *§5. "...initialized to zero on first boot..."*
     await this.currentTerm.readIfExistsElseSetAndWrite(0)
 
     this.logger.debug('Starting RPC service');
-
-    this.rpcServiceDetachers.add(this.rpcService.onBeforeSend(async (endpoint, message) => {
-      // Before responding to an RPC request, the recipient `Server`
-      // updates persistent state on stable storage.
-      // > *§5. "...(Updated on stable storage before responding)..."*
-      // > *§5.6 "...Raft’s RPCs...require the recipient to persist..."*
-      if (isRpcResponse(message)) {
-        await this.updatePersistentState();
-      }
-    }));
 
     this.rpcServiceDetachers.add(this.rpcService.onReceive(async (endpoint, message) => {
       await this.handleRpcMessage(endpoint, message);

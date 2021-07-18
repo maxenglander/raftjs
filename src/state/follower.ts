@@ -96,7 +96,7 @@ export class FollowerState implements IState {
       }
     }
 
-    await this.server.rpcService.send(
+    await this.server.sendRpcMessage(
       endpoint,
       createAppendEntriesRpcResponse({
         // The followerCommit field is not part of the Raft spec. It is a
@@ -155,7 +155,7 @@ export class FollowerState implements IState {
       );
     }
 
-    await this.server.rpcService.send(
+    await this.server.sendRpcMessage(
       endpoint,
       createRequestVoteRpcResponse({
         term: currentTerm,
