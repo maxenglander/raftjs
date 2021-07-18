@@ -49,8 +49,8 @@ export class LeaderState implements IState {
     clearInterval(this.sendHeartbeatsIntervalId);
   }
 
-  public getLeaderEndpoint(): IEndpoint {
-    return this.server.getCluster().servers[this.server.id]
+  public getLeaderId(): string {
+    return this.server.id
   }
 
   public getType(): StateType {

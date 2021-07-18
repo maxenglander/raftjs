@@ -36,11 +36,12 @@ export interface IServer {
   getVotedFor(): ServerId;
   handleClientRequest(request: IClientRequest): Promise<IClientResponse>;
   sendRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void>;
+  setCommitIndex(index: number): void;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   start(): Promise<void>;
   stop(): Promise<void>;
-  transitionTo(state: StateType | IState, leaderEndpoint?: IEndpoint): void;
+  transitionTo(state: StateType | IState, leaderId?: string): void;
 }
 
 export interface IServerOptions {

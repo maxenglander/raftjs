@@ -1,4 +1,6 @@
 import {
+  IAppendEntriesRpcRequest,
+  IRequestVoteRpcResponse,
   IRpcMessage,
   createRequestVoteRpcRequest,
   isAppendEntriesRpcRequest,
@@ -37,12 +39,26 @@ export class CandidateState implements IState {
     this.server.electionTimer.off('timeout', this.onTimeout);
   }
 
-  public getLeaderEndpoint(): IEndpoint {
+  public getLeaderId(): string {
     return null;
   }
 
   public getType(): StateType {
     return 'candidate';
+  }
+
+  private async handleAppendEntriesRpcRequest(endpoint: IEndpoint, message: IAppendEntriesRpcRequest): Promise<void> {
+    // When a candidate receives an AppendEntries RPC
+    // request from a leader with a term greater or equal
+    // to its own, it converts to a follower.
+    // > *§5. "...If AppendEntries RPC received from new leader..."*
+    // > *§5.2. "...While waiting for votes, a candidate may..."*
+    if(message.arguments.term >= this.server.getCurrentTerm()) {
+      this.server.logger.trace(
+        `Received append-entries request from ${endpoint}; transitioning to follower.`
+      );
+      this.server.transitionTo('follower', message.arguments.leaderId);
+    }
   }
 
   public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
@@ -51,24 +67,17 @@ export class CandidateState implements IState {
     };
   }
 
-  public handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage) { 
-    // When a candidate receives an AppendEntries RPC
-    // request from a leader with a term greater or equal
-    // to its own, it converts to a follower.
-    // > *§5. "...If AppendEntries RPC received..."*
-    // > *§5.2. "...While waiting for votes..."*
-    if(isAppendEntriesRpcRequest(message)) {
-      if(message.arguments.term >= this.server.getCurrentTerm()) {
-        this.server.logger.trace(
-          `Received append-entries request from ${endpoint}; transitioning to follower`
-        );
-        this.server.transitionTo('follower', endpoint);
-      }
+  private async handleRequestVoteRpcResponse(endpoint: IEndpoint, message: IRequestVoteRpcResponse): Promise<void> {
+    if (message.results.voteGranted) {
+      this.tallyVote(endpoint);
     }
-    if(isRequestVoteRpcResponse(message)) {
-      if (message.results.voteGranted) {
-        this.tallyVote(endpoint);
-      }
+  }
+
+  public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> { 
+    if(isAppendEntriesRpcRequest(message)) {
+      await this.handleAppendEntriesRpcRequest(endpoint, message);
+    } else if(isRequestVoteRpcResponse(message)) {
+      this.handleRequestVoteRpcResponse(endpoint, message);
     }
   }
 

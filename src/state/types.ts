@@ -8,7 +8,7 @@ import { IServer } from '../types';
 export interface IState {
   enter: () => void;
   exit: () => void;
-  getLeaderEndpoint: () => IEndpoint;
+  getLeaderId: () => string;
   getType: () => StateType
   handleClientRequest: (request: IClientRequest) => Promise<IClientResponse>;
   handleRpcMessage: (endpoint: IEndpoint, message: IRpcMessage) => void;

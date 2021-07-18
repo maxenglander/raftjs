@@ -15,6 +15,7 @@ import {
   IRequestVoteRpcRequest,
   IRequestVoteRpcResponse,
   getRpcMessageTerm,
+  isAppendEntriesRpcRequest,
   isRpcResponse
 } from './rpc/message';
 import { IEndpoint, isEndpoint } from './net/endpoint';
@@ -109,13 +110,22 @@ export class Server implements IServer {
 
   private async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
     const messageTerm = getRpcMessageTerm(message);
+
+    // All servers transition to a follower if request or response
+    // is received with message term greater than own term.
+    // > *§5. "...If RPC request or response contains term T > current term..."*
     if(messageTerm > this.getCurrentTerm()) {
       this.logger.trace(
         `Received a message with a term (${messageTerm}) higher than the server term (${this.getCurrentTerm()}); transitioning to follower`
       );
       this.setCurrentTerm(messageTerm);
-      this.transitionTo('follower', endpoint);
+      let leaderId: string = null;
+      if(isAppendEntriesRpcRequest(message)) {
+        leaderId = message.arguments.leaderId;
+      }
+      this.transitionTo('follower', leaderId);
     }
+
     await this.state.handleRpcMessage(endpoint, message);
   }
 
@@ -128,6 +138,10 @@ export class Server implements IServer {
       await this.updatePersistentState();
     }
     await this.rpcService.send(endpoint, message);
+  }
+
+  public setCommitIndex(index: number): void {
+    this.commitIndex = index;
   }
 
   // When the term is updated, it is not immediately
@@ -203,10 +217,13 @@ export class Server implements IServer {
   // is used here to facilitate separating the rules of
   // these states into separate components while allowing
   // those components access to `Server` data and methods.
-  public transitionTo(state: StateType | IState, leaderEndpoint?: IEndpoint): void {
-    const newState =
-      typeof state == 'string' ? createState(state, this, leaderEndpoint) : state;
-    if (this.state.getType() == newState.getType()) return;
+  public transitionTo(state: StateType | IState, leaderId?: string): void {
+    const stateType = typeof state == 'string' ? state : state.getType();
+
+    if (this.state.getType() == stateType) return;
+
+    const newState = typeof state == 'string' ? createState(state, this, leaderId) : state;
+
     this.state.exit();
     this.state = newState;
     this.state.enter();

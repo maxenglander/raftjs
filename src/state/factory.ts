@@ -15,7 +15,7 @@ function createNoopState(): IState {
   return {
     enter: noop,
     exit: noop,
-    getLeaderEndpoint: () => null,
+    getLeaderId: () => null,
     getType: () => null,
     handleClientRequest: () => Promise.resolve({
       error: 'not-ready'
@@ -30,13 +30,13 @@ function createNoopState(): IState {
 export function createState(
   stateType: StateType | 'noop',
   server: IServer,
-  leaderEndpoint?: IEndpoint
+  leaderId?: string
 ): IState {
   switch (stateType) {
     case 'candidate':
       return new CandidateState(server);
     case 'follower':
-      return new FollowerState(server, leaderEndpoint);
+      return new FollowerState(server, leaderId);
     case 'leader':
       return new LeaderState(server);
     case 'noop':

@@ -1,5 +1,3 @@
-import { IEndpoint } from '../../net'
-
 export interface ICommandClientRequest {
   command: Uint8Array;
 };
@@ -19,7 +17,7 @@ export interface INotReadyClientResponse {
 export interface IRedirectClientResponse {
   error: 'not-leader';
   redirectTo: {
-    leaderEndpoint: IEndpoint;
+    leaderId: string;
   }
 };
 

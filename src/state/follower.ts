@@ -21,11 +21,11 @@ import { IState, StateType } from './types';
 // current leader or granting vote to candidate..."*
 export class FollowerState implements IState {
   private readonly server: IServer;
-  private leaderEndpoint: IEndpoint;
+  private leaderId: string;
 
-  constructor(server: IServer, leaderEndpoint: IEndpoint) {
+  constructor(server: IServer, leaderId: string) {
     this.server = server;
-    this.leaderEndpoint = leaderEndpoint;
+    this.leaderId = leaderId;
   }
 
   public enter(): void {
@@ -41,8 +41,8 @@ export class FollowerState implements IState {
     this.server.electionTimer.off('timeout', this.onTimeout.bind(this));
   }
 
-  public getLeaderEndpoint(): IEndpoint {
-    return this.leaderEndpoint;
+  public getLeaderId(): string {
+    return this.leaderId;
   }
 
   public getType(): StateType {
@@ -57,19 +57,53 @@ export class FollowerState implements IState {
     endpoint: IEndpoint,
     message: IAppendEntriesRpcRequest
   ): Promise<void> {
-    this.leaderEndpoint = endpoint;
+    this.leaderId = message.arguments.leaderId;
+
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*
     this.server.electionTimer.reset();
 
-    const success = !(
-        // > *§5. "Reply false if term < currentTerm..."*
-        message.arguments.term < this.server.getCurrentTerm()
-        // > *§5. "Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm..."*
-     || !this.server.log.hasEntry(message.arguments.prevLogIndex)
-     || this.server.log.getEntry(message.arguments.prevLogIndex).term != message.arguments.prevLogTerm
-    );
+    // > *§5. "Reply false if term < currentTerm..."*
+    if (message.arguments.term < this.server.getCurrentTerm()) {
+      return await this.server.sendRpcMessage(
+        endpoint,
+        createAppendEntriesRpcResponse({
+          // The followerCommit field is not part of the Raft spec. It is a
+          // a detail of this implementation. It allows the leader to not have
+          // to keep track of the last log index sent the follower.
+          followerCommit: this.server.getCommitIndex(), 
+          // When another `Server` makes an `AppendEntries` RPC
+          // request with a `term` less than the `term` on this
+          // `Server`, the RPC request is rejected.
+          // > *§5. "...false if term < currentTerm..."*
+          success: false,
+          term: this.server.getCurrentTerm()
+        })
+      );
+    }
+
+    // > *§5. "Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm..."*
+    if (!(
+         this.server.log.hasEntry(message.arguments.prevLogIndex)
+      && this.server.log.getEntry(message.arguments.prevLogIndex).term == message.arguments.prevLogTerm
+    )) {
+      return await this.server.sendRpcMessage(
+        endpoint,
+        createAppendEntriesRpcResponse({
+          // The followerCommit field is not part of the Raft spec. It is a
+          // a detail of this implementation. It allows the leader to not have
+          // to keep track of the last log index sent the follower.
+          followerCommit: this.server.getCommitIndex(), 
+          // When another `Server` makes an `AppendEntries` RPC
+          // request with a `term` less than the `term` on this
+          // `Server`, the RPC request is rejected.
+          // > *§5. "...false if term < currentTerm..."*
+          success: false,
+          term: this.server.getCurrentTerm()
+        })
+      );
+    }
 
     for (const entry of message.arguments.entries) {
       // > *§5. "If an existing entry conflicts with a new one..."*
@@ -79,21 +113,21 @@ export class FollowerState implements IState {
           // > *§5. "...delete the existing entry and all that follow it"*
           this.server.log.truncateAt(entry.index);
         }
+      } else {
+        // > *§5. "Append any new entries not already in the log"*
+        if (entry.index == this.server.log.getNextIndex()) {
+          this.server.log.append(entry);
+        }
       }
-      // > *§5. "Append any new entries not already in the log"*
-      if (entry.index == this.server.log.getNextIndex()) {
-        this.server.log.append(entry);
-      }
-      // The Raft paper does not specify what to do when there is a "gap"
-      // between the next index of the local log and the index of an
-      // entry in an append-entries RPC request. This implementation
-      // assumes those entries should be ignored.
-      if (entry.index > this.server.log.getNextIndex()) {
-        this.server.logger.warn(`Entry received in append-entries request
-                                has an index (${entry.index}) greater than
-                                the next index in the local log
-                                ${this.server.log.getNextIndex()}.`);
-      }
+    }
+
+    // > *§5. "...If leaderCommit > commitIndex..."*
+    if (message.arguments.leaderCommit > this.server.getCommitIndex()) {
+      const indexOfLastNewEntry = message.arguments.entries.length > 0
+        ? message.arguments.entries[message.arguments.entries.length - 1].index
+	: Number.MAX_SAFE_INTEGER;
+      // > *§5. "...set commitIndex = min(leaderCommit, index of last new entry)..."*
+      this.server.setCommitIndex(Math.min(message.arguments.leaderCommit, indexOfLastNewEntry));
     }
 
     await this.server.sendRpcMessage(
@@ -103,30 +137,31 @@ export class FollowerState implements IState {
         // a detail of this implementation. It allows the leader to not have
         // to keep track of the last log index sent the follower.
         followerCommit: this.server.getCommitIndex(), 
-        // When another `Server` makes an `AppendEntries` RPC
-        // request with a `term` less than the `term` on this
-        // `Server`, the RPC request is rejected.
-        // > *§5. "...false if term < currentTerm..."*
-        success,
+        success: true,
         term: this.server.getCurrentTerm()
       })
     );
   }
 
   public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
-    return {
-      error: 'not-leader',
-      redirectTo: {
-        leaderEndpoint: this.leaderEndpoint
-      }
-    };
+    if (this.leaderId == null) {
+      return {
+        error: 'no-leader'
+      };
+    } else {
+      return {
+        error: 'not-leader',
+        redirectTo: {
+          leaderId: this.leaderId
+        }
+      };
+    }
   }
 
   public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {
-    if(isAppendEntriesRpcRequest(message)) {
+    if (isAppendEntriesRpcRequest(message)) {
       await this.handleAppendEntriesRpcRequest(endpoint, message);
-    }
-    if(isRequestVoteRpcRequest(message)) {
+    } else if (isRequestVoteRpcRequest(message)) {
       await this.handleRequestVoteRpcRequest(endpoint, message);
     }
   }
