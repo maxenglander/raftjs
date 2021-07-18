@@ -105,6 +105,7 @@ function decodeAppendEntriesResponse(
     procedureType: 'append-entries',
     results: {
       followerCommit: results.followerCommit(),
+      followerId: results.followerId(),
       success: results.success(),
       term: results.term()
     }
@@ -273,8 +274,10 @@ function encodeAppendEntriesResults(
   builder: flatbuffers.Builder,
   results: IAppendEntriesRpcResults
 ): flatbuffers.Offset {
+  const followerId = builder.createString(results.followerId);
   Schema.AppendEntriesResults.startAppendEntriesResults(builder);
   Schema.AppendEntriesResults.addFollowerCommit(builder, results.followerCommit);
+  Schema.AppendEntriesResults.addFollowerId(builder, followerId);
   Schema.AppendEntriesResults.addSuccess(builder, results.success);
   Schema.AppendEntriesResults.addTerm(builder, results.term);
   return Schema.AppendEntriesResults.endAppendEntriesResults(builder);

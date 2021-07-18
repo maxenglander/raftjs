@@ -37,7 +37,7 @@ describe('server', function() {
         });
       case 'response':
         return Object.assign({}, message, {
-          results: Object.assign({}, message.arguments, {
+          results: Object.assign({}, message.results, {
             term
           })
         });
@@ -104,13 +104,14 @@ describe('server', function() {
     createAppendEntriesRpcRequest({
       entries: [],
       leaderCommit: 0,
-      leaderId: 'leader-id',
+      leaderId: 'server1',
       prevLogIndex: 0,
       prevLogTerm: 0,
       term: INITIAL_TERM
     }),
     createAppendEntriesRpcResponse({
       followerCommit: 0,
+      followerId: 'server2',
       success: true,
       term: INITIAL_TERM
     }),

@@ -22,8 +22,9 @@ import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IClientRequest, IClientResponse } from './api/client';
-import { IServer, IServerOptions, IStateMachine, ServerId } from './types';
+import { ExecutionListener, IObservableStateMachine, IServer, IServerOptions, IStateMachine, ServerId } from './types';
 import { IState, StateType, createState } from './state';
+import { ObservableStateMachine } from './observable-state-machine';
 
 export class Server implements IServer {
   private readonly cluster: ICluster;
@@ -38,7 +39,7 @@ export class Server implements IServer {
   private readonly rpcService: IRpcService;
   private rpcServiceDetachers: Set<IDetacher>;
   private state: IState;
-  public readonly stateMachine: IStateMachine;
+  public readonly stateMachine: IObservableStateMachine;
   private votedFor: IDurableValue<string>;
 
   constructor(options: IServerOptions) {
@@ -57,7 +58,7 @@ export class Server implements IServer {
     // ensure that `Server` can always call `enter`
     // and `exit` on `this.state`.
     this.state = createState('noop', null, null);
-    this.stateMachine = options.stateMachine;
+    this.stateMachine = new ObservableStateMachine(options.stateMachine);
     this.votedFor = options.votedFor;
   }
 
@@ -142,6 +143,18 @@ export class Server implements IServer {
 
   public setCommitIndex(index: number): void {
     this.commitIndex = index;
+
+    // > *§5. "...If commitIndex > lastApplied..."*
+    while (this.commitIndex > this.lastApplied) {
+      // > *§5. "...increment lastApplied..."*
+      const lastApplied = this.lastApplied + 1;
+
+      // > *§5. "...apply log[lastApplied] to state machine..."*
+      const command = this.log.getEntry(lastApplied).command;
+      const result = this.stateMachine.execute(command);
+
+      this.lastApplied = lastApplied;
+    }
   }
 
   // When the term is updated, it is not immediately

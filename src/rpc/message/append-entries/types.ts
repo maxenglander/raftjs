@@ -35,5 +35,6 @@ export type IAppendEntriesRpcResponse = IBaseRpcResponse<
 
 export interface IAppendEntriesRpcResults extends IBaseRpcResults {
   readonly followerCommit: number;
+  readonly followerId: string;
   readonly success: boolean;
 }

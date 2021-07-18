@@ -24,8 +24,9 @@ export class FollowerState implements IState {
   private leaderId: string;
 
   constructor(server: IServer, leaderId: string) {
-    this.server = server;
+    this.handleAppendEntriesRpcRequest = this.handleAppendEntriesRpcRequest.bind(this);
     this.leaderId = leaderId;
+    this.server = server;
   }
 
   public enter(): void {
@@ -69,10 +70,12 @@ export class FollowerState implements IState {
       return await this.server.sendRpcMessage(
         endpoint,
         createAppendEntriesRpcResponse({
-          // The followerCommit field is not part of the Raft spec. It is a
-          // a detail of this implementation. It allows the leader to not have
-          // to keep track of the last log index sent the follower.
+          // The followerCommit and followerId fields is not part of the Raft spec.
+	  // They are details of this implementation which allow the server to
+	  // easily update nextIndex and matchIndex upon receiving append entries
+	  // responses.
           followerCommit: this.server.getCommitIndex(), 
+	  followerId: this.server.id,
           // When another `Server` makes an `AppendEntries` RPC
           // request with a `term` less than the `term` on this
           // `Server`, the RPC request is rejected.
@@ -91,10 +94,12 @@ export class FollowerState implements IState {
       return await this.server.sendRpcMessage(
         endpoint,
         createAppendEntriesRpcResponse({
-          // The followerCommit field is not part of the Raft spec. It is a
-          // a detail of this implementation. It allows the leader to not have
-          // to keep track of the last log index sent the follower.
+          // The followerCommit and followerId fields is not part of the Raft spec.
+	  // They are details of this implementation which allow the server to
+	  // easily update nextIndex and matchIndex upon receiving append entries
+	  // responses.
           followerCommit: this.server.getCommitIndex(), 
+	  followerId: this.server.id,
           // When another `Server` makes an `AppendEntries` RPC
           // request with a `term` less than the `term` on this
           // `Server`, the RPC request is rejected.
@@ -133,10 +138,12 @@ export class FollowerState implements IState {
     await this.server.sendRpcMessage(
       endpoint,
       createAppendEntriesRpcResponse({
-        // The followerCommit field is not part of the Raft spec. It is a
-        // a detail of this implementation. It allows the leader to not have
-        // to keep track of the last log index sent the follower.
+        // The followerCommit and followerId fields is not part of the Raft spec.
+	// They are details of this implementation which allow the server to
+	// easily update nextIndex and matchIndex upon receiving append entries
+	// responses.
         followerCommit: this.server.getCommitIndex(), 
+	followerId: this.server.id,
         success: true,
         term: this.server.getCurrentTerm()
       })

@@ -86,6 +86,7 @@ describe('server leader state', function() {
             endpoint,
             createAppendEntriesRpcResponse({
               followerCommit: 0,
+	      followerId: 'server1',
               success: true,
               term: server.getCurrentTerm()
             })

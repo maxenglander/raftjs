@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 
-import { ICreateServerOptions, IServer } from './types';
+import { ICreateServerOptions, IObservableStateMachine, IServer, IStateMachine } from './types';
 import {
   IDurableValue,
   createDurableInteger,
@@ -17,6 +17,7 @@ import { createLog } from './log';
 import { createLogger } from './logger';
 import { createRpcService } from './rpc';
 import { Server } from './server';
+import { ObservableStateMachine } from './observable-state-machine';
 
 // The `createServer` method produces a `Server` configured
 // by the provided `options`.
@@ -61,8 +62,12 @@ export function createServer(options: ICreateServerOptions): IServer {
     logger: options.logger || createLogger(),
     rpcService: options.rpcService || createRpcService(),
     stateMachine: options.stateMachine || {
-      execute: (command: Buffer) => Promise.resolve(Buffer.alloc(0))
+      execute: (command: Uint8Array) => Promise.resolve(new Uint8Array(0))
     },
     votedFor
   });
+}
+
+export function createObservableStateMachine(stateMachine: IStateMachine): IObservableStateMachine {
+  return new ObservableStateMachine(stateMachine);
 }

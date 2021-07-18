@@ -8,6 +8,8 @@ import { IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IState, StateType } from './state';
 
+export type ExecutionListener = (result: Uint8Array) => void;
+
 export type ICreateServerOptions = {
   readonly cluster: ICluster;
   readonly electionTimer?: IElectionTimer;
@@ -25,7 +27,7 @@ export interface IServer {
   readonly id: ServerId;
   readonly log: ILog;
   readonly logger: ILogger;
-  readonly stateMachine: IStateMachine;
+  readonly stateMachine: IObservableStateMachine;
   getCommitIndex(): number;
   getCluster(): ICluster;
   getCurrentTerm(): number;
@@ -59,5 +61,9 @@ export interface IServerOptions {
 export type ServerId = string;
 
 export interface IStateMachine {
-  execute(command: Buffer): Promise<Buffer>;
+  execute(command: Uint8Array): Promise<Uint8Array>;
+}
+
+export interface IObservableStateMachine extends IStateMachine {
+  onceExecuted(command: Uint8Array, listener: ExecutionListener): void;
 }
