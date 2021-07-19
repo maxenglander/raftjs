@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 
-import { ICreateServerOptions, IServer } from './types';
+import { ICreateServerOptions, IServer, IServerContext } from './types';
 import {
   IDurableValue,
   createDurableInteger,
@@ -22,6 +22,10 @@ import { Server } from './server';
 // The `createServer` method produces a `Server` configured
 // by the provided `options`.
 export function createServer(options: ICreateServerOptions): IServer {
+  return internalCreateServer(options);
+}
+
+export function internalCreateServer(options: ICreateServerOptions): Server {
   let currentTerm: IDurableValue<number>;
   if ('currentTerm' in options) {
     currentTerm = options.currentTerm;

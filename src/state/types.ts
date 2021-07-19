@@ -3,7 +3,7 @@ import { IEndpoint } from '../net/endpoint';
 import {
   IRpcMessage
 } from '../rpc/message';
-import { IServer } from '../types';
+import { IServerContext } from '../types';
 
 export interface IState {
   enter: () => void;
@@ -15,6 +15,6 @@ export interface IState {
   isLeader: () => boolean;
 }
 
-export type StateFactory = (server: IServer, leaderEndpoint: IEndpoint) => IState;
+export type StateFactory = (serverContext: IServerContext, leaderId: string) => IState;
 
 export type StateType = 'candidate' | 'follower' | 'leader';

@@ -20,7 +20,8 @@ import { IElectionTimer } from './election-timer';
 import { IEndpoint, createEndpoint } from './net/endpoint';
 import { ILog, createLog } from './log';
 import { IRpcMessage, IRpcService, createRpcService, isRpcRequest, isRpcResponse } from './rpc';
-import { IServer, createServer } from './'
+import { internalCreateServer } from './factory';
+import { Server } from './server';
 import { ITransport, createTcpTransport } from './transport';
 import { StateType } from './state'
 import { compilerError } from './util/compiler-error';
@@ -58,7 +59,7 @@ describe('server', function() {
   let currentTerm: IDurableValue<number>;
   let log: ILog;
   let peerRpcService: IRpcService;
-  let server: IServer;
+  let server: Server;
   let transport: ITransport;
   let votedFor: IDurableValue<string>;
 
@@ -76,7 +77,7 @@ describe('server', function() {
     transport = createTcpTransport();
     votedFor = createDurableString(tmp.fileSync().name);
 
-    server = createServer({
+    server = internalCreateServer({
       cluster: {
         servers: {
           server1: createEndpoint({
@@ -92,7 +93,7 @@ describe('server', function() {
       log,
       rpcService: createRpcService({ transport }),
       votedFor: votedFor
-    });
+    }) as Server;
 
     return Promise.all([
        peerRpcService.listen(peerEndpoint),

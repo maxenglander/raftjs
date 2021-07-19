@@ -22,11 +22,11 @@ import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IClientRequest, IClientResponse } from './api/client';
-import { IServer, IServerOptions, ServerId } from './types';
+import { IServer, IServerContext, IServerOptions, ServerId } from './types';
 import { IState, StateType, createState } from './state';
 import { IObservableStateMachine, IStateMachine, createObservableStateMachine } from './state-machine';
 
-export class Server implements IServer {
+export class Server implements IServer, IServerContext {
   private readonly cluster: ICluster;
   private commitIndex: number;
   private currentTerm: IDurableValue<number>;
@@ -60,6 +60,12 @@ export class Server implements IServer {
     this.state = createState('noop', null, null);
     this.stateMachine = createObservableStateMachine(options.stateMachine);
     this.votedFor = options.votedFor;
+  }
+
+  public async execute(request: IClientRequest): Promise<IClientResponse> {
+    // Client requests are handled differently depending on which
+    // state the server is in. So we delegate to state object.
+    return this.state.handleClientRequest(request);
   }
 
   public getCluster(): ICluster {
@@ -101,12 +107,6 @@ export class Server implements IServer {
   // *§5. "...candidateId that received vote in current term..."*
   public getVotedFor(): ServerId {
     return this.votedFor.getValue();
-  }
-
-  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
-    // Client requests are handled differently depending on which
-    // state the server is in. So we delegate to state object.
-    return this.state.handleClientRequest(request);
   }
 
   private async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {

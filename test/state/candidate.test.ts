@@ -19,7 +19,9 @@ import {
 import { IDetacher } from '../util/types';
 import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { IRpcService, createRpcService } from '../rpc';
-import { IServer, ServerId, createServer } from '../';
+import { ServerId } from '../';
+import { internalCreateServer } from '../factory';
+import { Server } from '../server';
 import { IState } from './';
 
 describe('server candidate state', function() {
@@ -37,7 +39,7 @@ describe('server candidate state', function() {
   let candidate: IState,
     electionTimer: IElectionTimer,
     rpcService: IRpcService,
-    server: IServer;
+    server: Server;
 
   afterEach(function() {
     return Promise.all([rpcService.close(), server.stop()]);
@@ -50,7 +52,7 @@ describe('server candidate state', function() {
       })
     });
 
-    server = createServer({
+    server = internalCreateServer({
       cluster: {
         servers: {
           server0: selfEndpoint,

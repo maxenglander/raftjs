@@ -10,7 +10,7 @@ import {
 } from '../rpc/message';
 import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IServer } from '../';
+import { IServerContext } from '../';
 import { IState, StateType } from './types';
 
 // Followers:
@@ -20,26 +20,26 @@ import { IState, StateType } from './types';
 // > *§5. "...an election timeout elapses without receiving AppendEntries RPC from
 // current leader or granting vote to candidate..."*
 export class FollowerState implements IState {
-  private readonly server: IServer;
+  private readonly serverContext: IServerContext;
   private leaderId: string;
 
-  constructor(server: IServer, leaderId: string) {
+  constructor(serverContext: IServerContext, leaderId: string) {
     this.handleAppendEntriesRpcRequest = this.handleAppendEntriesRpcRequest.bind(this);
     this.leaderId = leaderId;
-    this.server = server;
+    this.serverContext = serverContext;
   }
 
   public enter(): void {
-    this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
-    this.server.logger.debug(
-      `Starting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`
+    this.serverContext.electionTimer.on('timeout', this.onTimeout.bind(this));
+    this.serverContext.logger.debug(
+      `Starting election timer with timeout ${this.serverContext.electionTimer.getTimeout()}ms`
     );
-    this.server.electionTimer.start();
+    this.serverContext.electionTimer.start();
   }
 
   public exit(): void {
-    this.server.electionTimer.stop();
-    this.server.electionTimer.off('timeout', this.onTimeout.bind(this));
+    this.serverContext.electionTimer.stop();
+    this.serverContext.electionTimer.off('timeout', this.onTimeout.bind(this));
   }
 
   public getLeaderId(): string {
@@ -63,89 +63,89 @@ export class FollowerState implements IState {
     // One of the conditions for a follower resetting
     // its election timer is:
     // > *§5. "...receiving AppendEntries RPC from current leader..."*
-    this.server.electionTimer.reset();
+    this.serverContext.electionTimer.reset();
 
     // > *§5. "Reply false if term < currentTerm..."*
-    if (message.arguments.term < this.server.getCurrentTerm()) {
-      return await this.server.sendRpcMessage(
+    if (message.arguments.term < this.serverContext.getCurrentTerm()) {
+      return await this.serverContext.sendRpcMessage(
         endpoint,
         createAppendEntriesRpcResponse({
           // The followerCommit and followerId fields is not part of the Raft spec.
 	  // They are details of this implementation which allow the server to
 	  // easily update nextIndex and matchIndex upon receiving append entries
 	  // responses.
-          followerCommit: this.server.getCommitIndex(), 
-	  followerId: this.server.id,
+          followerCommit: this.serverContext.getCommitIndex(), 
+	  followerId: this.serverContext.id,
           // When another `Server` makes an `AppendEntries` RPC
           // request with a `term` less than the `term` on this
           // `Server`, the RPC request is rejected.
           // > *§5. "...false if term < currentTerm..."*
           success: false,
-          term: this.server.getCurrentTerm()
+          term: this.serverContext.getCurrentTerm()
         })
       );
     }
 
     // > *§5. "Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm..."*
     if (!(
-         this.server.log.hasEntry(message.arguments.prevLogIndex)
-      && this.server.log.getEntry(message.arguments.prevLogIndex).term == message.arguments.prevLogTerm
+         this.serverContext.log.hasEntry(message.arguments.prevLogIndex)
+      && this.serverContext.log.getEntry(message.arguments.prevLogIndex).term == message.arguments.prevLogTerm
     )) {
-      return await this.server.sendRpcMessage(
+      return await this.serverContext.sendRpcMessage(
         endpoint,
         createAppendEntriesRpcResponse({
           // The followerCommit and followerId fields is not part of the Raft spec.
 	  // They are details of this implementation which allow the server to
 	  // easily update nextIndex and matchIndex upon receiving append entries
 	  // responses.
-          followerCommit: this.server.getCommitIndex(), 
-	  followerId: this.server.id,
+          followerCommit: this.serverContext.getCommitIndex(), 
+	  followerId: this.serverContext.id,
           // When another `Server` makes an `AppendEntries` RPC
           // request with a `term` less than the `term` on this
           // `Server`, the RPC request is rejected.
           // > *§5. "...false if term < currentTerm..."*
           success: false,
-          term: this.server.getCurrentTerm()
+          term: this.serverContext.getCurrentTerm()
         })
       );
     }
 
     for (const entry of message.arguments.entries) {
       // > *§5. "If an existing entry conflicts with a new one..."*
-      if (this.server.log.hasEntry(entry.index)) {
+      if (this.serverContext.log.hasEntry(entry.index)) {
         // > *§5. "...same index but different terms..."*
-        if (entry.term !== this.server.log.getLastTerm()) {
+        if (entry.term !== this.serverContext.log.getLastTerm()) {
           // > *§5. "...delete the existing entry and all that follow it"*
-          this.server.log.truncateAt(entry.index);
+          this.serverContext.log.truncateAt(entry.index);
         }
       } else {
         // > *§5. "Append any new entries not already in the log"*
-        if (entry.index == this.server.log.getNextIndex()) {
-          this.server.log.append(entry);
+        if (entry.index == this.serverContext.log.getNextIndex()) {
+          this.serverContext.log.append(entry);
         }
       }
     }
 
     // > *§5. "...If leaderCommit > commitIndex..."*
-    if (message.arguments.leaderCommit > this.server.getCommitIndex()) {
+    if (message.arguments.leaderCommit > this.serverContext.getCommitIndex()) {
       const indexOfLastNewEntry = message.arguments.entries.length > 0
         ? message.arguments.entries[message.arguments.entries.length - 1].index
 	: Number.MAX_SAFE_INTEGER;
       // > *§5. "...set commitIndex = min(leaderCommit, index of last new entry)..."*
-      this.server.setCommitIndex(Math.min(message.arguments.leaderCommit, indexOfLastNewEntry));
+      this.serverContext.setCommitIndex(Math.min(message.arguments.leaderCommit, indexOfLastNewEntry));
     }
 
-    await this.server.sendRpcMessage(
+    await this.serverContext.sendRpcMessage(
       endpoint,
       createAppendEntriesRpcResponse({
         // The followerCommit and followerId fields is not part of the Raft spec.
 	// They are details of this implementation which allow the server to
 	// easily update nextIndex and matchIndex upon receiving append entries
 	// responses.
-        followerCommit: this.server.getCommitIndex(), 
-	followerId: this.server.id,
+        followerCommit: this.serverContext.getCommitIndex(), 
+	followerId: this.serverContext.id,
         success: true,
-        term: this.server.getCurrentTerm()
+        term: this.serverContext.getCurrentTerm()
       })
     );
   }
@@ -178,9 +178,9 @@ export class FollowerState implements IState {
     endpoint: IEndpoint,
     message: IRequestVoteRpcRequest
   ): Promise<void> {
-    const currentTerm = this.server.getCurrentTerm(),
-      vote = this.server.getVotedFor(),
-      { electionTimer } = this.server,
+    const currentTerm = this.serverContext.getCurrentTerm(),
+      vote = this.serverContext.getVotedFor(),
+      { electionTimer } = this.serverContext,
       // A receiver of RequestVote RPC will:
       // > *§5. "...reply false if term < currentTerm..."*
       voteGranted =
@@ -188,16 +188,16 @@ export class FollowerState implements IState {
         (vote == null || vote == message.arguments.candidateId);
 
     if (voteGranted) {
-      this.server.logger.trace(
+      this.serverContext.logger.trace(
         `Granting vote request from server ${endpoint.toString()}`
       );
     } else {
-      this.server.logger.trace(
+      this.serverContext.logger.trace(
         `Denying vote request from server ${endpoint.toString()}`
       );
     }
 
-    await this.server.sendRpcMessage(
+    await this.serverContext.sendRpcMessage(
       endpoint,
       createRequestVoteRpcResponse({
         term: currentTerm,
@@ -223,7 +223,7 @@ export class FollowerState implements IState {
   // begins an election by converting to a candidate.
   // > *§5.1 * "If a follower receives no communication, it becomes a candidate and initiates an election."*
   private onTimeout() {
-    this.server.logger.debug('Timer elapsed; transitioning to candidate');
-    this.server.transitionTo('candidate');
+    this.serverContext.logger.debug('Timer elapsed; transitioning to candidate');
+    this.serverContext.transitionTo('candidate');
   }
 }

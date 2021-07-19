@@ -21,6 +21,12 @@ export type ICreateServerOptions = {
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
 
 export interface IServer {
+  execute(request: IClientRequest): Promise<IClientResponse>;
+  start(): Promise<void>;
+  stop(): Promise<void>;
+}
+
+export interface IServerContext {
   readonly electionTimer: IElectionTimer;
   readonly endpoint: IEndpoint;
   readonly id: ServerId;
@@ -35,13 +41,10 @@ export interface IServer {
   getLastApplied(): number;
   getState(): IState;
   getVotedFor(): ServerId;
-  handleClientRequest(request: IClientRequest): Promise<IClientResponse>;
   sendRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void>;
   setCommitIndex(index: number): void;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
-  start(): Promise<void>;
-  stop(): Promise<void>;
   transitionTo(state: StateType | IState, leaderId?: string): void;
 }
 

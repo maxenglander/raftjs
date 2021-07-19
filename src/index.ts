@@ -1,7 +1,8 @@
 export {
   ICreateServerOptions,
   IServer,
+  IServerContext,
   IServerOptions,
   ServerId
 } from './types';
-export * from './factory';
+export { createServer } from './factory';

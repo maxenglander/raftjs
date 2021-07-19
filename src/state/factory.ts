@@ -1,7 +1,7 @@
 import { CandidateState } from './candidate';
 import { FollowerState } from './follower';
 import { IEndpoint} from '../net/endpoint';
-import { IServer } from '../types';
+import { IServerContext } from '../types';
 import { IState, StateType } from './types';
 import { LeaderState } from './leader';
 import { compilerError } from '../util/compiler-error';
@@ -29,16 +29,16 @@ function createNoopState(): IState {
 // implementations by name.
 export function createState(
   stateType: StateType | 'noop',
-  server: IServer,
+  serverContext: IServerContext,
   leaderId?: string
 ): IState {
   switch (stateType) {
     case 'candidate':
-      return new CandidateState(server);
+      return new CandidateState(serverContext);
     case 'follower':
-      return new FollowerState(server, leaderId);
+      return new FollowerState(serverContext, leaderId);
     case 'leader':
-      return new LeaderState(server);
+      return new LeaderState(serverContext);
     case 'noop':
       return createNoopState();
     default:

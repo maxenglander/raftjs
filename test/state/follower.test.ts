@@ -12,7 +12,8 @@ import {
 } from '../election-timer';
 import { createEndpoint } from '../net/endpoint';
 import { IDetacher } from '../util/types';
-import { IServer, createServer } from '../';
+import { Server } from '../server';
+import { internalCreateServer } from '../factory';
 import { IState } from './';
 import {
   IAppendEntriesRpcResponse,
@@ -29,7 +30,7 @@ describe('server follower state', function() {
       port: 13231
     });
 
-  let electionTimer: IElectionTimer, follower: IState, server: IServer;
+  let electionTimer: IElectionTimer, follower: IState, server: Server;
 
   afterEach(function() {
     return server.stop();
@@ -42,7 +43,7 @@ describe('server follower state', function() {
       })
     });
 
-    server = createServer({
+    server = internalCreateServer({
       cluster: {
         servers: {
           server0: createEndpoint({

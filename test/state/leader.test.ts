@@ -12,7 +12,8 @@ import {
 } from '../election-timer';
 import { IEndpoint, createEndpoint } from '../net/endpoint';
 import { IRpcService, createRpcService } from '../rpc';
-import { IServer, createServer } from '../';
+import { Server } from '../server';
+import { internalCreateServer } from '../factory';
 import { IState } from './';
 import { LeaderState } from './leader';
 
@@ -31,7 +32,7 @@ describe('server leader state', function() {
   let leader: IState,
     electionTimer: IElectionTimer,
     rpcService: IRpcService,
-    server: IServer;
+    server: Server;
 
   afterEach(function() {
     return Promise.all([rpcService.close(), server.stop()]);
@@ -44,7 +45,7 @@ describe('server leader state', function() {
       })
     });
 
-    server = createServer({
+    server = internalCreateServer({
       cluster: {
         servers: {
           server0: selfEndpoint,

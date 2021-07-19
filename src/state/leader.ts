@@ -1,6 +1,6 @@
 import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IServer } from '../types';
+import { IServerContext } from '../types';
 import { IState, StateType } from './types';
 import {
   IAppendEntriesRpcResponse,
@@ -20,10 +20,10 @@ export class LeaderState implements IState {
   private matchIndex: { [id: string]: number };
   private nextIndex: { [id: string]: number };
   private sendAppendEntriesIntervalId: any; // eslint-disable-line typescript-eslint/no-explicit-any
-  private readonly server: IServer;
+  private readonly serverContext: IServerContext;
 
-  constructor(server: IServer) {
-    this.server = server;
+  constructor(serverContext: IServerContext) {
+    this.serverContext = serverContext;
     this.sendAppendEntries = this.sendAppendEntries.bind(this);
   }
 
@@ -37,11 +37,11 @@ export class LeaderState implements IState {
     // > *§5 "...(Reinitialized after election)..."
     this.nextIndex = {};
 
-    for (const serverId in this.server.getServerIds()) {
+    for (const serverId in this.serverContext.getServerIds()) {
       // *§5 "...(initialized to 0, increases monotonically)..."
       this.matchIndex[serverId] = 0;
       // *§5 "...(initialized to leader last log index + 1)..."
-      this.nextIndex[serverId] = this.server.log.getLastIndex() + 1;
+      this.nextIndex[serverId] = this.serverContext.log.getLastIndex() + 1;
     }
 
     // > *§5 "...send initial empty AppendEntries RPCs (heartbeat) to each server..."*
@@ -66,7 +66,7 @@ export class LeaderState implements IState {
   }
 
   public getLeaderId(): string {
-    return this.server.id
+    return this.serverContext.id
   }
 
   public getType(): StateType {
@@ -82,24 +82,24 @@ export class LeaderState implements IState {
     }
 
     // > *§5 "...If there exists an N such that N > commitIndex..."
-    const commitIndex = this.server.getCommitIndex();
+    const commitIndex = this.serverContext.getCommitIndex();
     // > *§5 "...a majority of matchIndex[i]>=N..."
     const medianMatchIndex = this.getMedianMatchIndex();
     for (let N = medianMatchIndex; N > commitIndex; N--) {
       // > *§5 "...and log[N].term==currentTerm..."
-      if (this.server.log.getEntry(N).term == this.server.getCurrentTerm()) {
+      if (this.serverContext.log.getEntry(N).term == this.serverContext.getCurrentTerm()) {
         // > *§5 "...set commitIndex = N..."
-        this.server.setCommitIndex(N);
+        this.serverContext.setCommitIndex(N);
       }
     }
   }
 
   public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
     // > *§5 "If command received from client: append entry to local log..."
-    this.server.log.append({
+    this.serverContext.log.append({
       command: request.command,
-      index: this.server.log.getNextIndex(),
-      term: this.server.getCurrentTerm()
+      index: this.serverContext.log.getNextIndex(),
+      term: this.serverContext.getCurrentTerm()
     });
 
     // > *§5 "...then issues AppendEntries RPCs in parallel to each of the other servers..."
@@ -107,7 +107,7 @@ export class LeaderState implements IState {
 
     // Once the command has been executed, return the result to the client.
     return new Promise((resolve, reject) => {
-      this.server.stateMachine.onceExecuted(request.command, (result) => {
+      this.serverContext.stateMachine.onceExecuted(request.command, (result) => {
         resolve({
           result
 	});
@@ -126,26 +126,26 @@ export class LeaderState implements IState {
   }
 
   private sendAppendEntries() {
-    for (const serverId of this.server.getServerIds()) {
+    for (const serverId of this.serverContext.getServerIds()) {
       let entries: ReadonlyArray<ILogEntry> = [];
 
-      if (this.server.log.getLastIndex() >= this.nextIndex[serverId]) {
-        entries = this.server.log.slice(this.nextIndex[serverId]);
+      if (this.serverContext.log.getLastIndex() >= this.nextIndex[serverId]) {
+        entries = this.serverContext.log.slice(this.nextIndex[serverId]);
       }
 
-      const serverEndpoint = this.server.getCluster().servers[serverId];
-      this.server.sendRpcMessage(
+      const serverEndpoint = this.serverContext.getCluster().servers[serverId];
+      this.serverContext.sendRpcMessage(
         serverEndpoint,
         createAppendEntriesRpcRequest({
-          entries: this.server.log.slice(this.nextIndex[serverId]),
-          leaderCommit: this.server.getCommitIndex(),
-          leaderId: this.server.id,
-          prevLogIndex: this.server.log.getLastIndex(),
-          prevLogTerm: this.server.log.getLastTerm(),
-          term: this.server.getCurrentTerm()
+          entries: this.serverContext.log.slice(this.nextIndex[serverId]),
+          leaderCommit: this.serverContext.getCommitIndex(),
+          leaderId: this.serverContext.id,
+          prevLogIndex: this.serverContext.log.getLastIndex(),
+          prevLogTerm: this.serverContext.log.getLastTerm(),
+          term: this.serverContext.getCurrentTerm()
         })
       ).then(() => {}, (err) => {
-        this.server.logger.warn(`Failed to send append-entries request to ${serverEndpoint}: ${err}`);
+        this.serverContext.logger.warn(`Failed to send append-entries request to ${serverEndpoint}: ${err}`);
       });
     }
   }

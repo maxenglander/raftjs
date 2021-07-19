@@ -8,7 +8,7 @@ import {
 } from '../rpc/message';
 import { IClientRequest, IClientResponse } from '../api/client';
 import { IEndpoint } from '../net/endpoint';
-import { IServer } from '../';
+import { IServerContext } from '../';
 import { IState, StateType } from './types';
 
 // A candidate:
@@ -19,24 +19,24 @@ import { IState, StateType } from './types';
 // > *§5.1 "...(b) another server establishes itself as leader..."*
 // > *§5.1 "...(c) a period of time goes by with no winner..."*
 export class CandidateState implements IState {
-  private readonly server: IServer;
+  private readonly serverContext: IServerContext;
   private serverVotes: Set<string>;
 
-  constructor(server: IServer) {
-    this.server = server;
+  constructor(serverContext: IServerContext) {
+    this.serverContext = serverContext;
   }
 
   // Upon transitioning from a follower to a candidate,
   // a candidate immediately starts an election.
   // > *§5. "...On conversion to candidate, start election..."*
   public enter(): void {
-    this.server.electionTimer.on('timeout', this.onTimeout.bind(this));
+    this.serverContext.electionTimer.on('timeout', this.onTimeout.bind(this));
     this.startElection();
   }
 
   public exit(): void {
-    this.server.electionTimer.stop();
-    this.server.electionTimer.off('timeout', this.onTimeout);
+    this.serverContext.electionTimer.stop();
+    this.serverContext.electionTimer.off('timeout', this.onTimeout);
   }
 
   public getLeaderId(): string {
@@ -53,11 +53,11 @@ export class CandidateState implements IState {
     // to its own, it converts to a follower.
     // > *§5. "...If AppendEntries RPC received from new leader..."*
     // > *§5.2. "...While waiting for votes, a candidate may..."*
-    if(message.arguments.term >= this.server.getCurrentTerm()) {
-      this.server.logger.trace(
+    if(message.arguments.term >= this.serverContext.getCurrentTerm()) {
+      this.serverContext.logger.trace(
         `Received append-entries request from ${endpoint}; transitioning to follower.`
       );
-      this.server.transitionTo('follower', message.arguments.leaderId);
+      this.serverContext.transitionTo('follower', message.arguments.leaderId);
     }
   }
 
@@ -82,9 +82,9 @@ export class CandidateState implements IState {
   }
 
   private incrementTerm(): void {
-    const nextTerm = this.server.getCurrentTerm() + 1;
-    this.server.logger.trace(`Incrementing term to ${nextTerm}`);
-    this.server.setCurrentTerm(nextTerm);
+    const nextTerm = this.serverContext.getCurrentTerm() + 1;
+    this.serverContext.logger.trace(`Incrementing term to ${nextTerm}`);
+    this.serverContext.setCurrentTerm(nextTerm);
   }
 
   public isLeader(): boolean {
@@ -94,7 +94,7 @@ export class CandidateState implements IState {
   // A candidate obtains a majority when it receives
   // `(# servers / 2) + 1` votes.
   private isMajorityObtained(): boolean {
-    const numServers = Object.keys(this.server.getCluster().servers).length;
+    const numServers = Object.keys(this.serverContext.getCluster().servers).length;
     const majority = Math.floor(numServers / 2) + 1;
     return this.serverVotes.size >= majority;
   }
@@ -106,27 +106,27 @@ export class CandidateState implements IState {
   // > *§5. "...If election timeout elapses..."*
   // > *§5.2. "...third possible outcome..."*
   private onTimeout() {
-    this.server.logger.trace('Timer elapsed; restarting election');
+    this.serverContext.logger.trace('Timer elapsed; restarting election');
     this.startElection();
   }
 
   //
   private requestVotes() {
-    this.server.logger.trace('Requesting votes from other servers');
+    this.serverContext.logger.trace('Requesting votes from other servers');
 
-    const lastLogIndex = this.server.log.getLastIndex();
+    const lastLogIndex = this.serverContext.log.getLastIndex();
 
-    for (const serverEndpoint of this.server.getServerEndpoints()) {
-      this.server.sendRpcMessage(
+    for (const serverEndpoint of this.serverContext.getServerEndpoints()) {
+      this.serverContext.sendRpcMessage(
         serverEndpoint,
         createRequestVoteRpcRequest({
-          candidateId: this.server.id,
+          candidateId: this.serverContext.id,
           lastLogIndex,
-          lastLogTerm: this.server.log.getEntry(lastLogIndex).term,
-          term: this.server.getCurrentTerm()
+          lastLogTerm: this.serverContext.log.getEntry(lastLogIndex).term,
+          term: this.serverContext.getCurrentTerm()
         })
       ).then(() => {}, (err) => {
-        this.server.logger.warn(`Failed to send request-vote request to ${serverEndpoint}: ${err}`);
+        this.serverContext.logger.warn(`Failed to send request-vote request to ${serverEndpoint}: ${err}`);
       });
     }
   }
@@ -136,7 +136,7 @@ export class CandidateState implements IState {
   // and requests votes from all other servers.
   // *§5.2. "...To begin an election..."*
   private startElection() {
-    this.server.logger.trace('Starting election');
+    this.serverContext.logger.trace('Starting election');
 
     this.serverVotes = new Set<string>();
 
@@ -147,10 +147,10 @@ export class CandidateState implements IState {
     this.voteForSelf();
 
     // > *§5. "...reset election timer..."*
-    this.server.logger.trace(
-      `Resetting election timer with timeout ${this.server.electionTimer.getTimeout()}ms`
+    this.serverContext.logger.trace(
+      `Resetting election timer with timeout ${this.serverContext.electionTimer.getTimeout()}ms`
     );
-    this.server.electionTimer.reset();
+    this.serverContext.electionTimer.reset();
 
     // > *§5.2 "...issues RequestVote RPCs..."*
     this.requestVotes();
@@ -161,22 +161,22 @@ export class CandidateState implements IState {
   // > *§5. "...votes received from majority..."*
   // > *§5.2. "...a candidate wins an election if..."*
   private tallyVote(endpoint: IEndpoint) {
-    this.server.logger.trace(
+    this.serverContext.logger.trace(
       `Tallying vote received from ${endpoint.toString()}`
     );
 
     this.serverVotes.add(endpoint.toString());
     if (this.isMajorityObtained()) {
-      this.server.logger.debug(
+      this.serverContext.logger.debug(
         'Votes obtained from cluster majority; transitioning to leader'
       );
-      this.server.transitionTo('leader');
+      this.serverContext.transitionTo('leader');
     }
   }
 
   //
   private voteForSelf(): void {
-    this.server.setVotedFor(this.server.id);
-    this.tallyVote(this.server.endpoint);
+    this.serverContext.setVotedFor(this.serverContext.id);
+    this.tallyVote(this.serverContext.endpoint);
   }
 }
