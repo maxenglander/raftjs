@@ -132,7 +132,7 @@ export class FollowerState implements IState {
         ? message.arguments.entries[message.arguments.entries.length - 1].index
 	: Number.MAX_SAFE_INTEGER;
       // > *§5. "...set commitIndex = min(leaderCommit, index of last new entry)..."*
-      this.serverContext.setCommitIndex(Math.min(message.arguments.leaderCommit, indexOfLastNewEntry));
+      this.serverContext.setCommitIndexAndExecuteUnapplied(Math.min(message.arguments.leaderCommit, indexOfLastNewEntry));
     }
 
     await this.serverContext.sendRpcMessage(

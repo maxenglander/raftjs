@@ -81,15 +81,14 @@ export class LeaderState implements IState {
       this.nextIndex[message.results.followerId] = this.nextIndex[message.results.followerId] - 1;
     }
 
-    // > *§5 "...If there exists an N such that N > commitIndex..."
-    const commitIndex = this.serverContext.getCommitIndex();
     // > *§5 "...a majority of matchIndex[i]>=N..."
     const medianMatchIndex = this.getMedianMatchIndex();
-    for (let N = medianMatchIndex; N > commitIndex; N--) {
+    // > *§5 "...If there exists an N such that N > commitIndex..."
+    for (let N = medianMatchIndex; N > this.serverContext.getCommitIndex(); N--) {
       // > *§5 "...and log[N].term==currentTerm..."
       if (this.serverContext.log.getEntry(N).term == this.serverContext.getCurrentTerm()) {
         // > *§5 "...set commitIndex = N..."
-        this.serverContext.setCommitIndex(N);
+        await this.serverContext.setCommitIndexAndExecuteUnapplied(N);
       }
     }
   }

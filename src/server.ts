@@ -141,7 +141,9 @@ export class Server implements IServer, IServerContext {
     await this.rpcService.send(endpoint, message);
   }
 
-  public setCommitIndex(index: number): void {
+  // Update the commitIndex, apply unapplied entries from
+  // lastApplied up to commitIndex.
+  public async setCommitIndexAndExecuteUnapplied(index: number): Promise<void> {
     this.commitIndex = index;
 
     // > *§5. "...If commitIndex > lastApplied..."*
@@ -151,7 +153,7 @@ export class Server implements IServer, IServerContext {
 
       // > *§5. "...apply log[lastApplied] to state machine..."*
       const command = this.log.getEntry(lastApplied).command;
-      const result = this.stateMachine.execute(command);
+      const result = await this.stateMachine.execute(command);
 
       this.lastApplied = lastApplied;
     }

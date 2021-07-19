@@ -42,7 +42,7 @@ export interface IServerContext {
   getState(): IState;
   getVotedFor(): ServerId;
   sendRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void>;
-  setCommitIndex(index: number): void;
+  setCommitIndexAndExecuteUnapplied(index: number): Promise<void>;
   setCurrentTerm(newTerm: number): void;
   setVotedFor(candidateId: ServerId): void;
   transitionTo(state: StateType | IState, leaderId?: string): void;
