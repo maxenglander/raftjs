@@ -1,4 +1,4 @@
-import { IClientRequest, IClientResponse } from '../api/client';
+import { IRequest, IResponse } from '../api';
 import { IEndpoint } from '../net/endpoint';
 import {
   IRpcMessage
@@ -7,10 +7,10 @@ import { IServerContext } from '../types';
 
 export interface IState {
   enter: () => void;
+  execute: (request: IRequest) => Promise<IResponse>;
   exit: () => void;
   getLeaderId: () => string;
   getType: () => StateType
-  handleClientRequest: (request: IClientRequest) => Promise<IClientResponse>;
   handleRpcMessage: (endpoint: IEndpoint, message: IRpcMessage) => void;
   isLeader: () => boolean;
 }

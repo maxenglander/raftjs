@@ -1,4 +1,4 @@
-import { IClientRequest, IClientResponse } from '../api/client';
+import { IRequest, IResponse } from '../api';
 import { IEndpoint } from '../net/endpoint';
 import { IServerContext } from '../types';
 import { IState, StateType } from './types';
@@ -51,6 +51,27 @@ export class LeaderState implements IState {
     this.sendAppendEntriesIntervalId = setInterval(this.sendAppendEntries, 10);
   }
 
+  public execute(request: IRequest): Promise<IResponse> {
+    return new Promise((resolve, reject) => {
+      // > *§5 "If command received from client: append entry to local log..."
+      this.serverContext.log.append({
+        command: request.command,
+        index: this.serverContext.log.getNextIndex(),
+        term: this.serverContext.getCurrentTerm()
+      });
+  
+      // > *§5 "...then issues AppendEntries RPCs in parallel to each of the other servers..."
+      this.sendAppendEntries();
+
+      // Once the command has been executed, return the result to the client.
+      this.serverContext.stateMachine.onceExecuted(request.command, (result) => {
+        resolve({
+          result
+	});
+      });
+    });
+  }
+
   public exit(): void {
     clearInterval(this.sendAppendEntriesIntervalId);
   }
@@ -91,27 +112,6 @@ export class LeaderState implements IState {
         await this.serverContext.setCommitIndexAndExecuteUnapplied(N);
       }
     }
-  }
-
-  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
-    // > *§5 "If command received from client: append entry to local log..."
-    this.serverContext.log.append({
-      command: request.command,
-      index: this.serverContext.log.getNextIndex(),
-      term: this.serverContext.getCurrentTerm()
-    });
-
-    // > *§5 "...then issues AppendEntries RPCs in parallel to each of the other servers..."
-    this.sendAppendEntries();
-
-    // Once the command has been executed, return the result to the client.
-    return new Promise((resolve, reject) => {
-      this.serverContext.stateMachine.onceExecuted(request.command, (result) => {
-        resolve({
-          result
-	});
-      });
-    });
   }
 
   public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {

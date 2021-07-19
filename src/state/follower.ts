@@ -8,7 +8,7 @@ import {
   isAppendEntriesRpcRequest,
   isRequestVoteRpcRequest
 } from '../rpc/message';
-import { IClientRequest, IClientResponse } from '../api/client';
+import { IRequest, IResponse } from '../api';
 import { IEndpoint } from '../net/endpoint';
 import { IServerContext } from '../';
 import { IState, StateType } from './types';
@@ -37,6 +37,21 @@ export class FollowerState implements IState {
     this.serverContext.electionTimer.start();
   }
 
+  public async execute(request: IRequest): Promise<IResponse> {
+    if (this.leaderId == null) {
+      return {
+        error: 'interregnum'
+      };
+    } else {
+      return {
+        error: 'not-leader',
+        redirectTo: {
+          leaderId: this.leaderId
+        }
+      };
+    }
+  }
+
   public exit(): void {
     this.serverContext.electionTimer.stop();
     this.serverContext.electionTimer.off('timeout', this.onTimeout.bind(this));
@@ -50,9 +65,6 @@ export class FollowerState implements IState {
     return 'follower';
   }
 
-  // This method is a stub for a Raft response to an
-  // AppendEntries RPC request. At the present time,
-  // it only handles responding to heartbeats.
   // > *§5. "...Receiver implementation:..."*
   private async handleAppendEntriesRpcRequest(
     endpoint: IEndpoint,
@@ -148,21 +160,6 @@ export class FollowerState implements IState {
         term: this.serverContext.getCurrentTerm()
       })
     );
-  }
-
-  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
-    if (this.leaderId == null) {
-      return {
-        error: 'no-leader'
-      };
-    } else {
-      return {
-        error: 'not-leader',
-        redirectTo: {
-          leaderId: this.leaderId
-        }
-      };
-    }
   }
 
   public async handleRpcMessage(endpoint: IEndpoint, message: IRpcMessage): Promise<void> {

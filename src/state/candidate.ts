@@ -6,7 +6,7 @@ import {
   isAppendEntriesRpcRequest,
   isRequestVoteRpcResponse
 } from '../rpc/message';
-import { IClientRequest, IClientResponse } from '../api/client';
+import { IRequest, IResponse } from '../api';
 import { IEndpoint } from '../net/endpoint';
 import { IServerContext } from '../';
 import { IState, StateType } from './types';
@@ -34,6 +34,12 @@ export class CandidateState implements IState {
     this.startElection();
   }
 
+  public async execute(request: IRequest): Promise<IResponse> {
+    return {
+      error: 'interregnum'
+    };
+  }
+
   public exit(): void {
     this.serverContext.electionTimer.stop();
     this.serverContext.electionTimer.off('timeout', this.onTimeout);
@@ -59,12 +65,6 @@ export class CandidateState implements IState {
       );
       this.serverContext.transitionTo('follower', message.arguments.leaderId);
     }
-  }
-
-  public async handleClientRequest(request: IClientRequest): Promise<IClientResponse> {
-    return {
-      error: 'no-leader'
-    };
   }
 
   private async handleRequestVoteRpcResponse(endpoint: IEndpoint, message: IRequestVoteRpcResponse): Promise<void> {

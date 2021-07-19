@@ -1,4 +1,4 @@
-import { IClientRequest, IClientResponse } from './api/client';
+import { IRequest, IResponse } from './api';
 import { ICluster } from './cluster/types';
 import { IDurableValue } from './storage';
 import { ILog } from './log';
@@ -21,7 +21,7 @@ export type ICreateServerOptions = {
   & ({ dataDir: string; } | { votedFor: IDurableValue<string> });
 
 export interface IServer {
-  execute(request: IClientRequest): Promise<IClientResponse>;
+  execute(request: IRequest): Promise<IResponse>;
   start(): Promise<void>;
   stop(): Promise<void>;
 }

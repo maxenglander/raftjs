@@ -14,12 +14,12 @@ import { noop } from '../util';
 function createNoopState(): IState {
   return {
     enter: noop,
+    execute: () => Promise.resolve({
+      error: 'not-ready'
+    }),
     exit: noop,
     getLeaderId: () => null,
     getType: () => null,
-    handleClientRequest: () => Promise.resolve({
-      error: 'not-ready'
-    }),
     handleRpcMessage: noop,
     isLeader: () => false
   };

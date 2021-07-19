@@ -21,7 +21,7 @@ import {
 import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
-import { IClientRequest, IClientResponse } from './api/client';
+import { IRequest, IResponse } from './api';
 import { IServer, IServerContext, IServerOptions, ServerId } from './types';
 import { IState, StateType, createState } from './state';
 import { IObservableStateMachine, IStateMachine, createObservableStateMachine } from './state-machine';
@@ -62,10 +62,11 @@ export class Server implements IServer, IServerContext {
     this.votedFor = options.votedFor;
   }
 
-  public async execute(request: IClientRequest): Promise<IClientResponse> {
+  public async execute(request: IRequest): Promise<IResponse> {
     // Client requests are handled differently depending on which
-    // state the server is in. So we delegate to state object.
-    return this.state.handleClientRequest(request);
+    // state the server is in. Delegate execution handling to state
+    //  object.
+    return this.state.execute(request);
   }
 
   public getCluster(): ICluster {

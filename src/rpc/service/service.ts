@@ -1,14 +1,13 @@
-import { ICodec } from './codec';
-import { IDetacher } from '../util/types';
-import { IEndpoint } from '../net/endpoint';
-import { IRpcMessage } from './message';
+import { ICodec } from '../codec';
+import { IDetacher } from '../../util/types';
+import { IEndpoint } from '../../net/endpoint';
+import { IRpcMessage } from '../message';
 import {
   IRpcService,
   IRpcServiceOptions,
-  RpcBeforeSendHook,
   RpcReceiver
 } from './types';
-import { ITransport } from '../transport';
+import { ITransport } from '../../transport';
 
 // Encodes, sends, decodes and receives RPC messages.
 export class RpcService implements IRpcService {
