@@ -22,9 +22,9 @@ import { IEndpoint, isEndpoint } from './net/endpoint';
 import { IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IClientRequest, IClientResponse } from './api/client';
-import { ExecutionListener, IObservableStateMachine, IServer, IServerOptions, IStateMachine, ServerId } from './types';
+import { IServer, IServerOptions, ServerId } from './types';
 import { IState, StateType, createState } from './state';
-import { ObservableStateMachine } from './observable-state-machine';
+import { IObservableStateMachine, IStateMachine, createObservableStateMachine } from './state-machine';
 
 export class Server implements IServer {
   private readonly cluster: ICluster;
@@ -58,7 +58,7 @@ export class Server implements IServer {
     // ensure that `Server` can always call `enter`
     // and `exit` on `this.state`.
     this.state = createState('noop', null, null);
-    this.stateMachine = new ObservableStateMachine(options.stateMachine);
+    this.stateMachine = createObservableStateMachine(options.stateMachine);
     this.votedFor = options.votedFor;
   }
 

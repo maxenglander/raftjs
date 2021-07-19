@@ -7,8 +7,7 @@ import { IEndpoint } from './net/endpoint';
 import { IRpcMessage, IRpcService, RpcReceiver } from './rpc';
 import { IElectionTimer } from './election-timer';
 import { IState, StateType } from './state';
-
-export type ExecutionListener = (result: Uint8Array) => void;
+import { IObservableStateMachine, IStateMachine } from './state-machine';
 
 export type ICreateServerOptions = {
   readonly cluster: ICluster;
@@ -59,11 +58,3 @@ export interface IServerOptions {
 }
 
 export type ServerId = string;
-
-export interface IStateMachine {
-  execute(command: Uint8Array): Promise<Uint8Array>;
-}
-
-export interface IObservableStateMachine extends IStateMachine {
-  onceExecuted(command: Uint8Array, listener: ExecutionListener): void;
-}
