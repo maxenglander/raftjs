@@ -65,8 +65,8 @@ export class Server implements IServer, IServerContext {
   public async execute(request: IRequest): Promise<IResponse> {
     // Client requests are handled differently depending on which
     // state the server is in. Delegate execution handling to state
-    //  object.
-    return this.state.execute(request);
+    // object.
+    return await this.state.execute(request);
   }
 
   public getCluster(): ICluster {

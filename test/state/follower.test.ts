@@ -74,6 +74,17 @@ describe('server follower state', function() {
       server.transitionTo(follower);
     });
 
+    it('answers client requests with an "interregnum" error', async function() {
+      const response = await server.execute({
+        command: new Uint8Array(0)
+      })
+
+      expect(response).to.have.property('error');
+      if('error' in response) {
+        expect(response.error).to.equal('interregnum');
+      }
+    });
+
     context(
       'if it does not receive any append-entries requests before the election timeout',
       function() {
@@ -159,11 +170,35 @@ describe('server follower state', function() {
             }, timeRemaining);
           });
 
-          it('replies positively', function(done) {
+          it('replies positively to the append-entries request', function(done) {
             waitForAppendEntriesResponse(function() {
               expect(appendEntriesResponse.results.success).to.be.true;
               done();
             });
+          });
+
+	  context('after it sends an append-entries response', function() {
+            beforeEach(function(done) {
+              waitForAppendEntriesResponse(function() {
+		done();
+	      });
+	    });
+
+            it('answers client requests with a redirect error', async function() {
+              const response = await server.execute({
+                command: new Uint8Array(0)
+              });
+
+              expect(response).to.have.property('error');
+
+              if('error' in response) {
+                expect(response.error).to.equal('not-leader');
+
+                if('not-leader' === response.error) {
+                  expect(response.redirectTo.leaderId).to.equal('leader-id');
+                }
+              }
+	    });
           });
         });
 
@@ -196,7 +231,7 @@ describe('server follower state', function() {
               }, waitABit);
             });
 
-            it('replies negatively', function(done) {
+            it('replies negatively to the append-entries request', function(done) {
               waitForAppendEntriesResponse(function() {
                 expect(appendEntriesResponse.results.success).to.be.false;
                 done();

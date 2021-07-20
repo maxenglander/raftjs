@@ -24,7 +24,9 @@ export class FollowerState implements IState {
   private leaderId: string;
 
   constructor(serverContext: IServerContext, leaderId: string) {
+    this.handleRpcMessage = this.handleRpcMessage.bind(this);
     this.handleAppendEntriesRpcRequest = this.handleAppendEntriesRpcRequest.bind(this);
+    this.handleRequestVoteRpcRequest = this.handleRequestVoteRpcRequest.bind(this);
     this.leaderId = leaderId;
     this.serverContext = serverContext;
   }

@@ -76,6 +76,20 @@ describe('server candidate state', function() {
     ]);
   });
 
+  describe('#execute', function() {
+    it('always returns an "interregnum" error', function(done) {
+      server.execute({
+        command: new Uint8Array(0)
+      }).then(response => {
+        expect(response).to.have.property('error');
+        if('error' in response) {
+          expect(response.error).to.equal('interregnum');
+	}
+        done();
+      });
+    });
+  });
+
   context('after it is entered', function() {
     function waitForRequestVoteRequest(callback) {
       requestVoteRequestCallback = callback;
