@@ -17,12 +17,11 @@ import {
 } from './rpc/message';
 import { IDurableValue, createDurableInteger, createDurableString } from './storage';
 import { IElectionTimer } from './election-timer';
-import { IEndpoint, createEndpoint } from './net/endpoint';
+import { IEndpoint, ITransport, createEndpoint, createTcpTransport } from './net';
 import { ILog, createLog } from './log';
 import { IRpcMessage, IRpcService, createRpcService, isRpcRequest, isRpcResponse } from './rpc';
 import { internalCreateServer } from './factory';
 import { Server } from './server';
-import { ITransport, createTcpTransport } from './transport';
 import { StateType } from './state'
 import { compilerError } from './util/compiler-error';
 

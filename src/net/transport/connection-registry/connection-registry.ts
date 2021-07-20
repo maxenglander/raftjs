@@ -1,6 +1,6 @@
-import { Callback, NoArgsCallback } from '../../util/types';
+import { Callback, NoArgsCallback } from '../../../util/types';
 import { IConnectionRegistry } from './types';
-import { IEndpoint, parseEndpoint } from '../../net/endpoint';
+import { IEndpoint, parseEndpoint } from '../../endpoint';
 
 // A map of endpoint to connections, with methods
 // to iterate over or remove all endpoints at once.

@@ -4,13 +4,13 @@ import * as net from 'net';
 
 import { expect } from 'chai';
 
-import { createEndpoint } from '../net/endpoint';
+import { createEndpoint } from '../endpoint';
 import {
   IConnectionRegistry,
   createConnectionRegistry
 } from './connection-registry';
 import { createTcpTransport } from './tcp';
-import { noop } from '../util';
+import { noop } from '../../util';
 
 const encoder = new TextEncoder(),
   data = {

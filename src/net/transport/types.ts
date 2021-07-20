@@ -1,4 +1,4 @@
-import { IEndpoint } from '../net/endpoint';
+import { IEndpoint } from '../endpoint';
 
 export type IReceiver = (endpoint: IEndpoint, data: Uint8Array) => void;
 

@@ -1,8 +1,7 @@
 import { IDetacher } from '../../util/types';
 import { ICodec } from '../codec';
-import { IEndpoint } from '../../net/endpoint';
+import { IEndpoint, ITransport } from '../../net';
 import { IRpcMessage } from '../message';
-import { ITransport } from '../../transport';
 
 export interface IRpcServiceOptions {
   readonly codec?: ICodec;

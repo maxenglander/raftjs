@@ -1,5 +1,5 @@
-import { IEndpoint } from '../../net/endpoint';
-import { Callback, NoArgsCallback } from '../../util/types';
+import { IEndpoint } from '../../endpoint';
+import { Callback, NoArgsCallback } from '../../../util/types';
 
 export interface IConnectionRegistry<T> {
   count(): number;

@@ -1,4 +1,4 @@
-import { IEndpoint } from '../net/endpoint';
+import { IEndpoint } from '../endpoint';
 import { IReceiver, ITransport } from './';
 
 export function createMockTransport(options: {
