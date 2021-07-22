@@ -76,18 +76,14 @@ describe('server candidate state', function() {
     ]);
   });
 
-  describe('#execute', function() {
-    it('always returns an "interregnum" error', function(done) {
-      server.execute({
-        command: new Uint8Array(0)
-      }).then(response => {
-        expect(response).to.have.property('error');
-        if('error' in response) {
-          expect(response.error).to.equal('interregnum');
-	}
-        done();
-      });
+  it('answers client requests with an "interregnum" error', async function() {
+    const response = await server.execute({
+      command: new Uint8Array(0)
     });
+    expect(response).to.have.property('error');
+    if('error' in response) {
+      expect(response.error).to.equal('interregnum');
+    }
   });
 
   context('after it is entered', function() {
